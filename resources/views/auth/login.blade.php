@@ -5,26 +5,26 @@
         @csrf
 
         <div class="space-y-4">
-            <x-ui.input 
-                name="email" 
-                label="Email" 
-                type="email" 
-                placeholder="admin@kelurahan.go.id" 
-                required 
+            <x-ui.input
+                name="email"
+                label="Email"
+                type="email"
+                placeholder="admin@kelurahan.go.id"
+                required
             />
 
-            <x-ui.input 
-                name="password" 
-                label="Password" 
-                type="password" 
-                placeholder="Masukkan password" 
-                required 
+            <x-ui.input
+                name="password"
+                label="Password"
+                type="password"
+                placeholder="Masukkan password"
+                required
             />
 
             <div class="flex items-center justify-between">
-                <x-ui.checkbox 
-                    name="remember" 
-                    :single="true" 
+                <x-ui.checkbox
+                    name="remember"
+                    :single="true"
                     :options="[['label' => 'Ingat saya']]"
                 />
                 <a href="#" class="text-sm text-primary hover:underline">Lupa password?</a>

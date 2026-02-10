@@ -2,18 +2,18 @@
 
     {{-- Page Header --}}
     <x-slot:header>
-        <x-layouts.page-header 
-            title="Dashboard" 
-            description="Ringkasan data dan aktivitas Kelurahan Batua" 
+        <x-layouts.page-header
+            title="Dashboard"
+            description="Ringkasan data dan aktivitas Kelurahan Batua"
         />
     </x-slot:header>
 
     {{-- Statistics Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <x-ui.card class="bg-primary/5">
-            <x-ui.stat 
-                title="Total Penduduk" 
-                value="{{ number_format($totalPenduduk ?? 12450) }}" 
+            <x-ui.stat
+                title="Total Penduduk"
+                value="{{ number_format($totalPenduduk ?? 12450) }}"
                 description="Data terakhir"
                 trend="up"
                 trendValue="+2.5%"
@@ -27,8 +27,8 @@
         </x-ui.card>
 
         <x-ui.card class="bg-secondary/5">
-            <x-ui.stat 
-                title="Kartu Keluarga" 
+            <x-ui.stat
+                title="Kartu Keluarga"
                 value="{{ number_format($totalKK ?? 3120) }}"
                 description="Terdaftar"
             >
@@ -41,8 +41,8 @@
         </x-ui.card>
 
         <x-ui.card class="bg-accent/5">
-            <x-ui.stat 
-                title="Surat Bulan Ini" 
+            <x-ui.stat
+                title="Surat Bulan Ini"
                 value="{{ $totalSuratBulanIni ?? 87 }}"
                 description="Diproses"
                 trend="up"
@@ -57,8 +57,8 @@
         </x-ui.card>
 
         <x-ui.card class="bg-warning/5">
-            <x-ui.stat 
-                title="Menunggu Verifikasi" 
+            <x-ui.stat
+                title="Menunggu Verifikasi"
                 value="{{ $suratMenunggu ?? 5 }}"
                 description="Perlu tindakan"
             >

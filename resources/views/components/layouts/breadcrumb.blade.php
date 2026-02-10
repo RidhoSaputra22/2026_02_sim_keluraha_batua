@@ -1,7 +1,7 @@
 {{--
     Breadcrumb Component
     Displays navigation breadcrumbs.
-    
+
     Usage:
     <x-layouts.breadcrumb :items="[
         ['label' => 'Dashboard', 'url' => route('dashboard')],
