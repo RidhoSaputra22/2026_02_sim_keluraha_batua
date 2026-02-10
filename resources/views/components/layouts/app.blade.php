@@ -40,10 +40,10 @@
         <x-layouts.navbar :title="$title ?? 'Dashboard'" />
 
         {{-- Page content --}}
-        <main class="p-4 md:p-6 lg:p-8">
+        <main class="p-4 md:p-6 lg:p-8 min-h-screen">
             {{-- Breadcrumb --}}
             @if(isset($breadcrumbs))
-                <x-layouts.breadcrumb :items="$breadcrumbs" />
+            <x-layouts.breadcrumb :items="$breadcrumbs" />
             @endif
 
             {{-- Flash messages --}}
@@ -51,9 +51,9 @@
 
             {{-- Page header --}}
             @if(isset($header))
-                <div class="mb-6">
-                    {{ $header }}
-                </div>
+            <div class="mb-6">
+                {{ $header }}
+            </div>
             @endif
 
             {{-- Main slot --}}

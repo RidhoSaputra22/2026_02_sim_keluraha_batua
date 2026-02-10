@@ -12,14 +12,14 @@ class DataSekolahFactory extends Factory
     public function definition(): array
     {
         return [
-            'kelurahan' => $this->faker->words(3, true),
-            'nama_sekolah' => $this->faker->words(3, true),
-            'jenjang' => $this->faker->words(3, true),
-            'status' => $this->faker->words(3, true),
+            'kelurahan' => $this->faker->randomElement(['Batua', 'Bangkala', 'Tamangapa', 'Antang']),
+            'nama_sekolah' => 'SD Negeri ' . $this->faker->numberBetween(1, 100),
+            'jenjang' => $this->faker->randomElement(['SD', 'SMP', 'SMA', 'SMK']),
+            'status' => $this->faker->randomElement(['Negeri', 'Swasta']),
             'alamat' => $this->faker->sentence(12),
             'latitude' => $this->faker->latitude(),
             'longitude' => $this->faker->longitude(),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }

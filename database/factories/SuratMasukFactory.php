@@ -12,12 +12,12 @@ class SuratMasukFactory extends Factory
     public function definition(): array
     {
         return [
-            'no_surat' => $this->faker->words(3, true),
-            'jenis_surat' => $this->faker->words(3, true),
-            'sifat_surat' => $this->faker->words(3, true),
-            'asal_surat' => $this->faker->words(3, true),
+            'no_surat' => $this->faker->numerify('###/KEL-BTU/##/####'),
+            'jenis_surat' => $this->faker->randomElement(['SKTM', 'Domisili', 'Usaha', 'Kelahiran']),
+            'sifat_surat' => $this->faker->randomElement(['Biasa', 'Segera', 'Sangat Segera']),
+            'asal_surat' => $this->faker->randomElement(['Kecamatan', 'Dinas', 'Internal', 'Warga']),
             'tanggal_diterima' => $this->faker->date(),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }

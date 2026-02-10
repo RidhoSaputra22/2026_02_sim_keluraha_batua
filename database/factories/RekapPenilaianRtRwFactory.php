@@ -12,15 +12,15 @@ class RekapPenilaianRtRwFactory extends Factory
     public function definition(): array
     {
         return [
-            'nik' => $this->faker->unique()->numerify('################'),
-            'nama' => $this->faker->words(3, true),
-            'jabatan' => $this->faker->words(3, true),
-            'rw' => $this->faker->words(3, true),
+            'nik' => null,
+            'nama' => $this->faker->name(),
+            'jabatan' => $this->faker->randomElement(['Ketua', 'Sekretaris', 'Anggota']),
+            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
             'tanggal' => $this->faker->date(),
             'periode_penilaian' => $this->faker->date(),
             'nilai' => $this->faker->randomFloat(2, 0, 100),
-            'kelurahan' => $this->faker->words(3, true),
+            'kelurahan' => $this->faker->randomElement(['Batua', 'Bangkala', 'Tamangapa', 'Antang']),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }

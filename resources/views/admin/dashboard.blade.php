@@ -172,23 +172,23 @@
             {{-- Quick Actions --}}
             <x-ui.card title="Aksi Cepat">
                 <div class="space-y-2">
-                    <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2" href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Buat Surat Baru
-                    </x-ui.button>
-                    <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2" href="#" :outline="true">
+                    <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2" href="{{ route('admin.penduduk.create') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
                         Tambah Penduduk
                     </x-ui.button>
-                    <x-ui.button type="accent" size="sm" class="w-full justify-start gap-2" href="#" :outline="true">
+                    <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2" href="{{ route('admin.keluarga.create') }}" :outline="true">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        Cetak Laporan
+                        Tambah Kartu Keluarga
+                    </x-ui.button>
+                    <x-ui.button type="accent" size="sm" class="w-full justify-start gap-2" href="{{ route('admin.users.create') }}" :outline="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Pengguna
                     </x-ui.button>
                 </div>
             </x-ui.card>
@@ -254,34 +254,24 @@
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
                     <span class="text-sm">Total Pengguna</span>
-                    <span class="font-bold text-lg">{{ $totalUsers ?? 24 }}</span>
+                    <span class="font-bold text-lg">{{ $totalUsers ?? 0 }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm">Pengguna Aktif</span>
-                    <x-ui.badge type="success" size="sm">{{ $activeUsers ?? 20 }}</x-ui.badge>
+                    <x-ui.badge type="success" size="sm">{{ $activeUsers ?? 0 }}</x-ui.badge>
                 </div>
                 <div class="divider my-1"></div>
-                <div class="flex items-center justify-between text-sm">
-                    <span>Admin</span><span class="font-medium">2</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <span>Operator</span><span class="font-medium">5</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <span>Verifikator</span><span class="font-medium">3</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <span>Penandatangan</span><span class="font-medium">2</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <span>RT/RW</span><span class="font-medium">8</span>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                    <span>Warga</span><span class="font-medium">4</span>
-                </div>
+                @if(isset($usersPerRole))
+                    @foreach($usersPerRole as $role)
+                    <div class="flex items-center justify-between text-sm">
+                        <span>{{ \App\Models\Role::roleLabels()[$role->name] ?? ucfirst($role->name) }}</span>
+                        <span class="font-medium">{{ $role->users_count }}</span>
+                    </div>
+                    @endforeach
+                @endif
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="#">Kelola Pengguna →</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →</x-ui.button>
             </x-slot:actions>
         </x-ui.card>
 
@@ -308,7 +298,7 @@
                 </div>
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="#">Kelola Wilayah →</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('admin.wilayah.index') }}">Kelola Wilayah →</x-ui.button>
             </x-slot:actions>
         </x-ui.card>
 
@@ -345,7 +335,7 @@
                 </div>
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="#">Audit Log →</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('admin.audit-log') }}">Audit Log →</x-ui.button>
             </x-slot:actions>
         </x-ui.card>
     </div>

@@ -12,13 +12,13 @@ class PetugasKebersihanFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama' => $this->faker->words(3, true),
-            'nik' => $this->faker->unique()->numerify('################'),
-            'unit_kerja' => $this->faker->words(3, true),
+            'nama' => $this->faker->name(),
+            'nik' => null,
+            'unit_kerja' => $this->faker->randomElement(['Kebersihan Umum', 'Taman', 'Drainase']),
             'jenis_kelamin' => $this->faker->randomElement(['L','P']),
-            'pekerjaan' => $this->faker->words(3, true),
-            'lokasi' => $this->faker->words(3, true),
-            'status' => $this->faker->words(3, true),
-        ];;
+            'pekerjaan' => $this->faker->randomElement(['Petugas Kebersihan', 'Koordinator', 'Supervisor']),
+            'lokasi' => $this->faker->randomElement(['RW 001', 'RW 002', 'RW 003', 'Pasar']),
+            'status' => $this->faker->randomElement(['Aktif', 'Nonaktif', 'Cuti']),
+        ];
     }
 }

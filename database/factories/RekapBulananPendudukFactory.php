@@ -12,7 +12,7 @@ class RekapBulananPendudukFactory extends Factory
     public function definition(): array
     {
         return [
-            'kelurahan' => $this->faker->words(3, true),
+            'kelurahan' => $this->faker->randomElement(['Batua', 'Bangkala', 'Tamangapa', 'Antang']),
             'periode' => $this->faker->date(),
             'data_laki_laki' => $this->faker->numberBetween(0, 5000),
             'data_perempuan' => $this->faker->numberBetween(0, 5000),
@@ -38,6 +38,6 @@ class RekapBulananPendudukFactory extends Factory
             'pend_perempuan' => $this->faker->numberBetween(0, 5000),
             'pend_laki_laki_wna' => $this->faker->numberBetween(0, 5000),
             'pend_perempuan_wna' => $this->faker->numberBetween(0, 5000),
-        ];;
+        ];
     }
 }

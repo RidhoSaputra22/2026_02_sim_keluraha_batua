@@ -12,18 +12,19 @@ class DataRtRwFactory extends Factory
     public function definition(): array
     {
         return [
-            'kelurahan' => $this->faker->words(3, true),
-            'nik' => $this->faker->unique()->numerify('################'),
-            'nama' => $this->faker->words(3, true),
-            'jabatan' => $this->faker->words(3, true),
-            'rw' => $this->faker->words(3, true),
-            'rt' => $this->faker->words(3, true),
+            'kelurahan' => 'Batua',
+            'kecamatan' => 'Manggala',
+            'nik' => null,
+            'nama' => $this->faker->name(),
+            'jabatan' => $this->faker->randomElement(['RT', 'RW']),
+            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
+            'rt' => str_pad($this->faker->numberBetween(1, 15), 3, '0', STR_PAD_LEFT),
             'tgl_mulai' => $this->faker->date(),
-            'status' => $this->faker->words(3, true),
-            'alamat' => $this->faker->sentence(12),
-            'no_telp' => $this->faker->phoneNumber(),
-            'no_rekening' => $this->faker->words(3, true),
-            'no_npwp' => $this->faker->words(3, true),
-        ];;
+            'status' => $this->faker->randomElement(['aktif', 'nonaktif']),
+            'alamat' => $this->faker->address(),
+            'no_telp' => $this->faker->numerify('08##########'),
+            'no_rekening' => $this->faker->numerify('##########'),
+            'no_npwp' => $this->faker->numerify('##.###.###.#-###.###'),
+        ];
     }
 }

@@ -12,14 +12,14 @@ class TempatIbadahFactory extends Factory
     public function definition(): array
     {
         return [
-            'kelurahan' => $this->faker->words(3, true),
-            'tempat_ibadah' => $this->faker->words(3, true),
-            'nama' => $this->faker->words(3, true),
+            'kelurahan' => $this->faker->randomElement(['Batua', 'Bangkala', 'Tamangapa', 'Antang']),
+            'tempat_ibadah' => $this->faker->randomElement(['Masjid', 'Musholla', 'Gereja', 'Pura']),
+            'nama' => $this->faker->name(),
             'alamat' => $this->faker->sentence(12),
-            'rt' => $this->faker->words(3, true),
-            'rw' => $this->faker->words(3, true),
-            'pengurus' => $this->faker->words(3, true),
+            'rt' => str_pad($this->faker->numberBetween(1, 20), 3, '0', STR_PAD_LEFT),
+            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
+            'pengurus' => $this->faker->name(),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }

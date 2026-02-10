@@ -12,14 +12,19 @@ class PenandatangananFactory extends Factory
     public function definition(): array
     {
         return [
-            'nip' => $this->faker->unique()->numerify('################'),
-            'nama' => $this->faker->words(3, true),
-            'jabatan' => $this->faker->words(3, true),
-            'pangkat' => $this->faker->words(3, true),
-            'status' => $this->faker->words(3, true),
-            'no_telp' => $this->faker->phoneNumber(),
-            'tgl_input' => $this->faker->date(),
-            'petugas_input' => $this->faker->words(3, true),
-        ];;
+            'nik' => $this->faker->unique()->numerify('################'),
+            'nip' => null,
+            'nama' => $this->faker->name(),
+            'jabatan' => $this->faker->randomElement(['Lurah', 'Sekretaris Lurah', 'Kasi Pemerintahan']),
+            'pangkat' => $this->faker->randomElement(['Penata Muda', 'Penata', 'Penata Tk. I', 'Pembina']),
+            'golongan' => $this->faker->randomElement(['III/a', 'III/b', 'III/c', 'III/d', 'IV/a']),
+            'status' => $this->faker->randomElement(['aktif', 'nonaktif']),
+            'no_telp' => $this->faker->numerify('08##########'),
+            'email' => $this->faker->unique()->safeEmail(),
+            'alamat' => $this->faker->address(),
+            'tgl_mulai' => $this->faker->date(),
+            'tgl_input' => $this->faker->dateTimeBetween('-2 years', 'now'),
+            'petugas_input' => null,
+        ];
     }
 }

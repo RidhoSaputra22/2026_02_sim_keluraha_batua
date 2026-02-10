@@ -14,12 +14,12 @@ class DataFaskesFactory extends Factory
         return [
             'nama_rs' => $this->faker->words(3, true),
             'alamat' => $this->faker->sentence(12),
-            'rw' => $this->faker->words(3, true),
+            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
             'jenis' => $this->faker->words(3, true),
             'kelas' => $this->faker->words(3, true),
             'jenis_pelayanan' => $this->faker->words(3, true),
             'akreditasi' => $this->faker->words(3, true),
-            'telp' => $this->faker->phoneNumber(),
-        ];;
+            'telp' => $this->faker->numerify('08##########'),
+        ];
     }
 }

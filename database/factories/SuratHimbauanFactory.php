@@ -12,13 +12,13 @@ class SuratHimbauanFactory extends Factory
     public function definition(): array
     {
         return [
-            'no_surat' => $this->faker->words(3, true),
-            'sifat_surat' => $this->faker->words(3, true),
-            'asal_surat' => $this->faker->words(3, true),
+            'no_surat' => $this->faker->numerify('###/KEL-BTU/##/####'),
+            'sifat_surat' => $this->faker->randomElement(['Biasa', 'Segera', 'Sangat Segera']),
+            'asal_surat' => $this->faker->randomElement(['Kecamatan', 'Dinas', 'Internal', 'Warga']),
             'tanggal_surat' => $this->faker->date(),
-            'tujuan_surat' => $this->faker->words(3, true),
+            'tujuan_surat' => $this->faker->company(),
             'uraian' => $this->faker->sentence(12),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }

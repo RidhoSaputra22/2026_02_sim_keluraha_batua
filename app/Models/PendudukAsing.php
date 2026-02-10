@@ -38,7 +38,7 @@ class PendudukAsing extends Model
     protected $casts = [
         'jenis_kelamin' => JenisKelaminEnum::class,
         'tanggal_lahir' => 'date',
-        'tgl_input' => 'date',
+        'tgl_input'     => 'date',
     ];
 
     public function petugas(): BelongsTo
@@ -48,7 +48,7 @@ class PendudukAsing extends Model
 
     public function scopeWilayah($query, $rt = null, $rw = null)
     {
-        return $query->when($rt, fn ($q) => $q->where('rt', $rt))
-            ->when($rw, fn ($q) => $q->where('rw', $rw));
+        return $query->when($rt, fn($q) => $q->where('rt', $rt))
+                     ->when($rw, fn($q) => $q->where('rw', $rw));
     }
 }

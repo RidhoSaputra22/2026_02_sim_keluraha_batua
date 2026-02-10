@@ -12,15 +12,16 @@ class PegawaiStaffFactory extends Factory
     public function definition(): array
     {
         return [
-            'nip' => $this->faker->unique()->numerify('################'),
-            'nama' => $this->faker->words(3, true),
-            'jabatan' => $this->faker->words(3, true),
-            'gol' => $this->faker->words(3, true),
-            'pangkat' => $this->faker->words(3, true),
-            'status_pegawai' => $this->faker->words(3, true),
-            'tgl_input' => $this->faker->date(),
-            'petugas_input' => $this->faker->words(3, true),
-            'no_urut' => $this->faker->words(3, true),
-        ];;
+            'nik' => $this->faker->unique()->numerify('################'),
+            'nip' => $this->faker->unique()->numerify('##################'),
+            'nama' => $this->faker->name(),
+            'jabatan' => $this->faker->randomElement(['Lurah', 'Sekretaris Lurah', 'Kasi Pemerintahan', 'Kasi Pelayanan', 'Staff']),
+            'golongan' => $this->faker->randomElement(['III/a', 'III/b', 'III/c', 'III/d', 'IV/a']),
+            'pangkat' => $this->faker->randomElement(['Penata Muda', 'Penata', 'Penata Tk. I', 'Pembina']),
+            'status_pegawai' => $this->faker->randomElement(['aktif', 'nonaktif']),
+            'tgl_input' => $this->faker->dateTimeBetween('-2 years', 'now'),
+            'petugas_input' => null,
+            'no_urut' => $this->faker->numberBetween(1, 50),
+        ];
     }
 }

@@ -13,13 +13,17 @@ class DataKeluargaFactory extends Factory
     {
         return [
             'no_kk' => $this->faker->unique()->numerify('################'),
-            'nama_kepala_keluarga' => $this->faker->words(3, true),
-            'jumlah_anggota_keluarga' => $this->faker->numberBetween(0, 5000),
-            'rw' => $this->faker->words(3, true),
-            'rt' => $this->faker->words(3, true),
-            'tgl_input' => $this->faker->date(),
-            'petugas_input' => $this->faker->words(3, true),
-            'arsip' => $this->faker->optional()->filePath(),
-        ];;
+            'nama_kepala_keluarga' => $this->faker->name(),
+            'nik_kepala_keluarga' => $this->faker->unique()->numerify('################'),
+            'jumlah_anggota_keluarga' => $this->faker->numberBetween(1, 10),
+            'alamat' => $this->faker->address(),
+            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
+            'rt' => str_pad($this->faker->numberBetween(1, 15), 3, '0', STR_PAD_LEFT),
+            'kecamatan' => 'Manggala',
+            'kelurahan' => 'Batua',
+            'status' => 'aktif',
+            'tgl_input' => $this->faker->dateTimeBetween('-2 years', 'now'),
+            'petugas_input' => null,
+        ];
     }
 }

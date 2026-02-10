@@ -16,8 +16,8 @@ class DataEkspedisiFactory extends Factory
             'ekspedisi' => $this->faker->words(3, true),
             'alamat' => $this->faker->sentence(12),
             'penanggung_jawab' => $this->faker->words(3, true),
-            'telp_hp' => $this->faker->phoneNumber(),
+            'telp_hp' => $this->faker->numerify('08##########'),
             'kegiatan_ekspedisi' => $this->faker->words(3, true),
-        ];;
+        ];
     }
 }

@@ -12,12 +12,12 @@ class RekapImbFactory extends Factory
     public function definition(): array
     {
         return [
-            'nama_pemohon' => $this->faker->words(3, true),
+            'nama_pemohon' => $this->faker->name(),
             'alamat_pemohon' => $this->faker->sentence(12),
             'alamat_bangunan' => $this->faker->sentence(12),
-            'status_luas_tanah' => $this->faker->words(3, true),
-            'nama_pada_surat' => $this->faker->words(3, true),
-            'penggunaan_fungsi_gedung' => $this->faker->words(3, true),
-        ];;
+            'status_luas_tanah' => $this->faker->randomElement(['Milik Sendiri', 'Sewa', 'Warisan']),
+            'nama_pada_surat' => $this->faker->name(),
+            'penggunaan_fungsi_gedung' => $this->faker->randomElement(['Rumah Tinggal', 'Ruko', 'Kantor', 'Gudang']),
+        ];
     }
 }

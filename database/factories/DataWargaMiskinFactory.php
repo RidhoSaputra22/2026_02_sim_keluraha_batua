@@ -12,14 +12,14 @@ class DataWargaMiskinFactory extends Factory
     public function definition(): array
     {
         return [
-            'kelurahan' => $this->faker->words(3, true),
-            'nama' => $this->faker->words(3, true),
-            'nik' => $this->faker->unique()->numerify('################'),
+            'kelurahan' => $this->faker->randomElement(['Batua', 'Bangkala', 'Tamangapa', 'Antang']),
+            'nama' => $this->faker->name(),
+            'nik' => null,
             'alamat' => $this->faker->sentence(12),
-            'rw' => $this->faker->words(3, true),
-            'rt' => $this->faker->words(3, true),
-            'no_peserta' => $this->faker->words(3, true),
+            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
+            'rt' => str_pad($this->faker->numberBetween(1, 20), 3, '0', STR_PAD_LEFT),
+            'no_peserta' => $this->faker->numerify('##########'),
             'keterangan' => $this->faker->sentence(12),
-        ];;
+        ];
     }
 }

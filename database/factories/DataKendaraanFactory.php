@@ -12,15 +12,15 @@ class DataKendaraanFactory extends Factory
     public function definition(): array
     {
         return [
-            'jenis_barang' => $this->faker->words(3, true),
-            'nama_pengemudi' => $this->faker->words(3, true),
-            'no_polisi' => $this->faker->words(3, true),
-            'no_rangka' => $this->faker->words(3, true),
-            'no_mesin' => $this->faker->words(3, true),
+            'jenis_barang' => $this->faker->randomElement(['Motor', 'Mobil', 'Truk', 'Pick Up']),
+            'nama_pengemudi' => $this->faker->name(),
+            'no_polisi' => $this->faker->bothify('DD #### ??'),
+            'no_rangka' => $this->faker->bothify('???###?????????###'),
+            'no_mesin' => $this->faker->bothify('??#########'),
             'tahun_perolehan' => $this->faker->numberBetween(2000, (int)date('Y')),
-            'merek_type' => $this->faker->words(3, true),
-            'wilayah_penugasan' => $this->faker->words(3, true),
+            'merek_type' => $this->faker->randomElement(['Toyota Avanza', 'Honda Beat', 'Yamaha Mio', 'Suzuki Ertiga', 'Daihatsu Xenia']),
+            'wilayah_penugasan' => $this->faker->randomElement(['RW 001', 'RW 002', 'RW 003', 'Seluruh Kelurahan']),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }

@@ -12,11 +12,11 @@ class SuratLainLainFactory extends Factory
     public function definition(): array
     {
         return [
-            'no_surat' => $this->faker->words(3, true),
+            'no_surat' => $this->faker->numerify('###/KEL-BTU/##/####'),
             'tanggal_surat' => $this->faker->date(),
-            'perihal' => $this->faker->words(3, true),
-            'tujuan_surat' => $this->faker->words(3, true),
+            'perihal' => $this->faker->sentence(5),
+            'tujuan_surat' => $this->faker->company(),
             'arsip' => $this->faker->optional()->filePath(),
-        ];;
+        ];
     }
 }
