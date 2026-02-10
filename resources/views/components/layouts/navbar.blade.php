@@ -86,11 +86,7 @@
         {{-- User dropdown --}}
         <div class="dropdown dropdown-end">
             <label tabindex="0" class="btn btn-ghost btn-sm gap-2">
-                <div class="avatar placeholder">
-                    <div class="bg-primary text-primary-content rounded-full w-8">
-                        <span class="text-xs">{{ substr(auth()->user()->name ?? 'A', 0, 1) }}</span>
-                    </div>
-                </div>
+                <x-ui.avatar :name="auth()->user()->name ?? 'Admin'" size="sm" />
                 <span class="hidden md:inline text-sm font-medium">{{ auth()->user()->name ?? 'Admin' }}</span>
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />

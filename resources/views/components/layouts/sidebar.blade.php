@@ -1,7 +1,12 @@
 {{--
     Sidebar Component
-    Responsive sidebar with collapsible menu groups matching SIM Kelurahan modules.
+    Responsive sidebar with role-based menu visibility.
+    Uses auth()->user()->hasRole() to conditionally show menu groups.
 --}}
+
+@php
+    $user = auth()->user();
+@endphp
 
 <aside class="fixed top-0 left-0 z-50 h-screen w-64 bg-base-100 shadow-lg transition-transform duration-300 overflow-y-auto"
     :class="{
@@ -29,12 +34,25 @@
         </button>
     </div>
 
+    {{-- User role badge --}}
+    @if($user)
+    <div class="px-4 py-3 border-b border-base-200">
+        <div class="flex items-center gap-2">
+            <x-ui.avatar :name="$user->name" size="sm" />
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate">{{ $user->name }}</p>
+                <p class="text-xs text-base-content/60">{{ \App\Models\Role::roleLabels()[$user->getRoleName()] ?? 'User' }}</p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Navigation menu --}}
     <ul class="menu menu-sm px-3 py-4 gap-1">
 
-        {{-- Dashboard --}}
+        {{-- Dashboard — Semua role --}}
         <li>
-            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard*') ? 'active' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
                 </svg>
@@ -42,7 +60,13 @@
             </a>
         </li>
 
-        {{-- Data Master --}}
+        {{-- ============================================================ --}}
+        {{-- Data Master — Admin only --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole('admin'))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Data Master</span>
+        </li>
         <li>
             <details {{ request()->routeIs('master.*') ? 'open' : '' }}>
                 <summary>
@@ -60,8 +84,15 @@
                 </ul>
             </details>
         </li>
+        @endif
 
-        {{-- Kependudukan --}}
+        {{-- ============================================================ --}}
+        {{-- Kependudukan — Admin, Operator, RT/RW --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator', 'rt_rw']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
+        </li>
         <li>
             <details {{ request()->routeIs('kependudukan.*') ? 'open' : '' }}>
                 <summary>
@@ -73,14 +104,23 @@
                 <ul>
                     <li><a href="#" class="{{ request()->routeIs('kependudukan.penduduk.*') ? 'active' : '' }}">Data Penduduk</a></li>
                     <li><a href="#" class="{{ request()->routeIs('kependudukan.kk.*') ? 'active' : '' }}">Kartu Keluarga</a></li>
+                    @if($user->hasRole(['admin', 'operator']))
                     <li><a href="#" class="{{ request()->routeIs('kependudukan.mutasi.*') ? 'active' : '' }}">Mutasi Penduduk</a></li>
                     <li><a href="#" class="{{ request()->routeIs('kependudukan.kelahiran.*') ? 'active' : '' }}">Kelahiran</a></li>
                     <li><a href="#" class="{{ request()->routeIs('kependudukan.kematian.*') ? 'active' : '' }}">Kematian</a></li>
+                    @endif
                 </ul>
             </details>
         </li>
+        @endif
 
-        {{-- Persuratan --}}
+        {{-- ============================================================ --}}
+        {{-- Persuratan — Admin, Operator, Verifikator, Penandatangan, Warga (tracking only) --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator', 'verifikator', 'penandatangan', 'warga']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Persuratan</span>
+        </li>
         <li>
             <details {{ request()->routeIs('persuratan.*') ? 'open' : '' }}>
                 <summary>
@@ -90,16 +130,40 @@
                     Persuratan
                 </summary>
                 <ul>
+                    {{-- Permohonan: Admin, Operator, Warga --}}
+                    @if($user->hasRole(['admin', 'operator', 'warga']))
                     <li><a href="#" class="{{ request()->routeIs('persuratan.permohonan.*') ? 'active' : '' }}">Permohonan Surat</a></li>
+                    @endif
+
+                    {{-- Verifikasi: Admin, Verifikator --}}
+                    @if($user->hasRole(['admin', 'verifikator']))
                     <li><a href="#" class="{{ request()->routeIs('persuratan.verifikasi.*') ? 'active' : '' }}">Verifikasi</a></li>
+                    @endif
+
+                    {{-- Tanda Tangan: Admin, Penandatangan --}}
+                    @if($user->hasRole(['admin', 'penandatangan']))
                     <li><a href="#" class="{{ request()->routeIs('persuratan.tanda-tangan.*') ? 'active' : '' }}">Tanda Tangan</a></li>
+                    @endif
+
+                    {{-- Arsip: Admin, Operator --}}
+                    @if($user->hasRole(['admin', 'operator']))
                     <li><a href="#" class="{{ request()->routeIs('persuratan.arsip.*') ? 'active' : '' }}">Arsip Surat</a></li>
+                    @endif
+
+                    {{-- Tracking: Semua role persuratan --}}
                     <li><a href="#" class="{{ request()->routeIs('persuratan.tracking.*') ? 'active' : '' }}">Tracking Layanan</a></li>
                 </ul>
             </details>
         </li>
+        @endif
 
-        {{-- Data Usaha / PK5 --}}
+        {{-- ============================================================ --}}
+        {{-- Data Usaha / PK5 — Admin, Operator --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Data Usaha</span>
+        </li>
         <li>
             <details {{ request()->routeIs('usaha.*') ? 'open' : '' }}>
                 <summary>
@@ -115,8 +179,15 @@
                 </ul>
             </details>
         </li>
+        @endif
 
-        {{-- Laporan --}}
+        {{-- ============================================================ --}}
+        {{-- Laporan — Admin, Operator, Verifikator --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator', 'verifikator']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Laporan</span>
+        </li>
         <li>
             <details {{ request()->routeIs('laporan.*') ? 'open' : '' }}>
                 <summary>
@@ -128,14 +199,80 @@
                 <ul>
                     <li><a href="#" class="{{ request()->routeIs('laporan.kependudukan') ? 'active' : '' }}">Kependudukan</a></li>
                     <li><a href="#" class="{{ request()->routeIs('laporan.persuratan') ? 'active' : '' }}">Persuratan</a></li>
+                    @if($user->hasRole(['admin', 'operator']))
                     <li><a href="#" class="{{ request()->routeIs('laporan.usaha') ? 'active' : '' }}">Data Usaha</a></li>
+                    @endif
                 </ul>
             </details>
         </li>
+        @endif
 
+        {{-- ============================================================ --}}
+        {{-- RT/RW: menu khusus pengantar & data warga --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole('rt_rw'))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Layanan RT/RW</span>
+        </li>
+        <li>
+            <a href="#" class="{{ request()->routeIs('rtrw.pengantar.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Surat Pengantar
+            </a>
+        </li>
+        <li>
+            <a href="#" class="{{ request()->routeIs('rtrw.laporan.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                Laporan & Pengaduan
+            </a>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
+        {{-- Warga: menu khusus layanan mandiri --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole('warga'))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Layanan Saya</span>
+        </li>
+        <li>
+            <a href="#" class="{{ request()->routeIs('warga.permohonan.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Ajukan Permohonan
+            </a>
+        </li>
+        <li>
+            <a href="#" class="{{ request()->routeIs('warga.riwayat') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Riwayat & Tracking
+            </a>
+        </li>
+        <li>
+            <a href="#" class="{{ request()->routeIs('warga.dokumen') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Unduh Dokumen
+            </a>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
+        {{-- Administrasi Sistem — Admin only --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole('admin'))
         <div class="divider my-1 px-2"></div>
-
-        {{-- Administrasi Sistem --}}
+        <li class="menu-title">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Administrasi</span>
+        </li>
         <li>
             <details {{ request()->routeIs('admin.*') ? 'open' : '' }}>
                 <summary>
@@ -152,5 +289,6 @@
                 </ul>
             </details>
         </li>
+        @endif
     </ul>
 </aside>

@@ -196,7 +196,7 @@
     </div>
 
     {{-- Bottom row: Surat per jenis & Data Usaha --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {{-- Surat per Jenis --}}
         <x-ui.card title="Rekap Surat per Jenis (Bulan Ini)">
             <div class="space-y-3">
@@ -243,6 +243,109 @@
             </div>
             <x-slot:actions>
                 <x-ui.button type="ghost" size="sm" href="#">Lihat Detail →</x-ui.button>
+            </x-slot:actions>
+        </x-ui.card>
+    </div>
+
+    {{-- Admin-specific: System Overview --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {{-- User Management Overview --}}
+        <x-ui.card title="Manajemen Pengguna">
+            <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Total Pengguna</span>
+                    <span class="font-bold text-lg">{{ $totalUsers ?? 24 }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm">Pengguna Aktif</span>
+                    <x-ui.badge type="success" size="sm">{{ $activeUsers ?? 20 }}</x-ui.badge>
+                </div>
+                <div class="divider my-1"></div>
+                <div class="flex items-center justify-between text-sm">
+                    <span>Admin</span><span class="font-medium">2</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span>Operator</span><span class="font-medium">5</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span>Verifikator</span><span class="font-medium">3</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span>Penandatangan</span><span class="font-medium">2</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span>RT/RW</span><span class="font-medium">8</span>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                    <span>Warga</span><span class="font-medium">4</span>
+                </div>
+            </div>
+            <x-slot:actions>
+                <x-ui.button type="ghost" size="sm" href="#">Kelola Pengguna →</x-ui.button>
+            </x-slot:actions>
+        </x-ui.card>
+
+        {{-- Wilayah Overview --}}
+        <x-ui.card title="Data Wilayah">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-base-200 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-primary">{{ $totalRW ?? 8 }}</div>
+                    <div class="text-sm text-base-content/60">RW</div>
+                </div>
+                <div class="bg-base-200 rounded-lg p-4 text-center">
+                    <div class="text-2xl font-bold text-secondary">{{ $totalRT ?? 42 }}</div>
+                    <div class="text-sm text-base-content/60">RT</div>
+                </div>
+            </div>
+            <div class="mt-4 space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span>Penduduk/RT (rata-rata)</span>
+                    <span class="font-medium">296</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span>KK/RT (rata-rata)</span>
+                    <span class="font-medium">74</span>
+                </div>
+            </div>
+            <x-slot:actions>
+                <x-ui.button type="ghost" size="sm" href="#">Kelola Wilayah →</x-ui.button>
+            </x-slot:actions>
+        </x-ui.card>
+
+        {{-- Audit & System Log --}}
+        <x-ui.card title="Aktivitas Sistem Terbaru">
+            <div class="space-y-3">
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 bg-success rounded-full mt-2 shrink-0"></div>
+                    <div>
+                        <p class="text-sm font-medium">Operator menambah data penduduk</p>
+                        <p class="text-xs text-base-content/60">Andi S. — 5 menit lalu</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 bg-info rounded-full mt-2 shrink-0"></div>
+                    <div>
+                        <p class="text-sm font-medium">Verifikator menyetujui surat SKTM</p>
+                        <p class="text-xs text-base-content/60">Kasi Pelayanan — 15 menit lalu</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
+                    <div>
+                        <p class="text-sm font-medium">Lurah menandatangani 3 surat</p>
+                        <p class="text-xs text-base-content/60">Lurah — 30 menit lalu</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-2 h-2 bg-warning rounded-full mt-2 shrink-0"></div>
+                    <div>
+                        <p class="text-sm font-medium">Admin mengubah role pengguna</p>
+                        <p class="text-xs text-base-content/60">Admin — 1 jam lalu</p>
+                    </div>
+                </div>
+            </div>
+            <x-slot:actions>
+                <x-ui.button type="ghost" size="sm" href="#">Audit Log →</x-ui.button>
             </x-slot:actions>
         </x-ui.card>
     </div>
