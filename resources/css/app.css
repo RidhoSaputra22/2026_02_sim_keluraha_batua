@@ -1,0 +1,41 @@
+@import 'tailwindcss';
+@plugin "daisyui" {
+    themes: light --default, dark;
+}
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: oklch(0.7 0 0 / 0.3);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.5 0 0 / 0.5);
+}
+
+/* Sidebar active menu item */
+.menu li > .active,
+.menu li > a:active {
+    @apply bg-primary text-primary-content;
+}
+
+/* Alpine.js cloak */
+[x-cloak] {
+    display: none !important;
+}
