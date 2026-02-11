@@ -16,10 +16,10 @@
                 <x-ui.input name="search" placeholder="Cari No. KK, nama kepala keluarga, NIK..." value="{{ request('search') }}" />
             </div>
             <div class="w-full md:w-32">
-                <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r => 'RW ' . $r])->toArray()" selected="{{ request('rw') }}" />
+                <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r->id => 'RW ' . $r->nomor])->toArray()" selected="{{ request('rw') }}" />
             </div>
             <div class="w-full md:w-32">
-                <x-ui.select name="rt" placeholder="Semua RT" :options="$rtList->mapWithKeys(fn($r) => [$r => 'RT ' . $r])->toArray()" selected="{{ request('rt') }}" />
+                <x-ui.select name="rt" placeholder="Semua RT" :options="$rtList->mapWithKeys(fn($r) => [$r->id => 'RT ' . $r->nomor . '/RW ' . ($r->rw->nomor ?? '-')])->toArray()" selected="{{ request('rt') }}" />
             </div>
             <div class="flex gap-2">
                 <x-ui.button type="primary" size="md">Cari</x-ui.button>
@@ -37,7 +37,6 @@
                         <th>Kepala Keluarga</th>
                         <th>Jumlah Anggota</th>
                         <th>RT/RW</th>
-                        <th>Alamat</th>
                         <th class="text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -46,12 +45,11 @@
                     <tr class="hover">
                         <td class="font-mono text-sm">{{ $kk->no_kk }}</td>
                         <td>
-                            <div class="font-medium">{{ $kk->nama_kepala_keluarga }}</div>
-                            <div class="text-xs text-base-content/60">NIK: {{ $kk->nik_kepala_keluarga ?? '-' }}</div>
+                            <div class="font-medium">{{ $kk->kepalaKeluarga->nama ?? '-' }}</div>
+                            <div class="text-xs text-base-content/60">NIK: {{ $kk->kepalaKeluarga->nik ?? '-' }}</div>
                         </td>
                         <td>{{ $kk->jumlah_anggota_keluarga ?? '-' }} orang</td>
-                        <td class="text-sm">{{ $kk->rt ?? '-' }}/{{ $kk->rw ?? '-' }}</td>
-                        <td class="text-sm max-w-xs truncate">{{ $kk->alamat ?? '-' }}</td>
+                        <td class="text-sm">{{ $kk->rt->nomor ?? '-' }}/{{ $kk->rt->rw->nomor ?? '-' }}</td>
                         <td>
                             <div class="flex justify-end gap-1">
                                 <x-ui.button type="info" size="xs" :outline="true" href="{{ route('admin.keluarga.show', $kk) }}">
@@ -70,7 +68,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="6" class="text-center py-8 text-base-content/60">Tidak ada data keluarga.</td></tr>
+                    <tr><td colspan="5" class="text-center py-8 text-base-content/60">Tidak ada data keluarga.</td></tr>
                     @endforelse
                 </tbody>
             </table>

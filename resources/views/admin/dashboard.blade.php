@@ -13,10 +13,8 @@
         <x-ui.card class="bg-primary/5">
             <x-ui.stat
                 title="Total Penduduk"
-                value="{{ number_format($totalPenduduk ?? 12450) }}"
+                value="{{ number_format($totalPenduduk) }}"
                 description="Data terakhir"
-                trend="up"
-                trendValue="+2.5%"
             >
                 <x-slot:icon>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -29,7 +27,7 @@
         <x-ui.card class="bg-secondary/5">
             <x-ui.stat
                 title="Kartu Keluarga"
-                value="{{ number_format($totalKK ?? 3120) }}"
+                value="{{ number_format($totalKK) }}"
                 description="Terdaftar"
             >
                 <x-slot:icon>
@@ -43,10 +41,8 @@
         <x-ui.card class="bg-accent/5">
             <x-ui.stat
                 title="Surat Bulan Ini"
-                value="{{ $totalSuratBulanIni ?? 87 }}"
+                value="{{ $totalSuratBulanIni }}"
                 description="Diproses"
-                trend="up"
-                trendValue="+12"
             >
                 <x-slot:icon>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -59,7 +55,7 @@
         <x-ui.card class="bg-warning/5">
             <x-ui.stat
                 title="Menunggu Verifikasi"
-                value="{{ $suratMenunggu ?? 5 }}"
+                value="{{ $suratMenunggu }}"
                 description="Perlu tindakan"
             >
                 <x-slot:icon>
@@ -89,41 +85,37 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @forelse($recentSurat as $surat)
                             <tr class="hover">
-                                <td class="font-mono text-sm">045/KB/II/2026</td>
-                                <td>SKTM</td>
-                                <td>Ahmad Yani</td>
-                                <td>10 Feb 2026</td>
-                                <td><x-ui.badge type="success" size="sm">Selesai</x-ui.badge></td>
+                                <td class="font-mono text-sm">{{ $surat->nomor_surat }}</td>
+                                <td>{{ $surat->jenis->nama ?? '-' }}</td>
+                                <td>{{ $surat->pemohon->nama ?? $surat->nama_dalam_surat ?? '-' }}</td>
+                                <td>{{ $surat->tanggal_surat?->format('d M Y') ?? '-' }}</td>
+                                <td>
+                                    @php
+                                        $statusColor = match($surat->status_esign) {
+                                            'signed' => 'success',
+                                            'proses' => 'info',
+                                            'draft' => 'warning',
+                                            'reject' => 'error',
+                                            default => 'ghost',
+                                        };
+                                        $statusLabel = match($surat->status_esign) {
+                                            'signed' => 'Selesai',
+                                            'proses' => 'Proses',
+                                            'draft' => 'Draft',
+                                            'reject' => 'Ditolak',
+                                            default => '-',
+                                        };
+                                    @endphp
+                                    <x-ui.badge type="{{ $statusColor }}" size="sm">{{ $statusLabel }}</x-ui.badge>
+                                </td>
                             </tr>
-                            <tr class="hover">
-                                <td class="font-mono text-sm">044/KB/II/2026</td>
-                                <td>Domisili</td>
-                                <td>Siti Rahma</td>
-                                <td>09 Feb 2026</td>
-                                <td><x-ui.badge type="warning" size="sm">Verifikasi</x-ui.badge></td>
+                            @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-base-content/60">Belum ada data surat.</td>
                             </tr>
-                            <tr class="hover">
-                                <td class="font-mono text-sm">043/KB/II/2026</td>
-                                <td>Ket. Usaha</td>
-                                <td>Budi Santoso</td>
-                                <td>09 Feb 2026</td>
-                                <td><x-ui.badge type="info" size="sm">TTD</x-ui.badge></td>
-                            </tr>
-                            <tr class="hover">
-                                <td class="font-mono text-sm">042/KB/II/2026</td>
-                                <td>Pengantar Nikah</td>
-                                <td>Rina Melati</td>
-                                <td>08 Feb 2026</td>
-                                <td><x-ui.badge type="success" size="sm">Selesai</x-ui.badge></td>
-                            </tr>
-                            <tr class="hover">
-                                <td class="font-mono text-sm">041/KB/II/2026</td>
-                                <td>SKTM</td>
-                                <td>Dedi Kurniawan</td>
-                                <td>08 Feb 2026</td>
-                                <td><x-ui.badge type="error" size="sm">Ditolak</x-ui.badge></td>
-                            </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -143,28 +135,28 @@
                             <div class="w-3 h-3 bg-success rounded-full"></div>
                             <span class="text-sm">Kelahiran</span>
                         </div>
-                        <span class="font-semibold">{{ $mutasiLahir ?? 8 }}</span>
+                        <span class="font-semibold">{{ $mutasiLahir }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <div class="w-3 h-3 bg-error rounded-full"></div>
                             <span class="text-sm">Kematian</span>
                         </div>
-                        <span class="font-semibold">{{ $mutasiMeninggal ?? 3 }}</span>
+                        <span class="font-semibold">{{ $mutasiMeninggal }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <div class="w-3 h-3 bg-info rounded-full"></div>
                             <span class="text-sm">Datang</span>
                         </div>
-                        <span class="font-semibold">{{ $mutasiDatang ?? 12 }}</span>
+                        <span class="font-semibold">{{ $mutasiDatang }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
                             <div class="w-3 h-3 bg-warning rounded-full"></div>
                             <span class="text-sm">Pindah</span>
                         </div>
-                        <span class="font-semibold">{{ $mutasiPindah ?? 6 }}</span>
+                        <span class="font-semibold">{{ $mutasiPindah }}</span>
                     </div>
                 </div>
             </x-ui.card>
@@ -201,43 +193,38 @@
         <x-ui.card title="Rekap Surat per Jenis (Bulan Ini)">
             <div class="space-y-3">
                 @php
-                    $jenisSurat = [
-                        ['nama' => 'SKTM', 'jumlah' => 24, 'persen' => 28],
-                        ['nama' => 'Domisili', 'jumlah' => 20, 'persen' => 23],
-                        ['nama' => 'Keterangan Usaha', 'jumlah' => 15, 'persen' => 17],
-                        ['nama' => 'Pengantar Nikah', 'jumlah' => 12, 'persen' => 14],
-                        ['nama' => 'Ket. Kelahiran', 'jumlah' => 8, 'persen' => 9],
-                        ['nama' => 'Lainnya', 'jumlah' => 8, 'persen' => 9],
-                    ];
+                    $totalSurat = $suratPerJenis->sum('surats_count') ?: 1;
                 @endphp
-                @foreach($jenisSurat as $jenis)
+                @forelse($suratPerJenis as $jenis)
                     <div>
                         <div class="flex justify-between text-sm mb-1">
-                            <span>{{ $jenis['nama'] }}</span>
-                            <span class="font-medium">{{ $jenis['jumlah'] }}</span>
+                            <span>{{ $jenis->nama }}</span>
+                            <span class="font-medium">{{ $jenis->surats_count }}</span>
                         </div>
-                        <progress class="progress progress-primary w-full" value="{{ $jenis['persen'] }}" max="100"></progress>
+                        <progress class="progress progress-primary w-full" value="{{ round(($jenis->surats_count / $totalSurat) * 100) }}" max="100"></progress>
                     </div>
-                @endforeach
+                @empty
+                    <p class="text-sm text-base-content/60 text-center py-4">Belum ada data surat bulan ini.</p>
+                @endforelse
             </div>
         </x-ui.card>
 
         {{-- Data Usaha Ringkasan --}}
-        <x-ui.card title="Data Usaha / PK5">
+        <x-ui.card title="Data Usaha / UMKM">
             <div class="stats stats-vertical w-full">
                 <div class="stat px-0">
                     <div class="stat-title">Total Usaha Terdaftar</div>
-                    <div class="stat-value text-primary text-2xl">{{ $totalUsaha ?? 156 }}</div>
+                    <div class="stat-value text-primary text-2xl">{{ $totalUsaha }}</div>
                     <div class="stat-desc">di seluruh wilayah kelurahan</div>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-3 mt-4">
                 <div class="bg-base-200 rounded-lg p-3 text-center">
-                    <div class="text-xl font-bold text-base-content">{{ $usahaAktif ?? 142 }}</div>
+                    <div class="text-xl font-bold text-base-content">{{ $usahaAktif }}</div>
                     <div class="text-xs text-base-content/60">Aktif</div>
                 </div>
                 <div class="bg-base-200 rounded-lg p-3 text-center">
-                    <div class="text-xl font-bold text-base-content">{{ $usahaTidakAktif ?? 14 }}</div>
+                    <div class="text-xl font-bold text-base-content">{{ $usahaTidakAktif }}</div>
                     <div class="text-xs text-base-content/60">Tidak Aktif</div>
                 </div>
             </div>
@@ -254,21 +241,19 @@
             <div class="space-y-3">
                 <div class="flex items-center justify-between">
                     <span class="text-sm">Total Pengguna</span>
-                    <span class="font-bold text-lg">{{ $totalUsers ?? 0 }}</span>
+                    <span class="font-bold text-lg">{{ $totalUsers }}</span>
                 </div>
                 <div class="flex items-center justify-between">
                     <span class="text-sm">Pengguna Aktif</span>
-                    <x-ui.badge type="success" size="sm">{{ $activeUsers ?? 0 }}</x-ui.badge>
+                    <x-ui.badge type="success" size="sm">{{ $activeUsers }}</x-ui.badge>
                 </div>
                 <div class="divider my-1"></div>
-                @if(isset($usersPerRole))
-                    @foreach($usersPerRole as $role)
-                    <div class="flex items-center justify-between text-sm">
-                        <span>{{ \App\Models\Role::roleLabels()[$role->name] ?? ucfirst($role->name) }}</span>
-                        <span class="font-medium">{{ $role->users_count }}</span>
-                    </div>
-                    @endforeach
-                @endif
+                @foreach($usersPerRole as $role)
+                <div class="flex items-center justify-between text-sm">
+                    <span>{{ \App\Models\Role::roleLabels()[$role->name] ?? ucfirst($role->name) }}</span>
+                    <span class="font-medium">{{ $role->users_count }}</span>
+                </div>
+                @endforeach
             </div>
             <x-slot:actions>
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →</x-ui.button>
@@ -279,60 +264,45 @@
         <x-ui.card title="Data Wilayah">
             <div class="grid grid-cols-2 gap-4">
                 <div class="bg-base-200 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-bold text-primary">{{ $totalRW ?? 8 }}</div>
+                    <div class="text-2xl font-bold text-primary">{{ $totalRW }}</div>
                     <div class="text-sm text-base-content/60">RW</div>
                 </div>
                 <div class="bg-base-200 rounded-lg p-4 text-center">
-                    <div class="text-2xl font-bold text-secondary">{{ $totalRT ?? 42 }}</div>
+                    <div class="text-2xl font-bold text-secondary">{{ $totalRT }}</div>
                     <div class="text-sm text-base-content/60">RT</div>
                 </div>
             </div>
+            @if($totalRT > 0)
             <div class="mt-4 space-y-2">
                 <div class="flex justify-between text-sm">
                     <span>Penduduk/RT (rata-rata)</span>
-                    <span class="font-medium">296</span>
+                    <span class="font-medium">{{ $totalRT > 0 ? round($totalPenduduk / $totalRT) : 0 }}</span>
                 </div>
                 <div class="flex justify-between text-sm">
                     <span>KK/RT (rata-rata)</span>
-                    <span class="font-medium">74</span>
+                    <span class="font-medium">{{ $totalRT > 0 ? round($totalKK / $totalRT) : 0 }}</span>
                 </div>
             </div>
+            @endif
             <x-slot:actions>
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.wilayah.index') }}">Kelola Wilayah →</x-ui.button>
             </x-slot:actions>
         </x-ui.card>
 
-        {{-- Audit & System Log --}}
-        <x-ui.card title="Aktivitas Sistem Terbaru">
+        {{-- Recent Users --}}
+        <x-ui.card title="Pengguna Terbaru">
             <div class="space-y-3">
+                @forelse($recentUsers as $user)
                 <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 bg-success rounded-full mt-2 shrink-0"></div>
+                    <div class="w-2 h-2 bg-{{ $user->is_active ? 'success' : 'error' }} rounded-full mt-2 shrink-0"></div>
                     <div>
-                        <p class="text-sm font-medium">Operator menambah data penduduk</p>
-                        <p class="text-xs text-base-content/60">Andi S. — 5 menit lalu</p>
+                        <p class="text-sm font-medium">{{ $user->name }}</p>
+                        <p class="text-xs text-base-content/60">{{ $user->role->name ?? '-' }} — {{ $user->created_at?->diffForHumans() }}</p>
                     </div>
                 </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 bg-info rounded-full mt-2 shrink-0"></div>
-                    <div>
-                        <p class="text-sm font-medium">Verifikator menyetujui surat SKTM</p>
-                        <p class="text-xs text-base-content/60">Kasi Pelayanan — 15 menit lalu</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
-                    <div>
-                        <p class="text-sm font-medium">Lurah menandatangani 3 surat</p>
-                        <p class="text-xs text-base-content/60">Lurah — 30 menit lalu</p>
-                    </div>
-                </div>
-                <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 bg-warning rounded-full mt-2 shrink-0"></div>
-                    <div>
-                        <p class="text-sm font-medium">Admin mengubah role pengguna</p>
-                        <p class="text-xs text-base-content/60">Admin — 1 jam lalu</p>
-                    </div>
-                </div>
+                @empty
+                <p class="text-sm text-base-content/60 text-center py-4">Belum ada pengguna.</p>
+                @endforelse
             </div>
             <x-slot:actions>
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.audit-log') }}">Audit Log →</x-ui.button>

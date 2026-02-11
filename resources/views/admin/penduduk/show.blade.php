@@ -27,16 +27,8 @@
                         <p class="font-medium">{{ $penduduk->nama }}</p>
                     </div>
                     <div>
-                        <span class="text-sm text-base-content/60">No. KK</span>
-                        <p class="font-mono">{{ $penduduk->no_kk ?? '-' }}</p>
-                    </div>
-                    <div>
                         <span class="text-sm text-base-content/60">Jenis Kelamin</span>
-                        <p>{{ $penduduk->jenis_kelamin?->value === 'L' ? 'Laki-laki' : 'Perempuan' }}</p>
-                    </div>
-                    <div>
-                        <span class="text-sm text-base-content/60">Tempat/Tanggal Lahir</span>
-                        <p>{{ $penduduk->tempat_lahir ?? '-' }}, {{ $penduduk->tanggal_lahir?->format('d F Y') ?? '-' }}</p>
+                        <p>{{ $penduduk->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</p>
                     </div>
                     <div>
                         <span class="text-sm text-base-content/60">Golongan Darah</span>
@@ -56,16 +48,8 @@
                         <p>{{ $penduduk->status_kawin ?? '-' }}</p>
                     </div>
                     <div>
-                        <span class="text-sm text-base-content/60">Pekerjaan</span>
-                        <p>{{ $penduduk->pekerjaan ?? '-' }}</p>
-                    </div>
-                    <div>
                         <span class="text-sm text-base-content/60">Pendidikan</span>
                         <p>{{ $penduduk->pendidikan ?? '-' }}</p>
-                    </div>
-                    <div>
-                        <span class="text-sm text-base-content/60">Kewarganegaraan</span>
-                        <p>{{ $penduduk->kewarganegaraan ?? '-' }}</p>
                     </div>
                 </div>
             </x-ui.card>
@@ -78,11 +62,7 @@
                     </div>
                     <div>
                         <span class="text-sm text-base-content/60">RT / RW</span>
-                        <p>{{ $penduduk->rt ?? '-' }} / {{ $penduduk->rw ?? '-' }}</p>
-                    </div>
-                    <div>
-                        <span class="text-sm text-base-content/60">Kelurahan / Kecamatan</span>
-                        <p>{{ $penduduk->kelurahan ?? '-' }} / {{ $penduduk->kecamatan ?? '-' }}</p>
+                        <p>{{ $penduduk->rt->nomor ?? '-' }} / {{ $penduduk->rt->rw->nomor ?? '-' }}</p>
                     </div>
                 </div>
             </x-ui.card>
@@ -99,20 +79,9 @@
                         </x-ui.badge>
                     </div>
                     <div class="flex justify-between items-center">
-                        <span class="text-sm">Input oleh</span>
-                        <span class="text-sm font-medium">{{ $penduduk->petugas?->name ?? 'Sistem' }}</span>
-                    </div>
-                    <div class="flex justify-between items-center">
                         <span class="text-sm">Tanggal Input</span>
-                        <span class="text-sm">{{ $penduduk->tgl_input?->format('d/m/Y') ?? $penduduk->created_at?->format('d/m/Y') }}</span>
+                        <span class="text-sm">{{ $penduduk->tgl_input ? \Carbon\Carbon::parse($penduduk->tgl_input)->format('d/m/Y') : ($penduduk->created_at?->format('d/m/Y') ?? '-') }}</span>
                     </div>
-                    @if($penduduk->keterangan)
-                    <div class="divider my-1"></div>
-                    <div>
-                        <span class="text-sm text-base-content/60">Keterangan</span>
-                        <p class="text-sm mt-1">{{ $penduduk->keterangan }}</p>
-                    </div>
-                    @endif
                 </div>
             </x-ui.card>
 
@@ -120,8 +89,12 @@
             <x-ui.card title="Data Keluarga">
                 <div class="space-y-2">
                     <div>
+                        <span class="text-sm text-base-content/60">No. KK</span>
+                        <p class="font-mono text-sm">{{ $penduduk->keluarga->no_kk }}</p>
+                    </div>
+                    <div>
                         <span class="text-sm text-base-content/60">Kepala Keluarga</span>
-                        <p class="font-medium">{{ $penduduk->keluarga->nama_kepala_keluarga }}</p>
+                        <p class="font-medium">{{ $penduduk->keluarga->kepalaKeluarga->nama ?? '-' }}</p>
                     </div>
                     <div>
                         <span class="text-sm text-base-content/60">Jumlah Anggota</span>
@@ -131,19 +104,6 @@
                 <x-slot:actions>
                     <x-ui.button type="ghost" size="xs" href="{{ route('admin.keluarga.show', $penduduk->keluarga) }}">Detail KK →</x-ui.button>
                 </x-slot:actions>
-            </x-ui.card>
-            @endif
-
-            @if($penduduk->suratKeluar->count() > 0)
-            <x-ui.card title="Riwayat Surat">
-                <div class="space-y-2">
-                    @foreach($penduduk->suratKeluar->take(5) as $surat)
-                    <div class="flex justify-between items-center text-sm">
-                        <span>{{ $surat->jenis_surat ?? 'Surat' }}</span>
-                        <span class="text-base-content/60">{{ $surat->tanggal_surat?->format('d/m/Y') }}</span>
-                    </div>
-                    @endforeach
-                </div>
             </x-ui.card>
             @endif
         </div>

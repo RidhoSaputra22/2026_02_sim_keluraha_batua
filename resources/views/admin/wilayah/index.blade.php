@@ -16,10 +16,10 @@
                 <x-ui.input name="search" placeholder="Cari nama, NIK, no. telp..." value="{{ request('search') }}" />
             </div>
             <div class="w-full md:w-36">
-                <x-ui.select name="jabatan" placeholder="Semua Jabatan" :options="['RT' => 'Ketua RT', 'RW' => 'Ketua RW']" selected="{{ request('jabatan') }}" />
+                <x-ui.select name="jabatan" placeholder="Semua Jabatan" :options="$jabatanList->mapWithKeys(fn($j) => [$j->id => $j->nama])->toArray()" selected="{{ request('jabatan') }}" />
             </div>
             <div class="w-full md:w-32">
-                <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r => 'RW ' . $r])->toArray()" selected="{{ request('rw') }}" />
+                <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r->id => 'RW ' . $r->nomor])->toArray()" selected="{{ request('rw') }}" />
             </div>
             <div class="w-full md:w-36">
                 <x-ui.select name="status" placeholder="Semua Status" :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" selected="{{ request('status') }}" />
@@ -48,7 +48,7 @@
                         <th>NIK</th>
                         <th>Jabatan</th>
                         <th>RT/RW</th>
-                        <th>Periode</th>
+                        <th>Tgl Mulai</th>
                         <th>Kontak</th>
                         <th>Status</th>
                         <th class="text-right">Aksi</th>
@@ -57,28 +57,19 @@
                 <tbody>
                     @forelse($wilayah as $w)
                     <tr class="hover">
-                        <td class="font-medium">{{ $w->nama }}</td>
-                        <td class="font-mono text-xs">{{ $w->nik ?? '-' }}</td>
+                        <td class="font-medium">{{ $w->penduduk->nama ?? '-' }}</td>
+                        <td class="font-mono text-xs">{{ $w->penduduk->nik ?? '-' }}</td>
                         <td>
-                            @php $jabatanVal = $w->jabatan instanceof \App\Enums\JabatanRtRwEnum ? $w->jabatan->value : $w->jabatan; @endphp
-                            <span class="badge {{ $jabatanVal === 'RW' ? 'badge-secondary' : 'badge-primary' }} badge-sm">
-                                {{ $jabatanVal }} {{ $jabatanVal === 'RT' ? str_pad($w->rt, 3, '0', STR_PAD_LEFT) : str_pad($w->rw, 3, '0', STR_PAD_LEFT) }}
-                            </span>
+                            <span class="badge badge-primary badge-sm">{{ $w->jabatan->nama ?? '-' }}</span>
                         </td>
-                        <td class="text-sm">RT {{ $w->rt ?? '-' }} / RW {{ $w->rw ?? '-' }}</td>
+                        <td class="text-sm">RT {{ $w->rt->nomor ?? '-' }} / RW {{ $w->rw->nomor ?? '-' }}</td>
                         <td class="text-sm">
-                            @if($w->tgl_mulai || $w->tgl_selesai)
-                                {{ $w->tgl_mulai ? \Carbon\Carbon::parse($w->tgl_mulai)->format('d/m/Y') : '?' }}
-                                - {{ $w->tgl_selesai ? \Carbon\Carbon::parse($w->tgl_selesai)->format('d/m/Y') : 'Sekarang' }}
-                            @else
-                                -
-                            @endif
+                            {{ $w->tgl_mulai ? \Carbon\Carbon::parse($w->tgl_mulai)->format('d/m/Y') : '-' }}
                         </td>
                         <td class="text-sm">{{ $w->no_telp ?? '-' }}</td>
                         <td>
-                            @php $statusVal = $w->status instanceof \App\Enums\StatusAktifEnum ? $w->status->value : $w->status; @endphp
-                            <span class="badge {{ $statusVal === 'aktif' ? 'badge-success' : 'badge-error' }} badge-sm">
-                                {{ ucfirst($statusVal ?? 'aktif') }}
+                            <span class="badge {{ $w->status === 'aktif' ? 'badge-success' : 'badge-error' }} badge-sm">
+                                {{ ucfirst($w->status ?? 'aktif') }}
                             </span>
                         </td>
                         <td>

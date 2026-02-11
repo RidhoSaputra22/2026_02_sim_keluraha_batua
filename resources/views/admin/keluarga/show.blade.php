@@ -22,7 +22,7 @@
                     <div class="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mx-auto mb-3">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     </div>
-                    <h3 class="font-bold text-lg">{{ $keluarga->nama_kepala_keluarga }}</h3>
+                    <h3 class="font-bold text-lg">{{ $keluarga->kepalaKeluarga->nama ?? '-' }}</h3>
                     <p class="text-sm text-base-content/60">Kepala Keluarga</p>
                 </div>
                 <div class="divide-y">
@@ -32,7 +32,7 @@
                     </div>
                     <div class="py-2 flex justify-between">
                         <span class="text-sm text-base-content/60">NIK KK</span>
-                        <span class="font-mono text-sm">{{ $keluarga->nik_kepala_keluarga ?? '-' }}</span>
+                        <span class="font-mono text-sm">{{ $keluarga->kepalaKeluarga->nik ?? '-' }}</span>
                     </div>
                     <div class="py-2 flex justify-between">
                         <span class="text-sm text-base-content/60">Anggota</span>
@@ -40,20 +40,9 @@
                     </div>
                     <div class="py-2 flex justify-between">
                         <span class="text-sm text-base-content/60">RT/RW</span>
-                        <span class="text-sm">{{ $keluarga->rt ?? '-' }}/{{ $keluarga->rw ?? '-' }}</span>
-                    </div>
-                    <div class="py-2 flex justify-between">
-                        <span class="text-sm text-base-content/60">Status</span>
-                        <span class="badge {{ $keluarga->status === 'aktif' ? 'badge-success' : 'badge-error' }} badge-sm">{{ ucfirst($keluarga->status ?? 'aktif') }}</span>
+                        <span class="text-sm">{{ $keluarga->rt->nomor ?? '-' }}/{{ $keluarga->rt->rw->nomor ?? '-' }}</span>
                     </div>
                 </div>
-            </x-ui.card>
-
-            <x-ui.card title="Alamat">
-                <p class="text-sm">{{ $keluarga->alamat ?? '-' }}</p>
-                <p class="text-sm text-base-content/60 mt-1">
-                    Kel. {{ $keluarga->kelurahan ?? '-' }}, Kec. {{ $keluarga->kecamatan ?? '-' }}
-                </p>
             </x-ui.card>
         </div>
 
@@ -67,32 +56,30 @@
                                 <th>NIK</th>
                                 <th>Nama</th>
                                 <th>L/P</th>
-                                <th>Tgl Lahir</th>
+                                <th>Agama</th>
                                 <th>Status Kawin</th>
-                                <th>Pekerjaan</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($keluarga->penduduk as $a)
+                            @forelse($keluarga->anggota as $a)
                             <tr class="hover">
                                 <td class="font-mono text-xs">{{ $a->nik }}</td>
                                 <td>
                                     <span class="font-medium">{{ $a->nama }}</span>
-                                    @if($a->nik === $keluarga->nik_kepala_keluarga)
+                                    @if($a->id === $keluarga->kepala_keluarga_id)
                                         <span class="badge badge-primary badge-xs ml-1">KK</span>
                                     @endif
                                 </td>
                                 <td>{{ $a->jenis_kelamin ?? '-' }}</td>
-                                <td class="text-sm">{{ $a->tanggal_lahir ? \Carbon\Carbon::parse($a->tanggal_lahir)->format('d/m/Y') : '-' }}</td>
+                                <td class="text-sm">{{ $a->agama ?? '-' }}</td>
                                 <td class="text-sm">{{ ucfirst($a->status_kawin ?? '-') }}</td>
-                                <td class="text-sm">{{ $a->pekerjaan ?? '-' }}</td>
                                 <td>
                                     <x-ui.button type="info" size="xs" :outline="true" href="{{ route('admin.penduduk.show', $a) }}">Detail</x-ui.button>
                                 </td>
                             </tr>
                             @empty
-                            <tr><td colspan="7" class="text-center py-8 text-base-content/60">Belum ada data anggota keluarga terdaftar.</td></tr>
+                            <tr><td colspan="6" class="text-center py-8 text-base-content/60">Belum ada data anggota keluarga terdaftar.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

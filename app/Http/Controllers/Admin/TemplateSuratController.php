@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\TemplateSurat;
-use App\Models\JenisSurat;
+use App\Models\SuratJenis;
 use Illuminate\Http\Request;
 
 class TemplateSuratController extends Controller
@@ -31,14 +31,14 @@ class TemplateSuratController extends Controller
         }
 
         $templates = $query->latest()->paginate(15)->withQueryString();
-        $jenisSuratList = JenisSurat::active()->orderBy('nama')->get();
+        $jenisSuratList = SuratJenis::orderBy('nama')->get();
 
         return view('admin.template-surat.index', compact('templates', 'jenisSuratList'));
     }
 
     public function create()
     {
-        $jenisSuratList = JenisSurat::active()->orderBy('nama')->get();
+        $jenisSuratList = SuratJenis::orderBy('nama')->get();
 
         return view('admin.template-surat.create', compact('jenisSuratList'));
     }
@@ -77,7 +77,7 @@ class TemplateSuratController extends Controller
 
     public function edit(TemplateSurat $templateSurat)
     {
-        $jenisSuratList = JenisSurat::active()->orderBy('nama')->get();
+        $jenisSuratList = SuratJenis::orderBy('nama')->get();
 
         return view('admin.template-surat.edit', compact('templateSurat', 'jenisSuratList'));
     }

@@ -1,25 +1,30 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Auth\LoginController;
-
-// ─── Role-specific Dashboard Controllers ───────────────────────
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
-use App\Http\Controllers\Operator\DashboardController as OperatorDashboard;
-use App\Http\Controllers\Verifikator\DashboardController as VerifikatorDashboard;
-use App\Http\Controllers\Penandatangan\DashboardController as PenandatanganDashboard;
-use App\Http\Controllers\RtRw\DashboardController as RtRwDashboard;
-use App\Http\Controllers\Warga\DashboardController as WargaDashboard;
-
+use App\Http\Controllers\Admin\JenisSuratController as AdminJenisSuratController;
+use App\Http\Controllers\Admin\KeluargaController as AdminKeluargaController;
+// ─── Role-specific Dashboard Controllers ───────────────────────
+use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
+use App\Http\Controllers\Admin\PenandatanganController as AdminPenandatanganController;
+use App\Http\Controllers\Admin\PendudukController as AdminPendudukController;
+use App\Http\Controllers\Admin\ReferensiController as AdminReferensiController;
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
+use App\Http\Controllers\Admin\TemplateSuratController as AdminTemplateSuratController;
 // ─── Admin Module Controllers ──────────────────────────────────
 use App\Http\Controllers\Admin\UserController as AdminUserController;
-use App\Http\Controllers\Admin\RoleController as AdminRoleController;
-use App\Http\Controllers\Admin\PendudukController as AdminPendudukController;
-use App\Http\Controllers\Admin\KeluargaController as AdminKeluargaController;
 use App\Http\Controllers\Admin\WilayahController as AdminWilayahController;
-use App\Http\Controllers\Admin\PenandatanganController as AdminPenandatanganController;
-use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Kependudukan\KelahiranController;
+use App\Http\Controllers\Kependudukan\KematianController;
+use App\Http\Controllers\Kependudukan\MutasiController;
+use App\Http\Controllers\Operator\DashboardController as OperatorDashboard;
+use App\Http\Controllers\Penandatangan\DashboardController as PenandatanganDashboard;
+use App\Http\Controllers\RtRw\DashboardController as RtRwDashboard;
+// ─── Kependudukan Controllers ──────────────────────────────────
+use App\Http\Controllers\Verifikator\DashboardController as VerifikatorDashboard;
+use App\Http\Controllers\Warga\DashboardController as WargaDashboard;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,6 +68,11 @@ Route::middleware('auth')->group(function () {
         Route::resource('penandatangan', AdminPenandatanganController::class);
         Route::resource('pegawai', AdminPegawaiController::class);
 
+        // Master Data
+        Route::resource('jenis-surat', AdminJenisSuratController::class)->parameters(['jenis-surat' => 'jenisSurat']);
+        Route::resource('template-surat', AdminTemplateSuratController::class)->parameters(['template-surat' => 'templateSurat']);
+        Route::get('/referensi', [AdminReferensiController::class, 'index'])->name('referensi.index');
+
         // Audit Log
         Route::get('/audit-log', fn () => view('pages.admin.audit-log.index'))->name('audit-log');
     });
@@ -73,9 +83,9 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('master')->name('master.')->group(function () {
         Route::get('/wilayah', fn () => redirect()->route('admin.wilayah.index'))->name('wilayah.index');
         Route::get('/penandatangan', fn () => redirect()->route('admin.penandatangan.index'))->name('penandatangan.index');
-        Route::get('/jenis-surat', fn () => 'Jenis Surat page')->name('jenis-surat.index');
-        Route::get('/template-surat', fn () => 'Template Surat page')->name('template-surat.index');
-        Route::get('/referensi', fn () => 'Data Referensi page')->name('referensi.index');
+        Route::get('/jenis-surat', fn () => redirect()->route('admin.jenis-surat.index'))->name('jenis-surat.index');
+        Route::get('/template-surat', fn () => redirect()->route('admin.template-surat.index'))->name('template-surat.index');
+        Route::get('/referensi', fn () => redirect()->route('admin.referensi.index'))->name('referensi.index');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -125,9 +135,15 @@ Route::middleware('auth')->group(function () {
         // Redirect to admin-scoped resources (admin has full access via CheckRole bypass)
         Route::get('/penduduk', fn () => redirect()->route('admin.penduduk.index'))->name('penduduk.index');
         Route::get('/kk', fn () => redirect()->route('admin.keluarga.index'))->name('kk.index');
-        Route::get('/mutasi', fn () => 'Mutasi Penduduk page')->name('mutasi.index');
-        Route::get('/kelahiran', fn () => 'Kelahiran page')->name('kelahiran.index');
-        Route::get('/kematian', fn () => 'Kematian page')->name('kematian.index');
+
+        // Mutasi Penduduk (pindah/datang)
+        Route::resource('mutasi', MutasiController::class)->except(['show']);
+
+        // Kelahiran
+        Route::resource('kelahiran', KelahiranController::class)->except(['show']);
+
+        // Kematian
+        Route::resource('kematian', KematianController::class)->except(['show']);
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -159,4 +175,3 @@ Route::middleware('auth')->group(function () {
         Route::get('/usaha', fn () => 'Laporan Usaha page')->name('usaha');
     });
 });
-

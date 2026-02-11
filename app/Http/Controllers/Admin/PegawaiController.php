@@ -16,8 +16,7 @@ class PegawaiController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
                   ->orWhere('nip', 'like', "%{$search}%")
-                  ->orWhere('jabatan', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%");
+                  ->orWhere('jabatan', 'like', "%{$search}%");
             });
         }
 
@@ -38,22 +37,16 @@ class PegawaiController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nik'             => ['nullable', 'string', 'max:20'],
-            'nip'             => ['nullable', 'string', 'max:30'],
+            'nip'             => ['required', 'string', 'max:30', 'unique:pegawai_staff,nip'],
             'nama'            => ['required', 'string', 'max:255'],
             'jabatan'         => ['required', 'string', 'max:100'],
-            'golongan'        => ['nullable', 'string', 'max:20'],
+            'gol'             => ['nullable', 'string', 'max:20'],
             'pangkat'         => ['nullable', 'string', 'max:50'],
             'status_pegawai'  => ['required', 'in:aktif,nonaktif'],
-            'alamat'          => ['nullable', 'string'],
-            'no_telp'         => ['nullable', 'string', 'max:20'],
-            'email'           => ['nullable', 'email', 'max:100'],
-            'tgl_lahir'       => ['nullable', 'date'],
-            'tgl_mulai'       => ['nullable', 'date'],
             'no_urut'         => ['nullable', 'integer'],
         ]);
 
-        $validated['petugas_input'] = auth()->id();
+        $validated['petugas_input_id'] = auth()->id();
         $validated['tgl_input'] = now();
 
         PegawaiStaff::create($validated);
@@ -70,18 +63,12 @@ class PegawaiController extends Controller
     public function update(Request $request, PegawaiStaff $pegawai)
     {
         $validated = $request->validate([
-            'nik'             => ['nullable', 'string', 'max:20'],
-            'nip'             => ['nullable', 'string', 'max:30'],
+            'nip'             => ['required', 'string', 'max:30', "unique:pegawai_staff,nip,{$pegawai->id}"],
             'nama'            => ['required', 'string', 'max:255'],
             'jabatan'         => ['required', 'string', 'max:100'],
-            'golongan'        => ['nullable', 'string', 'max:20'],
+            'gol'             => ['nullable', 'string', 'max:20'],
             'pangkat'         => ['nullable', 'string', 'max:50'],
             'status_pegawai'  => ['required', 'in:aktif,nonaktif'],
-            'alamat'          => ['nullable', 'string'],
-            'no_telp'         => ['nullable', 'string', 'max:20'],
-            'email'           => ['nullable', 'email', 'max:100'],
-            'tgl_lahir'       => ['nullable', 'date'],
-            'tgl_mulai'       => ['nullable', 'date'],
             'no_urut'         => ['nullable', 'integer'],
         ]);
 

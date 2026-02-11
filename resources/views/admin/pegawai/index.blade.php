@@ -32,10 +32,8 @@
                     <tr>
                         <th>No</th>
                         <th>Nama / NIP</th>
-                        <th>NIK</th>
                         <th>Jabatan</th>
                         <th>Pangkat / Gol.</th>
-                        <th>Kontak</th>
                         <th>Status</th>
                         <th class="text-right">Aksi</th>
                     </tr>
@@ -48,18 +46,11 @@
                             <div class="font-medium">{{ $p->nama }}</div>
                             <div class="text-xs text-base-content/60">NIP: {{ $p->nip ?? '-' }}</div>
                         </td>
-                        <td class="font-mono text-xs">{{ $p->nik ?? '-' }}</td>
                         <td class="text-sm">{{ $p->jabatan ?? '-' }}</td>
                         <td class="text-sm">
                             {{ $p->pangkat ?? '-' }}
-                            @if($p->golongan)
-                                <span class="text-base-content/60">({{ $p->golongan }})</span>
-                            @endif
-                        </td>
-                        <td class="text-sm">
-                            <div>{{ $p->no_telp ?? '-' }}</div>
-                            @if($p->email)
-                                <div class="text-xs text-base-content/60">{{ $p->email }}</div>
+                            @if($p->gol)
+                                <span class="text-base-content/60">({{ $p->gol }})</span>
                             @endif
                         </td>
                         <td>
@@ -89,7 +80,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="8" class="text-center py-8 text-base-content/60">Tidak ada data pegawai.</td></tr>
+                    <tr><td colspan="6" class="text-center py-8 text-base-content/60">Tidak ada data pegawai.</td></tr>
                     @endforelse
                 </tbody>
             </table>

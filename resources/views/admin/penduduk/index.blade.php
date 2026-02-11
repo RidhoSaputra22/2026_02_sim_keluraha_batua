@@ -14,13 +14,13 @@
     <x-ui.card class="mb-6">
         <form method="GET" action="{{ route('admin.penduduk.index') }}" class="flex flex-col md:flex-row gap-4">
             <div class="flex-1">
-                <x-ui.input name="search" placeholder="Cari NIK, nama, No. KK, alamat..." value="{{ request('search') }}" />
+                <x-ui.input name="search" placeholder="Cari NIK, nama, alamat..." value="{{ request('search') }}" />
             </div>
             <div class="w-full md:w-32">
-                <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r => 'RW ' . $r])->toArray()" selected="{{ request('rw') }}" />
+                <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r->id => 'RW ' . $r->nomor])->toArray()" selected="{{ request('rw') }}" />
             </div>
             <div class="w-full md:w-32">
-                <x-ui.select name="rt" placeholder="Semua RT" :options="$rtList->mapWithKeys(fn($r) => [$r => 'RT ' . $r])->toArray()" selected="{{ request('rt') }}" />
+                <x-ui.select name="rt" placeholder="Semua RT" :options="$rtList->mapWithKeys(fn($r) => [$r->id => 'RT ' . $r->nomor . '/RW ' . ($r->rw->nomor ?? '-')])->toArray()" selected="{{ request('rt') }}" />
             </div>
             <div class="w-full md:w-32">
                 <x-ui.select name="jenis_kelamin" placeholder="Semua JK" :options="['L' => 'Laki-laki', 'P' => 'Perempuan']" selected="{{ request('jenis_kelamin') }}" />
@@ -41,7 +41,7 @@
                         <th>NIK</th>
                         <th>Nama</th>
                         <th>JK</th>
-                        <th>Tempat/Tgl Lahir</th>
+                        <th>Agama</th>
                         <th>RT/RW</th>
                         <th>Status</th>
                         <th class="text-right">Aksi</th>
@@ -53,17 +53,15 @@
                         <td class="font-mono text-sm">{{ $p->nik }}</td>
                         <td>
                             <div class="font-medium">{{ $p->nama }}</div>
-                            <div class="text-xs text-base-content/60">KK: {{ $p->no_kk ?? '-' }}</div>
+                            <div class="text-xs text-base-content/60">KK: {{ $p->keluarga->no_kk ?? '-' }}</div>
                         </td>
                         <td>
-                            <x-ui.badge type="{{ $p->jenis_kelamin?->value === 'L' ? 'info' : 'secondary' }}" size="xs">
-                                {{ $p->jenis_kelamin?->value ?? '-' }}
+                            <x-ui.badge type="{{ $p->jenis_kelamin === 'L' ? 'info' : 'secondary' }}" size="xs">
+                                {{ $p->jenis_kelamin ?? '-' }}
                             </x-ui.badge>
                         </td>
-                        <td class="text-sm">
-                            {{ $p->tempat_lahir ?? '-' }}, {{ $p->tanggal_lahir?->format('d/m/Y') ?? '-' }}
-                        </td>
-                        <td class="text-sm">{{ $p->rt ?? '-' }}/{{ $p->rw ?? '-' }}</td>
+                        <td class="text-sm">{{ $p->agama ?? '-' }}</td>
+                        <td class="text-sm">{{ $p->rt->nomor ?? '-' }}/{{ $p->rt->rw->nomor ?? '-' }}</td>
                         <td>
                             <x-ui.badge type="{{ ($p->status_data ?? 'aktif') === 'aktif' ? 'success' : 'warning' }}" size="xs">
                                 {{ $p->status_data ?? 'aktif' }}

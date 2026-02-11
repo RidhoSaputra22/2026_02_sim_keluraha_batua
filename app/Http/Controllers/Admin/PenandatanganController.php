@@ -4,16 +4,17 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Penandatanganan;
+use App\Models\PegawaiStaff;
 use Illuminate\Http\Request;
 
 class PenandatanganController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Penandatanganan::query();
+        $query = Penandatanganan::with('pegawai');
 
         if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
+            $query->whereHas('pegawai', function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
                   ->orWhere('nip', 'like', "%{$search}%")
                   ->orWhere('jabatan', 'like', "%{$search}%");
@@ -31,27 +32,20 @@ class PenandatanganController extends Controller
 
     public function create()
     {
-        return view('admin.penandatangan.create');
+        $pegawaiList = PegawaiStaff::orderBy('nama')->get();
+
+        return view('admin.penandatangan.create', compact('pegawaiList'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nik'          => ['nullable', 'string', 'max:20'],
-            'nip'          => ['nullable', 'string', 'max:30'],
-            'nama'         => ['required', 'string', 'max:255'],
-            'jabatan'      => ['required', 'string', 'max:100'],
-            'pangkat'      => ['nullable', 'string', 'max:50'],
-            'golongan'     => ['nullable', 'string', 'max:20'],
-            'status'       => ['required', 'in:aktif,nonaktif'],
-            'alamat'       => ['nullable', 'string'],
-            'no_telp'      => ['nullable', 'string', 'max:20'],
-            'email'        => ['nullable', 'email', 'max:100'],
-            'tgl_mulai'    => ['nullable', 'date'],
-            'tgl_selesai'  => ['nullable', 'date', 'after_or_equal:tgl_mulai'],
+            'pegawai_id' => ['required', 'exists:pegawai_staff,id'],
+            'status'     => ['required', 'in:aktif,nonaktif'],
+            'no_telp'    => ['nullable', 'string', 'max:20'],
         ]);
 
-        $validated['petugas_input'] = auth()->id();
+        $validated['petugas_input_id'] = auth()->id();
         $validated['tgl_input'] = now();
 
         Penandatanganan::create($validated);
@@ -62,24 +56,18 @@ class PenandatanganController extends Controller
 
     public function edit(Penandatanganan $penandatangan)
     {
-        return view('admin.penandatangan.edit', compact('penandatangan'));
+        $penandatangan->load('pegawai');
+        $pegawaiList = PegawaiStaff::orderBy('nama')->get();
+
+        return view('admin.penandatangan.edit', compact('penandatangan', 'pegawaiList'));
     }
 
     public function update(Request $request, Penandatanganan $penandatangan)
     {
         $validated = $request->validate([
-            'nik'          => ['nullable', 'string', 'max:20'],
-            'nip'          => ['nullable', 'string', 'max:30'],
-            'nama'         => ['required', 'string', 'max:255'],
-            'jabatan'      => ['required', 'string', 'max:100'],
-            'pangkat'      => ['nullable', 'string', 'max:50'],
-            'golongan'     => ['nullable', 'string', 'max:20'],
-            'status'       => ['required', 'in:aktif,nonaktif'],
-            'alamat'       => ['nullable', 'string'],
-            'no_telp'      => ['nullable', 'string', 'max:20'],
-            'email'        => ['nullable', 'email', 'max:100'],
-            'tgl_mulai'    => ['nullable', 'date'],
-            'tgl_selesai'  => ['nullable', 'date', 'after_or_equal:tgl_mulai'],
+            'pegawai_id' => ['required', 'exists:pegawai_staff,id'],
+            'status'     => ['required', 'in:aktif,nonaktif'],
+            'no_telp'    => ['nullable', 'string', 'max:20'],
         ]);
 
         $penandatangan->update($validated);

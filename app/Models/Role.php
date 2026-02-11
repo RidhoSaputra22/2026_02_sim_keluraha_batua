@@ -36,4 +36,21 @@ class Role extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    // ─── Helpers ──────────────────────────────────────────────
+
+    /**
+     * Get human-readable labels for each role name.
+     */
+    public static function roleLabels(): array
+    {
+        return [
+            self::ADMIN         => 'Administrator',
+            self::OPERATOR      => 'Operator',
+            self::VERIFIKATOR   => 'Verifikator',
+            self::PENANDATANGAN => 'Penandatangan',
+            self::RT_RW         => 'RT/RW',
+            self::WARGA         => 'Warga',
+        ];
+    }
 }

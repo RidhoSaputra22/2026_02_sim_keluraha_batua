@@ -18,28 +18,15 @@
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Informasi Kartu Keluarga</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <x-ui.input label="Nomor KK" name="no_kk" value="{{ old('no_kk', $keluarga->no_kk) }}" required maxlength="16" />
-                <x-ui.input label="Nama Kepala Keluarga" name="nama_kepala_keluarga" value="{{ old('nama_kepala_keluarga', $keluarga->nama_kepala_keluarga) }}" required />
-                <x-ui.input label="NIK Kepala Keluarga" name="nik_kepala_keluarga" value="{{ old('nik_kepala_keluarga', $keluarga->nik_kepala_keluarga) }}" maxlength="16" />
+                <x-ui.select label="Kepala Keluarga" name="kepala_keluarga_id" :options="$pendudukList->mapWithKeys(fn($p) => [$p->id => $p->nik . ' - ' . $p->nama])->toArray()" selected="{{ old('kepala_keluarga_id', $keluarga->kepala_keluarga_id) }}" />
                 <x-ui.input label="Jumlah Anggota Keluarga" name="jumlah_anggota_keluarga" type="number" value="{{ old('jumlah_anggota_keluarga', $keluarga->jumlah_anggota_keluarga) }}" min="1" />
+                <x-ui.select label="RT / RW" name="rt_id" :options="$rtList->mapWithKeys(fn($r) => [$r->id => 'RT ' . $r->nomor . ' / RW ' . ($r->rw->nomor ?? '-')])->toArray()" selected="{{ old('rt_id', $keluarga->rt_id) }}" />
             </div>
 
-            {{-- Alamat --}}
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Alamat</h3>
+            {{-- Arsip --}}
+            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Arsip</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="md:col-span-2">
-                    <x-ui.textarea label="Alamat Lengkap" name="alamat" value="{{ old('alamat', $keluarga->alamat) }}" />
-                </div>
-                <x-ui.input label="RT" name="rt" value="{{ old('rt', $keluarga->rt) }}" />
-                <x-ui.input label="RW" name="rw" value="{{ old('rw', $keluarga->rw) }}" />
-                <x-ui.input label="Kelurahan" name="kelurahan" value="{{ old('kelurahan', $keluarga->kelurahan) }}" />
-                <x-ui.input label="Kecamatan" name="kecamatan" value="{{ old('kecamatan', $keluarga->kecamatan) }}" />
-            </div>
-
-            {{-- Status --}}
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Status Data</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <x-ui.select label="Status" name="status" :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" selected="{{ old('status', $keluarga->status) }}" />
-                <x-ui.textarea label="Keterangan / Arsip" name="arsip" value="{{ old('arsip', $keluarga->arsip) }}" />
+                <x-ui.input label="Path Arsip" name="arsip_path" value="{{ old('arsip_path', $keluarga->arsip_path) }}" />
             </div>
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">

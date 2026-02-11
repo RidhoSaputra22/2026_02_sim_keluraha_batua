@@ -107,15 +107,13 @@ class PegawaiControllerTest extends TestCase
     public function test_admin_can_store_new_pegawai(): void
     {
         $data = [
+            'nip'            => '199901012022011001',
             'nama'           => 'Andi Pegawai',
             'jabatan'        => 'Kasi Pelayanan',
-            'nip'            => '199901012022011001',
-            'golongan'       => 'III/b',
+            'gol'            => 'III/b',
             'pangkat'        => 'Penata Muda',
             'status_pegawai' => 'aktif',
             'no_urut'        => 5,
-            'no_telp'        => '08123456789',
-            'email'          => 'andi@batua.com',
         ];
 
         $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), $data);
@@ -125,12 +123,14 @@ class PegawaiControllerTest extends TestCase
         $this->assertDatabaseHas('pegawai_staff', [
             'nama'    => 'Andi Pegawai',
             'jabatan' => 'Kasi Pelayanan',
+            'nip'     => '199901012022011001',
         ]);
     }
 
     public function test_store_pegawai_validates_nama_required(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+            'nip'            => '199901012022011099',
             'jabatan'        => 'Staff',
             'status_pegawai' => 'aktif',
         ]);
@@ -141,6 +141,7 @@ class PegawaiControllerTest extends TestCase
     public function test_store_pegawai_validates_jabatan_required(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+            'nip'            => '199901012022011099',
             'nama'           => 'Test',
             'status_pegawai' => 'aktif',
         ]);
@@ -151,6 +152,7 @@ class PegawaiControllerTest extends TestCase
     public function test_store_pegawai_validates_status_in_valid_values(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+            'nip'            => '199901012022011099',
             'nama'           => 'Test',
             'jabatan'        => 'Staff',
             'status_pegawai' => 'invalid',
@@ -159,16 +161,15 @@ class PegawaiControllerTest extends TestCase
         $response->assertSessionHasErrors('status_pegawai');
     }
 
-    public function test_store_pegawai_validates_email_format(): void
+    public function test_store_pegawai_validates_nip_required(): void
     {
         $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
             'nama'           => 'Test',
             'jabatan'        => 'Staff',
             'status_pegawai' => 'aktif',
-            'email'          => 'not-an-email',
         ]);
 
-        $response->assertSessionHasErrors('email');
+        $response->assertSessionHasErrors('nip');
     }
 
     public function test_store_pegawai_sets_petugas_and_tgl_input(): void
@@ -184,7 +185,7 @@ class PegawaiControllerTest extends TestCase
 
         $pegawai = PegawaiStaff::where('nama', 'Test Petugas')->first();
         $this->assertNotNull($pegawai);
-        $this->assertEquals($this->admin->id, $pegawai->petugas_input);
+        $this->assertEquals($this->admin->id, $pegawai->petugas_input_id);
         $this->assertNotNull($pegawai->tgl_input);
     }
 
@@ -207,6 +208,7 @@ class PegawaiControllerTest extends TestCase
         $pegawai = PegawaiStaff::factory()->create();
 
         $response = $this->actingAs($this->admin)->put(route('admin.pegawai.update', $pegawai), [
+            'nip'            => $pegawai->nip,
             'nama'           => 'Nama Updated',
             'jabatan'        => 'Sekretaris Lurah',
             'status_pegawai' => 'nonaktif',
@@ -231,6 +233,6 @@ class PegawaiControllerTest extends TestCase
 
         $response->assertRedirect(route('admin.pegawai.index'));
         $response->assertSessionHas('success');
-        $this->assertSoftDeleted('pegawai_staff', ['id' => $pegawai->id]);
+        $this->assertDatabaseMissing('pegawai_staff', ['id' => $pegawai->id]);
     }
 }

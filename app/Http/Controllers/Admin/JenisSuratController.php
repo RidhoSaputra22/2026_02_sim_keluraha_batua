@@ -3,28 +3,20 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\JenisSurat;
+use App\Models\SuratJenis;
 use Illuminate\Http\Request;
 
 class JenisSuratController extends Controller
 {
     public function index(Request $request)
     {
-        $query = JenisSurat::query();
+        $query = SuratJenis::withCount('surats');
 
         if ($search = $request->get('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('kode', 'like', "%{$search}%")
-                    ->orWhere('nama', 'like', "%{$search}%")
-                    ->orWhere('format_nomor', 'like', "%{$search}%");
-            });
+            $query->where('nama', 'like', "%{$search}%");
         }
 
-        if ($request->has('is_active')) {
-            $query->where('is_active', $request->get('is_active'));
-        }
-
-        $jenisSurat = $query->latest()->paginate(15)->withQueryString();
+        $jenisSurat = $query->orderBy('nama')->paginate(15)->withQueryString();
 
         return view('admin.jenis-surat.index', compact('jenisSurat'));
     }
@@ -37,44 +29,32 @@ class JenisSuratController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'kode' => ['required', 'string', 'max:20', 'unique:jenis_surat,kode'],
-            'nama' => ['required', 'string', 'max:255'],
-            'keterangan' => ['nullable', 'string'],
-            'format_nomor' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['boolean'],
+            'nama' => ['required', 'string', 'max:255', 'unique:surat_jenis,nama'],
         ]);
 
-        $validated['is_active'] = $request->has('is_active') ? true : false;
-
-        JenisSurat::create($validated);
+        SuratJenis::create($validated);
 
         return redirect()->route('admin.jenis-surat.index')
             ->with('success', 'Jenis surat berhasil ditambahkan.');
     }
 
-    public function show(JenisSurat $jenisSurat)
+    public function show(SuratJenis $jenisSurat)
     {
-        $jenisSurat->load('templateSurat');
+        $jenisSurat->loadCount('surats');
 
         return view('admin.jenis-surat.show', compact('jenisSurat'));
     }
 
-    public function edit(JenisSurat $jenisSurat)
+    public function edit(SuratJenis $jenisSurat)
     {
         return view('admin.jenis-surat.edit', compact('jenisSurat'));
     }
 
-    public function update(Request $request, JenisSurat $jenisSurat)
+    public function update(Request $request, SuratJenis $jenisSurat)
     {
         $validated = $request->validate([
-            'kode' => ['required', 'string', 'max:20', "unique:jenis_surat,kode,{$jenisSurat->id}"],
-            'nama' => ['required', 'string', 'max:255'],
-            'keterangan' => ['nullable', 'string'],
-            'format_nomor' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['boolean'],
+            'nama' => ['required', 'string', 'max:255', "unique:surat_jenis,nama,{$jenisSurat->id}"],
         ]);
-
-        $validated['is_active'] = $request->has('is_active') ? true : false;
 
         $jenisSurat->update($validated);
 
@@ -82,7 +62,7 @@ class JenisSuratController extends Controller
             ->with('success', 'Jenis surat berhasil diperbarui.');
     }
 
-    public function destroy(JenisSurat $jenisSurat)
+    public function destroy(SuratJenis $jenisSurat)
     {
         $jenisSurat->delete();
 

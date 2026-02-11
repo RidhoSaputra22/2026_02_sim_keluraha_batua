@@ -32,9 +32,8 @@
                     <tr>
                         <th>Nama / NIP</th>
                         <th>Jabatan</th>
-                        <th>Pangkat / Golongan</th>
-                        <th>Kontak</th>
-                        <th>Periode</th>
+                        <th>Pangkat / Gol.</th>
+                        <th>No. Telp</th>
                         <th>Status</th>
                         <th class="text-right">Aksi</th>
                     </tr>
@@ -43,30 +42,17 @@
                     @forelse($penandatangan as $p)
                     <tr class="hover">
                         <td>
-                            <div class="font-medium">{{ $p->nama }}</div>
-                            <div class="text-xs text-base-content/60">NIP: {{ $p->nip ?? '-' }}</div>
+                            <div class="font-medium">{{ $p->pegawai->nama ?? '-' }}</div>
+                            <div class="text-xs text-base-content/60">NIP: {{ $p->pegawai->nip ?? '-' }}</div>
                         </td>
-                        <td class="text-sm">{{ $p->jabatan ?? '-' }}</td>
+                        <td class="text-sm">{{ $p->pegawai->jabatan ?? '-' }}</td>
                         <td class="text-sm">
-                            {{ $p->pangkat ?? '-' }}
-                            @if($p->golongan)
-                                <span class="text-base-content/60">({{ $p->golongan }})</span>
+                            {{ $p->pegawai->pangkat ?? '-' }}
+                            @if($p->pegawai->gol)
+                                <span class="text-base-content/60">({{ $p->pegawai->gol }})</span>
                             @endif
                         </td>
-                        <td class="text-sm">
-                            <div>{{ $p->no_telp ?? '-' }}</div>
-                            @if($p->email)
-                                <div class="text-xs text-base-content/60">{{ $p->email }}</div>
-                            @endif
-                        </td>
-                        <td class="text-sm">
-                            @if($p->tgl_mulai || $p->tgl_selesai)
-                                {{ $p->tgl_mulai ? \Carbon\Carbon::parse($p->tgl_mulai)->format('d/m/Y') : '?' }}
-                                - {{ $p->tgl_selesai ? \Carbon\Carbon::parse($p->tgl_selesai)->format('d/m/Y') : 'Sekarang' }}
-                            @else
-                                -
-                            @endif
-                        </td>
+                        <td class="text-sm">{{ $p->no_telp ?? '-' }}</td>
                         <td>
                             <span class="badge {{ $p->status === 'aktif' ? 'badge-success' : 'badge-error' }} badge-sm">
                                 {{ ucfirst($p->status ?? 'aktif') }}
@@ -87,7 +73,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="7" class="text-center py-8 text-base-content/60">Tidak ada data penandatangan.</td></tr>
+                    <tr><td colspan="6" class="text-center py-8 text-base-content/60">Tidak ada data penandatangan.</td></tr>
                     @endforelse
                 </tbody>
             </table>

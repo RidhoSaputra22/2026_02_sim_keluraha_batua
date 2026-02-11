@@ -14,29 +14,12 @@
         <form method="POST" action="{{ route('admin.penandatangan.store') }}">
             @csrf
 
-            {{-- Data Pribadi --}}
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Data Pribadi</h3>
+            {{-- Pilih Pegawai --}}
+            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Data Penandatangan</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <x-ui.input label="Nama Lengkap" name="nama" placeholder="Masukkan nama lengkap" value="{{ old('nama') }}" required />
-                <x-ui.input label="NIP" name="nip" placeholder="Masukkan NIP" value="{{ old('nip') }}" />
-                <x-ui.input label="NIK" name="nik" placeholder="Masukkan 16 digit NIK" value="{{ old('nik') }}" maxlength="16" />
+                <x-ui.select label="Pegawai" name="pegawai_id" required :options="$pegawaiList->mapWithKeys(fn($p) => [$p->id => $p->nip . ' - ' . $p->nama . ' (' . $p->jabatan . ')'])->toArray()" selected="{{ old('pegawai_id') }}" />
                 <x-ui.input label="No. Telepon" name="no_telp" placeholder="08xxxxxxxxxx" value="{{ old('no_telp') }}" />
-                <x-ui.input label="Email" name="email" type="email" placeholder="email@contoh.com" value="{{ old('email') }}" />
-                <div></div>
-                <div class="md:col-span-2">
-                    <x-ui.textarea label="Alamat" name="alamat" placeholder="Alamat lengkap" value="{{ old('alamat') }}" />
-                </div>
-            </div>
-
-            {{-- Data Jabatan --}}
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Data Jabatan</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <x-ui.input label="Jabatan" name="jabatan" placeholder="Contoh: Lurah, Sekretaris Lurah" value="{{ old('jabatan') }}" required />
-                <x-ui.input label="Pangkat" name="pangkat" placeholder="Contoh: Penata Tk. I" value="{{ old('pangkat') }}" />
-                <x-ui.input label="Golongan" name="golongan" placeholder="Contoh: III/d" value="{{ old('golongan') }}" />
-                <x-ui.input label="Tanggal Mulai" name="tgl_mulai" type="date" value="{{ old('tgl_mulai') }}" />
-                <x-ui.input label="Tanggal Selesai" name="tgl_selesai" type="date" value="{{ old('tgl_selesai') }}" />
-                <x-ui.select label="Status" name="status" :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" selected="{{ old('status', 'aktif') }}" />
+                <x-ui.select label="Status" name="status" required :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" selected="{{ old('status', 'aktif') }}" />
             </div>
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">

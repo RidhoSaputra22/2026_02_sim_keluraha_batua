@@ -3,134 +3,128 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\DataRtRw;
-use App\Enums\JabatanRtRwEnum;
-use App\Enums\StatusAktifEnum;
+use App\Models\RtRwPengurus;
+use App\Models\JabatanRtRw;
+use App\Models\Penduduk;
+use App\Models\Rt;
+use App\Models\Rw;
+use App\Models\Kelurahan;
 use Illuminate\Http\Request;
 
 class WilayahController extends Controller
 {
     public function index(Request $request)
     {
-        $query = DataRtRw::query();
+        $query = RtRwPengurus::with(['penduduk', 'jabatan', 'rw', 'rt']);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%")
-                  ->orWhere('no_telp', 'like', "%{$search}%");
+                $q->whereHas('penduduk', function ($qp) use ($search) {
+                    $qp->where('nama', 'like', "%{$search}%")
+                        ->orWhere('nik', 'like', "%{$search}%");
+                })
+                ->orWhere('no_telp', 'like', "%{$search}%");
             });
         }
 
-        if ($jabatan = $request->get('jabatan')) {
-            $query->where('jabatan', $jabatan);
+        if ($jabatanId = $request->get('jabatan')) {
+            $query->where('jabatan_id', $jabatanId);
         }
 
-        if ($rw = $request->get('rw')) {
-            $query->where('rw', $rw);
+        if ($rwId = $request->get('rw')) {
+            $query->where('rw_id', $rwId);
         }
 
         if ($status = $request->get('status')) {
             $query->where('status', $status);
         }
 
-        $wilayah = $query->orderBy('rw')->orderBy('rt')->paginate(15)->withQueryString();
+        $wilayah = $query->orderBy('rw_id')->orderBy('rt_id')->paginate(15)->withQueryString();
 
-        $rwList = DataRtRw::select('rw')->distinct()->whereNotNull('rw')->orderBy('rw')->pluck('rw');
+        $rwList = Rw::orderBy('nomor')->get();
+        $jabatanList = JabatanRtRw::orderBy('nama')->get();
 
         // Stats for summary cards
-        $totalRT = DataRtRw::where('jabatan', 'RT')->count();
-        $totalRW = DataRtRw::where('jabatan', 'RW')->count();
-        $totalAktif = DataRtRw::where('status', 'aktif')->count();
-        $totalNonaktif = DataRtRw::where('status', 'nonaktif')->count();
+        $totalRT = Rt::count();
+        $totalRW = Rw::count();
+        $totalAktif = RtRwPengurus::where('status', 'aktif')->count();
+        $totalNonaktif = RtRwPengurus::where('status', 'nonaktif')->count();
 
-        return view('admin.wilayah.index', compact('wilayah', 'rwList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
+        return view('admin.wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
     }
 
     public function create()
     {
-        return view('admin.wilayah.create');
+        $pendudukList = Penduduk::orderBy('nama')->get();
+        $jabatanList = JabatanRtRw::orderBy('nama')->get();
+        $rwList = Rw::orderBy('nomor')->get();
+        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
+        $kelurahanList = Kelurahan::orderBy('nama')->get();
+
+        return view('admin.wilayah.create', compact('pendudukList', 'jabatanList', 'rwList', 'rtList', 'kelurahanList'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nik'          => ['nullable', 'string', 'size:16', 'exists:data_penduduk,nik'],
-            'nama'         => ['required', 'string', 'max:255'],
-            'jabatan'      => ['required', 'in:RT,RW'],
-            'rt'           => ['nullable', 'string', 'max:5'],
-            'rw'           => ['required', 'string', 'max:5'],
-            'kelurahan'    => ['nullable', 'string', 'max:100'],
-            'kecamatan'    => ['nullable', 'string', 'max:100'],
+            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
+            'penduduk_id'  => ['required', 'exists:penduduks,id'],
+            'jabatan_id'   => ['required', 'exists:jabatan_rt_rw,id'],
+            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rt_id'        => ['nullable', 'exists:rts,id'],
+            'tgl_mulai'    => ['nullable', 'date'],
+            'status'       => ['required', 'in:aktif,nonaktif'],
             'alamat'       => ['nullable', 'string'],
             'no_telp'      => ['nullable', 'string', 'max:20'],
-            'email'        => ['nullable', 'email', 'max:100'],
-            'tgl_mulai'    => ['nullable', 'date'],
-            'tgl_selesai'  => ['nullable', 'date', 'after_or_equal:tgl_mulai'],
-            'periode'      => ['nullable', 'string', 'max:20'],
-            'status'       => ['required', 'in:aktif,nonaktif'],
             'no_rekening'  => ['nullable', 'string', 'max:30'],
             'no_npwp'      => ['nullable', 'string', 'max:30'],
-            'keterangan'   => ['nullable', 'string'],
         ]);
 
-        // Remove empty nik to avoid FK constraint issues
-        if (empty($validated['nik'])) {
-            unset($validated['nik']);
-        }
-
-        $validated['petugas_input'] = auth()->id();
-        $validated['tgl_input'] = now();
-
-        DataRtRw::create($validated);
+        RtRwPengurus::create($validated);
 
         return redirect()->route('admin.wilayah.index')
-            ->with('success', 'Data wilayah RT/RW berhasil ditambahkan.');
+            ->with('success', 'Data pengurus RT/RW berhasil ditambahkan.');
     }
 
-    public function edit(DataRtRw $wilayah)
+    public function edit(RtRwPengurus $wilayah)
     {
-        return view('admin.wilayah.edit', compact('wilayah'));
+        $wilayah->load(['penduduk', 'jabatan', 'rw', 'rt']);
+        $pendudukList = Penduduk::orderBy('nama')->get();
+        $jabatanList = JabatanRtRw::orderBy('nama')->get();
+        $rwList = Rw::orderBy('nomor')->get();
+        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
+        $kelurahanList = Kelurahan::orderBy('nama')->get();
+
+        return view('admin.wilayah.edit', compact('wilayah', 'pendudukList', 'jabatanList', 'rwList', 'rtList', 'kelurahanList'));
     }
 
-    public function update(Request $request, DataRtRw $wilayah)
+    public function update(Request $request, RtRwPengurus $wilayah)
     {
         $validated = $request->validate([
-            'nik'          => ['nullable', 'string', 'size:16', 'exists:data_penduduk,nik'],
-            'nama'         => ['required', 'string', 'max:255'],
-            'jabatan'      => ['required', 'in:RT,RW'],
-            'rt'           => ['nullable', 'string', 'max:5'],
-            'rw'           => ['required', 'string', 'max:5'],
-            'kelurahan'    => ['nullable', 'string', 'max:100'],
-            'kecamatan'    => ['nullable', 'string', 'max:100'],
+            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
+            'penduduk_id'  => ['required', 'exists:penduduks,id'],
+            'jabatan_id'   => ['required', 'exists:jabatan_rt_rw,id'],
+            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rt_id'        => ['nullable', 'exists:rts,id'],
+            'tgl_mulai'    => ['nullable', 'date'],
+            'status'       => ['required', 'in:aktif,nonaktif'],
             'alamat'       => ['nullable', 'string'],
             'no_telp'      => ['nullable', 'string', 'max:20'],
-            'email'        => ['nullable', 'email', 'max:100'],
-            'tgl_mulai'    => ['nullable', 'date'],
-            'tgl_selesai'  => ['nullable', 'date', 'after_or_equal:tgl_mulai'],
-            'periode'      => ['nullable', 'string', 'max:20'],
-            'status'       => ['required', 'in:aktif,nonaktif'],
             'no_rekening'  => ['nullable', 'string', 'max:30'],
             'no_npwp'      => ['nullable', 'string', 'max:30'],
-            'keterangan'   => ['nullable', 'string'],
         ]);
-
-        // Remove empty nik to avoid FK constraint issues
-        if (empty($validated['nik'])) {
-            $validated['nik'] = null;
-        }
 
         $wilayah->update($validated);
 
         return redirect()->route('admin.wilayah.index')
-            ->with('success', 'Data wilayah RT/RW berhasil diperbarui.');
+            ->with('success', 'Data pengurus RT/RW berhasil diperbarui.');
     }
 
-    public function destroy(DataRtRw $wilayah)
+    public function destroy(RtRwPengurus $wilayah)
     {
         $wilayah->delete();
 
         return redirect()->route('admin.wilayah.index')
-            ->with('success', 'Data wilayah RT/RW berhasil dihapus.');
+            ->with('success', 'Data pengurus RT/RW berhasil dihapus.');
     }
 }
