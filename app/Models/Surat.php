@@ -28,13 +28,21 @@ class Surat extends Model {
         'status_esign',
         'tgl_input',
         'petugas_input_id',
-        'arsip_path'
+        'arsip_path',
+        'verifikator_id',
+        'penandatangan_pejabat_id',
+        'tgl_verifikasi',
+        'tgl_ttd',
+        'catatan_verifikasi',
+        'catatan_penandatangan',
     ];
 
     protected $casts = [
         'tanggal_surat' => 'date',
         'tanggal_diterima' => 'date',
-        'tgl_input' => 'datetime'
+        'tgl_input' => 'datetime',
+        'tgl_verifikasi' => 'datetime',
+        'tgl_ttd' => 'datetime',
     ];
 
 
@@ -66,6 +74,21 @@ class Surat extends Model {
     public function pemohon()
     {
         return $this->belongsTo(Pemohon::class);
+    }
+
+    public function petugasInput()
+    {
+        return $this->belongsTo(User::class, 'petugas_input_id');
+    }
+
+    public function verifikator()
+    {
+        return $this->belongsTo(User::class, 'verifikator_id');
+    }
+
+    public function penandatanganPejabat()
+    {
+        return $this->belongsTo(Penandatanganan::class, 'penandatangan_pejabat_id');
     }
 }
 

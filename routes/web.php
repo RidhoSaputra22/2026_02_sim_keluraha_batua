@@ -20,7 +20,18 @@ use App\Http\Controllers\Kependudukan\KematianController;
 use App\Http\Controllers\Kependudukan\MutasiController;
 use App\Http\Controllers\Operator\DashboardController as OperatorDashboard;
 use App\Http\Controllers\Penandatangan\DashboardController as PenandatanganDashboard;
+use App\Http\Controllers\Persuratan\ArsipController;
+use App\Http\Controllers\Persuratan\PermohonanController;
+use App\Http\Controllers\Persuratan\TandaTanganController;
+use App\Http\Controllers\Persuratan\TrackingController;
+use App\Http\Controllers\Persuratan\VerifikasiController;
 use App\Http\Controllers\RtRw\DashboardController as RtRwDashboard;
+use App\Http\Controllers\Usaha\JenisUsahaController;
+use App\Http\Controllers\Usaha\LaporanUsahaController;
+use App\Http\Controllers\Usaha\UsahaController;
+use App\Http\Controllers\Laporan\LaporanKependudukanController;
+use App\Http\Controllers\Laporan\LaporanPersuratanController;
+use App\Http\Controllers\Laporan\LaporanUsahaController as LaporanUsahaGlobalController;
 // ─── Kependudukan Controllers ──────────────────────────────────
 use App\Http\Controllers\Verifikator\DashboardController as VerifikatorDashboard;
 use App\Http\Controllers\Warga\DashboardController as WargaDashboard;
@@ -74,7 +85,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/referensi', [AdminReferensiController::class, 'index'])->name('referensi.index');
 
         // Audit Log
-        Route::get('/audit-log', fn () => view('pages.admin.audit-log.index'))->name('audit-log');
+        Route::get('/audit-log', fn () => view('admin.audit-log.index'))->name('audit-log');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -150,28 +161,59 @@ Route::middleware('auth')->group(function () {
     // ║  SHARED: PERSURATAN — Admin, Operator, Verifikator, etc.   ║
     // ╚══════════════════════════════════════════════════════════════╝
     Route::middleware('role:admin,operator,verifikator,penandatangan,warga')->prefix('persuratan')->name('persuratan.')->group(function () {
-        Route::get('/permohonan', fn () => 'Permohonan Surat page')->name('permohonan.index');
-        Route::get('/verifikasi', fn () => 'Verifikasi page')->name('verifikasi.index');
-        Route::get('/tanda-tangan', fn () => 'Tanda Tangan page')->name('tanda-tangan.index');
-        Route::get('/arsip', fn () => 'Arsip Surat page')->name('arsip.index');
-        Route::get('/tracking', fn () => 'Tracking Layanan page')->name('tracking.index');
+        // Permohonan Surat (CRUD)
+        Route::get('/permohonan', [PermohonanController::class, 'index'])->name('permohonan.index');
+        Route::get('/permohonan/create', [PermohonanController::class, 'create'])->name('permohonan.create');
+        Route::post('/permohonan', [PermohonanController::class, 'store'])->name('permohonan.store');
+        Route::get('/permohonan/{permohonan}/edit', [PermohonanController::class, 'edit'])->name('permohonan.edit');
+        Route::put('/permohonan/{permohonan}', [PermohonanController::class, 'update'])->name('permohonan.update');
+        Route::delete('/permohonan/{permohonan}', [PermohonanController::class, 'destroy'])->name('permohonan.destroy');
+
+        // Verifikasi (list + approve/reject actions)
+        Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
+        Route::post('/verifikasi/{surat}/approve', [VerifikasiController::class, 'approve'])->name('verifikasi.approve');
+        Route::post('/verifikasi/{surat}/reject', [VerifikasiController::class, 'reject'])->name('verifikasi.reject');
+
+        // Tanda Tangan (list + sign/reject actions)
+        Route::get('/tanda-tangan', [TandaTanganController::class, 'index'])->name('tanda-tangan.index');
+        Route::post('/tanda-tangan/{surat}/sign', [TandaTanganController::class, 'sign'])->name('tanda-tangan.sign');
+        Route::post('/tanda-tangan/{surat}/reject', [TandaTanganController::class, 'reject'])->name('tanda-tangan.reject');
+
+        // Arsip Surat (read-only index with filters)
+        Route::get('/arsip', [ArsipController::class, 'index'])->name('arsip.index');
+
+        // Tracking Layanan (search & track)
+        Route::get('/tracking', [TrackingController::class, 'index'])->name('tracking.index');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
     // ║  SHARED: DATA USAHA / PK5 — Admin, Operator                ║
     // ╚══════════════════════════════════════════════════════════════╝
     Route::middleware('role:admin,operator')->prefix('usaha')->name('usaha.')->group(function () {
-        Route::get('/', fn () => 'Daftar Usaha page')->name('index');
-        Route::get('/jenis', fn () => 'Jenis Usaha page')->name('jenis.index');
-        Route::get('/laporan', fn () => 'Laporan Usaha page')->name('laporan');
+        // Daftar Usaha (CRUD)
+        Route::get('/', [UsahaController::class, 'index'])->name('index');
+        Route::get('/create', [UsahaController::class, 'create'])->name('create');
+        Route::post('/', [UsahaController::class, 'store'])->name('store');
+        Route::get('/{usaha}/edit', [UsahaController::class, 'edit'])->name('edit');
+        Route::put('/{usaha}', [UsahaController::class, 'update'])->name('update');
+        Route::delete('/{usaha}', [UsahaController::class, 'destroy'])->name('destroy');
+
+        // Jenis Usaha (CRUD inline)
+        Route::get('/jenis', [JenisUsahaController::class, 'index'])->name('jenis.index');
+        Route::post('/jenis', [JenisUsahaController::class, 'store'])->name('jenis.store');
+        Route::put('/jenis/{jenisUsaha}', [JenisUsahaController::class, 'update'])->name('jenis.update');
+        Route::delete('/jenis/{jenisUsaha}', [JenisUsahaController::class, 'destroy'])->name('jenis.destroy');
+
+        // Laporan Usaha
+        Route::get('/laporan', [LaporanUsahaController::class, 'index'])->name('laporan');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
     // ║  SHARED: LAPORAN — Admin, Operator, Verifikator             ║
     // ╚══════════════════════════════════════════════════════════════╝
     Route::middleware('role:admin,operator,verifikator')->prefix('laporan')->name('laporan.')->group(function () {
-        Route::get('/kependudukan', fn () => 'Laporan Kependudukan page')->name('kependudukan');
-        Route::get('/persuratan', fn () => 'Laporan Persuratan page')->name('persuratan');
-        Route::get('/usaha', fn () => 'Laporan Usaha page')->name('usaha');
+        Route::get('/kependudukan', [LaporanKependudukanController::class, 'index'])->name('kependudukan');
+        Route::get('/persuratan', [LaporanPersuratanController::class, 'index'])->name('persuratan');
+        Route::get('/usaha', [LaporanUsahaGlobalController::class, 'index'])->name('usaha');
     });
 });

@@ -19,7 +19,9 @@ class Umkm extends Model {
         'no_hp',
         'nama_ukm',
         'alamat',
-        'sektor_umkm'
+        'sektor_umkm',
+        'jenis_usaha_id',
+        'status',
     ];
 
 
@@ -36,6 +38,11 @@ class Umkm extends Model {
     public function penduduk()
     {
         return $this->belongsTo(Penduduk::class);
+    }
+
+    public function jenisUsaha()
+    {
+        return $this->belongsTo(JenisUsaha::class);
     }
 }
 
