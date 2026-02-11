@@ -4,40 +4,41 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AgendaKegiatan extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    protected $table = 'agenda_kegiatan';
+    protected $table = 'agenda_kegiatans';
 
     protected $fillable = [
-        'judul_kegiatan',
-        'tanggal_kegiatan',
+        'kelurahan_id',
         'hari_kegiatan',
-        'jam_mulai',
-        'jam_selesai',
+        'jam',
         'lokasi',
-        'instansi_pengirim',
+        'instansi_id',
         'perihal',
         'penanggung_jawab',
-        'peserta',
-        'status',
         'keterangan',
-        'petugas_input',
-        'tgl_input',
-        'arsip',
+        'arsip_path',
     ];
 
     protected $casts = [
-        'tanggal_kegiatan' => 'date',
-        'tgl_input'        => 'date',
+        'hari_kegiatan' => 'date',
     ];
 
-    public function petugas(): BelongsTo
+    public function kelurahan()
     {
-        return $this->belongsTo(User::class, 'petugas_input', 'id');
+        return $this->belongsTo(Kelurahan::class);
+    }
+
+    public function instansi()
+    {
+        return $this->belongsTo(Instansi::class);
+    }
+
+    public function hasil()
+    {
+        return $this->hasOne(HasilKegiatan::class, 'agenda_id');
     }
 }

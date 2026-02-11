@@ -4,40 +4,26 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Pk5 extends Model
-{
-    use HasFactory, SoftDeletes;
+class Pk5 extends Model {
+    use HasFactory;
 
-    protected $table = 'pk5';
+    protected $table = 'pk5s';
 
     protected $fillable = [
-        'nik',
         'nip',
         'nama',
         'jabatan',
         'pangkat',
-        'golongan',
         'status',
-        'alamat',
         'no_telp',
-        'email',
-        'tgl_mulai',
-        'tgl_selesai',
-        'petugas_input',
         'tgl_input',
+        'petugas_input_id'
     ];
 
     protected $casts = [
-        'tgl_mulai'   => 'date',
-        'tgl_selesai' => 'date',
-        'tgl_input'   => 'date',
+        'tgl_input' => 'datetime'
     ];
 
-    public function petugas(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'petugas_input', 'id');
-    }
 }
+

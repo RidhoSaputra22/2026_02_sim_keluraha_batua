@@ -12,19 +12,11 @@ class PenandatangananFactory extends Factory
     public function definition(): array
     {
         return [
-            'nik' => $this->faker->unique()->numerify('################'),
-            'nip' => null,
-            'nama' => $this->faker->name(),
-            'jabatan' => $this->faker->randomElement(['Lurah', 'Sekretaris Lurah', 'Kasi Pemerintahan']),
-            'pangkat' => $this->faker->randomElement(['Penata Muda', 'Penata', 'Penata Tk. I', 'Pembina']),
-            'golongan' => $this->faker->randomElement(['III/a', 'III/b', 'III/c', 'III/d', 'IV/a']),
-            'status' => $this->faker->randomElement(['aktif', 'nonaktif']),
-            'no_telp' => $this->faker->numerify('08##########'),
-            'email' => $this->faker->unique()->safeEmail(),
-            'alamat' => $this->faker->address(),
-            'tgl_mulai' => $this->faker->date(),
-            'tgl_input' => $this->faker->dateTimeBetween('-2 years', 'now'),
-            'petugas_input' => null,
+            'pegawai_id' => \App\Models\PegawaiStaff::factory(),
+            'status' => $this->faker->randomElement(['Aktif','Nonaktif']),
+            'no_telp' => $this->faker->e164PhoneNumber(),
+            'tgl_input' => $this->faker->dateTimeThisYear(),
+            'petugas_input_id' => null
         ];
     }
 }

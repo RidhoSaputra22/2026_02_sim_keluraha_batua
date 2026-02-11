@@ -12,11 +12,11 @@ class HasilKegiatanFactory extends Factory
     public function definition(): array
     {
         return [
-            'hari_tanggal' => $this->faker->dayOfWeek() . ', ' . $this->faker->date(),
-            'agenda' => $this->faker->sentence(5),
-            'notulen' => $this->faker->sentence(12),
-            'keterangan' => $this->faker->sentence(12),
-            'arsip' => $this->faker->optional()->filePath(),
+            'agenda_id' => \App\Models\AgendaKegiatan::factory(),
+            'hari_tanggal' => $this->faker->dateTimeThisYear(),
+            'notulen' => $this->faker->paragraphs(2, true),
+            'keterangan' => $this->faker->sentence(8),
+            'arsip_path' => null
         ];
     }
 }

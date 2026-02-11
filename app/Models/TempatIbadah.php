@@ -4,44 +4,37 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class TempatIbadah extends Model
-{
-    use HasFactory, SoftDeletes;
+class TempatIbadah extends Model {
+    use HasFactory;
 
-    protected $table = 'tempat_ibadah';
+    protected $table = 'tempat_ibadahs';
 
     protected $fillable = [
-        'jenis_tempat_ibadah',
+        'kelurahan_id',
+        'tempat_ibadah',
         'nama',
         'alamat',
-        'rt',
-        'rw',
-        'kelurahan',
-        'kecamatan',
+        'rt_id',
+        'rw_id',
         'pengurus',
-        'no_telp',
-        'tahun_berdiri',
-        'luas_tanah',
-        'luas_bangunan',
-        'status_tanah',
-        'keterangan',
-        'petugas_input',
-        'tgl_input',
-        'arsip',
+        'arsip_path'
     ];
 
-    protected $casts = [
-        'tahun_berdiri'  => 'integer',
-        'luas_tanah'     => 'decimal:2',
-        'luas_bangunan'  => 'decimal:2',
-        'tgl_input'      => 'date',
-    ];
 
-    public function petugas(): BelongsTo
+    public function kelurahan()
     {
-        return $this->belongsTo(User::class, 'petugas_input', 'id');
+        return $this->belongsTo(Kelurahan::class);
+    }
+
+    public function rt()
+    {
+        return $this->belongsTo(Rt::class);
+    }
+
+    public function rw()
+    {
+        return $this->belongsTo(Rw::class);
     }
 }
+

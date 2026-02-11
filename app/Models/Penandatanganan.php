@@ -4,52 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Penandatanganan extends Model
-{
-    use HasFactory, SoftDeletes;
+class Penandatanganan extends Model {
+    use HasFactory;
 
-    protected $table = 'penandatanganan';
+    protected $table = 'penandatanganans';
 
     protected $fillable = [
-        'nik',
-        'nip',
-        'nama',
-        'jabatan',
-        'pangkat',
-        'golongan',
+        'pegawai_id',
         'status',
-        'alamat',
         'no_telp',
-        'email',
-        'tgl_mulai',
-        'tgl_selesai',
-        'ttd_digital',
-        'petugas_input',
         'tgl_input',
+        'petugas_input_id'
     ];
 
     protected $casts = [
-        'tgl_mulai'   => 'date',
-        'tgl_selesai' => 'date',
-        'tgl_input'   => 'date',
+        'tgl_input' => 'datetime'
     ];
 
-    public function petugas(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'petugas_input', 'id');
-    }
 
-    public function suratKeluar(): HasMany
+    public function pegawai()
     {
-        return $this->hasMany(DaftarSuratKeluar::class, 'penandatangan_id', 'id');
-    }
-
-    public function scopeAktif($query)
-    {
-        return $query->where('status', 'aktif');
+        return $this->belongsTo(PegawaiStaff::class, 'pegawai_id');
     }
 }
+

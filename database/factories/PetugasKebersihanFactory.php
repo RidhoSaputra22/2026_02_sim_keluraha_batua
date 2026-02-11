@@ -12,13 +12,15 @@ class PetugasKebersihanFactory extends Factory
     public function definition(): array
     {
         return [
+            'kelurahan_id' => \App\Models\Kelurahan::factory(),
+            'penduduk_id' => null,
             'nama' => $this->faker->name(),
-            'nik' => null,
-            'unit_kerja' => $this->faker->randomElement(['Kebersihan Umum', 'Taman', 'Drainase']),
+            'nik' => $this->faker->numerify('################'),
+            'unit_kerja' => $this->faker->randomElement(['DLH','Kelurahan','RW']),
             'jenis_kelamin' => $this->faker->randomElement(['L','P']),
-            'pekerjaan' => $this->faker->randomElement(['Petugas Kebersihan', 'Koordinator', 'Supervisor']),
-            'lokasi' => $this->faker->randomElement(['RW 001', 'RW 002', 'RW 003', 'Pasar']),
-            'status' => $this->faker->randomElement(['Aktif', 'Nonaktif', 'Cuti']),
+            'pekerjaan' => 'Petugas Kebersihan',
+            'lokasi' => $this->faker->streetName(),
+            'status' => $this->faker->randomElement(['Aktif','Nonaktif'])
         ];
     }
 }

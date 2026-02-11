@@ -12,14 +12,15 @@ class AgendaKegiatanFactory extends Factory
     public function definition(): array
     {
         return [
+            'kelurahan_id' => \App\Models\Kelurahan::factory(),
             'hari_kegiatan' => $this->faker->date(),
-            'jam' => $this->faker->time('H:i'),
-            'lokasi' => $this->faker->randomElement(['Kantor Kelurahan', 'Balai RW', 'Aula', 'Lapangan']),
-            'instansi_pengirim' => $this->faker->randomElement(['Kecamatan Manggala', 'Dinas Kependudukan', 'Dinas Kesehatan', 'Internal']),
-            'perihal' => $this->faker->sentence(5),
+            'jam' => $this->faker->time(),
+            'lokasi' => $this->faker->address(),
+            'instansi_id' => \App\Models\Instansi::factory(),
+            'perihal' => $this->faker->sentence(4),
             'penanggung_jawab' => $this->faker->name(),
-            'keterangan' => $this->faker->sentence(12),
-            'arsip' => $this->faker->optional()->filePath(),
+            'keterangan' => $this->faker->sentence(8),
+            'arsip_path' => null
         ];
     }
 }

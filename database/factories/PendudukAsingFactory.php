@@ -12,17 +12,14 @@ class PendudukAsingFactory extends Factory
     public function definition(): array
     {
         return [
-            'no_passport' => $this->faker->unique()->bothify('P#########'),
+            'no_paspor' => $this->faker->unique()->bothify('??######'),
             'nama' => $this->faker->name(),
-            'kecamatan' => $this->faker->randomElement(['Manggala', 'Panakkukang', 'Tamalate', 'Makassar']),
-            'kelurahan' => $this->faker->randomElement(['Batua', 'Bangkala', 'Tamangapa', 'Antang']),
-            'rt' => str_pad($this->faker->numberBetween(1, 20), 3, '0', STR_PAD_LEFT),
-            'rw' => str_pad($this->faker->numberBetween(1, 10), 3, '0', STR_PAD_LEFT),
             'alamat' => $this->faker->address(),
-            'jenis_kelamin' => $this->faker->randomElement(['L', 'P']),
-            'tgl_input' => $this->faker->dateTimeBetween('-2 years', 'now'),
-            'petugas_input' => $this->faker->numberBetween(1, 10),
-            'arsip' => $this->faker->optional()->filePath(),
+            'rt_id' => \App\Models\Rt::factory(),
+            'jenis_kelamin' => $this->faker->randomElement(['L','P']),
+            'tgl_input' => $this->faker->dateTimeThisYear(),
+            'petugas_input_id' => null,
+            'arsip_path' => null
         ];
     }
 }
