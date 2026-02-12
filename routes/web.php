@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
+use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Admin\JenisSuratController as AdminJenisSuratController;
 use App\Http\Controllers\Admin\KeluargaController as AdminKeluargaController;
 // ─── Role-specific Dashboard Controllers ───────────────────────
@@ -26,12 +27,24 @@ use App\Http\Controllers\Persuratan\TandaTanganController;
 use App\Http\Controllers\Persuratan\TrackingController;
 use App\Http\Controllers\Persuratan\VerifikasiController;
 use App\Http\Controllers\RtRw\DashboardController as RtRwDashboard;
+use App\Http\Controllers\RtRw\WargaController as RtRwWargaController;
+use App\Http\Controllers\RtRw\PengantarController as RtRwPengantarController;
+use App\Http\Controllers\RtRw\LaporanController as RtRwLaporanController;
 use App\Http\Controllers\Usaha\JenisUsahaController;
 use App\Http\Controllers\Usaha\LaporanUsahaController;
 use App\Http\Controllers\Usaha\UsahaController;
 use App\Http\Controllers\Laporan\LaporanKependudukanController;
 use App\Http\Controllers\Laporan\LaporanPersuratanController;
 use App\Http\Controllers\Laporan\LaporanUsahaController as LaporanUsahaGlobalController;
+// ─── Ekspedisi, Data Umum, Agenda, Survey Controllers ──────────
+use App\Http\Controllers\Ekspedisi\EkspedisiController;
+use App\Http\Controllers\DataUmum\FaskesController;
+use App\Http\Controllers\DataUmum\SekolahController;
+use App\Http\Controllers\DataUmum\TempatIbadahController;
+use App\Http\Controllers\DataUmum\PetugasKebersihanController;
+use App\Http\Controllers\DataUmum\KendaraanController;
+use App\Http\Controllers\Agenda\AgendaKegiatanController;
+use App\Http\Controllers\Survey\SurveyKepuasanController;
 // ─── Kependudukan Controllers ──────────────────────────────────
 use App\Http\Controllers\Verifikator\DashboardController as VerifikatorDashboard;
 use App\Http\Controllers\Warga\DashboardController as WargaDashboard;
@@ -87,7 +100,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/referensi', [AdminReferensiController::class, 'index'])->name('referensi.index');
 
         // Audit Log
-        Route::get('/audit-log', fn () => view('admin.audit-log.index'))->name('audit-log');
+        Route::get('/audit-log', [AdminAuditLogController::class, 'index'])->name('audit-log');
+        Route::get('/audit-log/{auditLog}', [AdminAuditLogController::class, 'show'])->name('audit-log.show');
+        Route::delete('/audit-log/cleanup', [AdminAuditLogController::class, 'destroy'])->name('audit-log.destroy');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -127,8 +142,18 @@ Route::middleware('auth')->group(function () {
     // ╚══════════════════════════════════════════════════════════════╝
     Route::middleware('role:rt_rw')->prefix('rtrw')->name('rtrw.')->group(function () {
         Route::get('/dashboard', [RtRwDashboard::class, 'index'])->name('dashboard');
-        Route::get('/pengantar', fn () => 'Surat Pengantar page')->name('pengantar.index');
-        Route::get('/laporan', fn () => 'Laporan & Pengaduan page')->name('laporan.index');
+
+        // Warga
+        Route::get('/warga', [RtRwWargaController::class, 'index'])->name('warga.index');
+        Route::get('/warga/{penduduk}', [RtRwWargaController::class, 'show'])->name('warga.show');
+        Route::get('/keluarga', [RtRwWargaController::class, 'keluarga'])->name('keluarga.index');
+
+        // Surat Pengantar
+        Route::get('/pengantar', [RtRwPengantarController::class, 'index'])->name('pengantar.index');
+        Route::get('/pengantar/{surat}', [RtRwPengantarController::class, 'show'])->name('pengantar.show');
+
+        // Laporan
+        Route::get('/laporan', [RtRwLaporanController::class, 'index'])->name('laporan.index');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -217,9 +242,63 @@ Route::middleware('auth')->group(function () {
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
-    // ║  SHARED: LAPORAN — Admin, Operator, Verifikator             ║
+    // ║  SHARED: EKSPEDISI SURAT — Admin, Operator                 ║
     // ╚══════════════════════════════════════════════════════════════╝
-    Route::middleware('role:admin,operator,verifikator')->prefix('laporan')->name('laporan.')->group(function () {
+    Route::middleware('role:admin,operator')->prefix('ekspedisi')->name('ekspedisi.')->group(function () {
+        Route::get('/', [EkspedisiController::class, 'index'])->name('index');
+        Route::get('/create', [EkspedisiController::class, 'create'])->name('create');
+        Route::post('/', [EkspedisiController::class, 'store'])->name('store');
+        Route::get('/{ekspedisi}/edit', [EkspedisiController::class, 'edit'])->name('edit');
+        Route::put('/{ekspedisi}', [EkspedisiController::class, 'update'])->name('update');
+        Route::delete('/{ekspedisi}', [EkspedisiController::class, 'destroy'])->name('destroy');
+    });
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  SHARED: DATA UMUM — Admin, Operator                       ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin,operator')->prefix('data-umum')->name('data-umum.')->group(function () {
+        // Fasilitas Kesehatan
+        Route::resource('faskes', FaskesController::class)->except(['show']);
+        // Sekolah
+        Route::resource('sekolah', SekolahController::class)->except(['show']);
+        // Tempat Ibadah
+        Route::resource('tempat-ibadah', TempatIbadahController::class)->except(['show'])->parameters(['tempat-ibadah' => 'tempatIbadah']);
+        // Petugas Kebersihan
+        Route::resource('petugas-kebersihan', PetugasKebersihanController::class)->except(['show'])->parameters(['petugas-kebersihan' => 'petugasKebersihan']);
+        // Kendaraan
+        Route::resource('kendaraan', KendaraanController::class)->except(['show']);
+    });
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  SHARED: AGENDA & KEGIATAN — Admin, Operator               ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin,operator')->prefix('agenda')->name('agenda.')->group(function () {
+        Route::get('/', [AgendaKegiatanController::class, 'index'])->name('index');
+        Route::get('/create', [AgendaKegiatanController::class, 'create'])->name('create');
+        Route::post('/', [AgendaKegiatanController::class, 'store'])->name('store');
+        Route::get('/{agenda}', [AgendaKegiatanController::class, 'show'])->name('show');
+        Route::get('/{agenda}/edit', [AgendaKegiatanController::class, 'edit'])->name('edit');
+        Route::put('/{agenda}', [AgendaKegiatanController::class, 'update'])->name('update');
+        Route::delete('/{agenda}', [AgendaKegiatanController::class, 'destroy'])->name('destroy');
+        Route::post('/{agenda}/hasil', [AgendaKegiatanController::class, 'storeHasil'])->name('hasil.store');
+    });
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  SHARED: SURVEY KEPUASAN — All Roles                       ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin,operator,verifikator,penandatangan,rt_rw,warga')->prefix('survey')->name('survey.')->group(function () {
+        Route::get('/', [SurveyKepuasanController::class, 'index'])->name('index');
+        Route::get('/create', [SurveyKepuasanController::class, 'create'])->name('create');
+        Route::post('/', [SurveyKepuasanController::class, 'store'])->name('store');
+        Route::get('/{survey}/edit', [SurveyKepuasanController::class, 'edit'])->name('edit');
+        Route::put('/{survey}', [SurveyKepuasanController::class, 'update'])->name('update');
+        Route::delete('/{survey}', [SurveyKepuasanController::class, 'destroy'])->name('destroy');
+    });
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  SHARED: LAPORAN — Admin, Operator, Verifikator, Penandatangan ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin,operator,verifikator,penandatangan')->prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/kependudukan', [LaporanKependudukanController::class, 'index'])->name('kependudukan');
         Route::get('/persuratan', [LaporanPersuratanController::class, 'index'])->name('persuratan');
         Route::get('/usaha', [LaporanUsahaGlobalController::class, 'index'])->name('usaha');

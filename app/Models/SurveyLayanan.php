@@ -15,7 +15,7 @@ class SurveyLayanan extends Model {
     ];
 
 
-    public function penilaian()
+    public function surveyKepuasan()
     {
         return $this->hasMany(SurveyKepuasan::class, 'jenis_layanan_id');
     }

@@ -8,7 +8,8 @@
 $user = auth()->user();
 @endphp
 
-<aside class="fixed top-0 left-0 z-50 h-screen w-64 bg-base-100 shadow-lg transition-transform duration-300 overflow-y-auto"
+<aside
+    class="fixed top-0 left-0 z-50 h-screen w-64 bg-base-100 shadow-lg transition-transform duration-300 overflow-y-auto"
     :class="{
         'translate-x-0': sidebarMobileOpen,
         '-translate-x-full lg:translate-x-0': !sidebarMobileOpen
@@ -51,7 +52,7 @@ $user = auth()->user();
     @endif
 
     {{-- Navigation menu --}}
-    <ul class="menu menu-sm px-3 py-4 gap-1">
+    <ul class="menu menu-sm px-3 py-4 gap-1 w-full">
 
         {{-- Dashboard — Semua role --}}
         <li>
@@ -107,14 +108,14 @@ $user = auth()->user();
         @endif
 
         {{-- ============================================================ --}}
-        {{-- Kependudukan — Admin, Operator, RT/RW --}}
+        {{-- Kependudukan — Admin, Operator --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator', 'rt_rw']))
+        @if($user && $user->hasRole(['admin', 'operator']))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
         </li>
         <li>
-            <details {{ request()->routeIs('kependudukan.*') ? 'open' : '' }}>
+            <details {{ request()->routeIs('kependudukan.*', 'admin.penduduk.*', 'admin.keluarga.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -130,7 +131,6 @@ $user = auth()->user();
                     <li><a href="{{ route('admin.keluarga.index') }}"
                             class="{{ request()->routeIs('admin.keluarga.*', 'kependudukan.kk.*') ? 'active' : '' }}">Kartu
                             Keluarga</a></li>
-                    @if($user->hasRole(['admin', 'operator']))
                     <li><a href="{{ route('kependudukan.mutasi.index') }}"
                             class="{{ request()->routeIs('kependudukan.mutasi.*') ? 'active' : '' }}">Mutasi
                             Penduduk</a></li>
@@ -140,7 +140,6 @@ $user = auth()->user();
                     <li><a href="{{ route('kependudukan.kematian.index') }}"
                             class="{{ request()->routeIs('kependudukan.kematian.*') ? 'active' : '' }}">Kematian</a>
                     </li>
-                    @endif
                 </ul>
             </details>
         </li>
@@ -201,6 +200,25 @@ $user = auth()->user();
         @endif
 
         {{-- ============================================================ --}}
+        {{-- Ekspedisi — Admin, Operator --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Ekspedisi</span>
+        </li>
+        <li>
+            <a href="{{ route('ekspedisi.index') }}" class="{{ request()->routeIs('ekspedisi.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                Ekspedisi Surat
+            </a>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
         {{-- Data Usaha / PK5 — Admin, Operator --}}
         {{-- ============================================================ --}}
         @if($user && $user->hasRole(['admin', 'operator']))
@@ -230,9 +248,64 @@ $user = auth()->user();
         @endif
 
         {{-- ============================================================ --}}
-        {{-- Laporan — Admin, Operator, Verifikator --}}
+        {{-- Data Umum — Admin, Operator --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator', 'verifikator']))
+        @if($user && $user->hasRole(['admin', 'operator']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Data Umum</span>
+        </li>
+        <li>
+            <details {{ request()->routeIs('data-umum.*') ? 'open' : '' }}>
+                <summary>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                    </svg>
+                    Data Umum
+                </summary>
+                <ul>
+                    <li><a href="{{ route('data-umum.faskes.index') }}"
+                            class="{{ request()->routeIs('data-umum.faskes.*') ? 'active' : '' }}">Fasilitas
+                            Kesehatan</a></li>
+                    <li><a href="{{ route('data-umum.sekolah.index') }}"
+                            class="{{ request()->routeIs('data-umum.sekolah.*') ? 'active' : '' }}">Sekolah</a></li>
+                    <li><a href="{{ route('data-umum.tempat-ibadah.index') }}"
+                            class="{{ request()->routeIs('data-umum.tempat-ibadah.*') ? 'active' : '' }}">Tempat
+                            Ibadah</a></li>
+                    <li><a href="{{ route('data-umum.petugas-kebersihan.index') }}"
+                            class="{{ request()->routeIs('data-umum.petugas-kebersihan.*') ? 'active' : '' }}">Petugas
+                            Kebersihan</a></li>
+                    <li><a href="{{ route('data-umum.kendaraan.index') }}"
+                            class="{{ request()->routeIs('data-umum.kendaraan.*') ? 'active' : '' }}">Kendaraan</a></li>
+                </ul>
+            </details>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
+        {{-- Agenda & Kegiatan — Admin, Operator --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator']))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Agenda & Kegiatan</span>
+        </li>
+        <li>
+            <a href="{{ route('agenda.index') }}" class="{{ request()->routeIs('agenda.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Agenda & Kegiatan
+            </a>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
+        {{-- Laporan — Admin, Operator, Verifikator, Penandatangan --}}
+        {{-- ============================================================ --}}
+        @if($user && $user->hasRole(['admin', 'operator', 'verifikator', 'penandatangan']))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Laporan</span>
         </li>
@@ -247,11 +320,18 @@ $user = auth()->user();
                     Laporan
                 </summary>
                 <ul>
+                    {{-- Laporan Kependudukan: Admin, Operator only --}}
+                    @if($user->hasRole(['admin', 'operator']))
                     <li><a href="{{ route('laporan.kependudukan') }}"
                             class="{{ request()->routeIs('laporan.kependudukan') ? 'active' : '' }}">Kependudukan</a>
                     </li>
+                    @endif
+
+                    {{-- Laporan Persuratan: All roles that handle surat workflow --}}
                     <li><a href="{{ route('laporan.persuratan') }}"
                             class="{{ request()->routeIs('laporan.persuratan') ? 'active' : '' }}">Persuratan</a></li>
+
+                    {{-- Laporan Usaha: Admin, Operator only --}}
                     @if($user->hasRole(['admin', 'operator']))
                     <li><a href="{{ route('laporan.usaha') }}"
                             class="{{ request()->routeIs('laporan.usaha') ? 'active' : '' }}">Data Usaha</a></li>
@@ -267,6 +347,27 @@ $user = auth()->user();
         @if($user && $user->hasRole('rt_rw'))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Layanan RT/RW</span>
+        </li>
+        <li>
+            <a href="{{ route('rtrw.warga.index') }}" class="{{ request()->routeIs('rtrw.warga.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Data Warga
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('rtrw.keluarga.index') }}"
+                class="{{ request()->routeIs('rtrw.keluarga.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                Data Keluarga
+            </a>
         </li>
         <li>
             <a href="{{ route('rtrw.pengantar.index') }}"
@@ -285,9 +386,9 @@ $user = auth()->user();
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Laporan & Pengaduan
+                Laporan Wilayah
             </a>
         </li>
         @endif
@@ -324,11 +425,27 @@ $user = auth()->user();
         @endif
 
         {{-- ============================================================ --}}
+        {{-- Survey Kepuasan — All roles (optional) --}}
+        {{-- ============================================================ --}}
+        @if($user)
+        <div class="divider my-1 px-2"></div>
+        <li>
+            <a href="{{ route('survey.index') }}" class="{{ request()->routeIs('survey.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                Survey Kepuasan
+            </a>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
         {{-- Administrasi Sistem — Admin only --}}
         {{-- ============================================================ --}}
         @if($user && $user->hasRole('admin'))
-        <div class="divider my-1 px-2"></div>
-        <li class="menu-title">
+        <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Administrasi</span>
         </li>
         <li>

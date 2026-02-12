@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class RtRwPengurus extends Model {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $table = 'rt_rw_pengurus';
 

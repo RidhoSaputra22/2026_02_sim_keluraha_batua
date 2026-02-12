@@ -20,5 +20,15 @@ class Rt extends Model {
     {
         return $this->belongsTo(Rw::class);
     }
+
+    public function penduduks()
+    {
+        return $this->hasMany(Penduduk::class);
+    }
+
+    public function keluargas()
+    {
+        return $this->hasMany(Keluarga::class);
+    }
 }
 
