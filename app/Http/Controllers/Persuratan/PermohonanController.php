@@ -17,6 +17,13 @@ class PermohonanController extends Controller
     {
         $query = Surat::with(['jenis', 'sifat', 'pemohon.penduduk', 'petugasInput']);
 
+        // Filter for warga role: only show their own permohonan
+        if ($request->user()->hasRole('warga')) {
+            $query->whereHas('pemohon', function ($q) use ($request) {
+                $q->where('nama', $request->user()->name);
+            });
+        }
+
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nomor_surat', 'like', "%{$search}%")

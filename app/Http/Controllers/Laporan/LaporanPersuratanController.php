@@ -21,7 +21,7 @@ class LaporanPersuratanController extends Controller
         $perJenis = SuratJenis::withCount('surats')->orderByDesc('surats_count')->get();
 
         // Per bulan (tahun ini)
-        $perBulan = Surat::selectRaw("strftime('%m', tgl_input) as bulan, count(*) as total")
+        $perBulan = Surat::selectRaw("MONTH(tgl_input) as bulan, count(*) as total")
             ->whereYear('tgl_input', now()->year)
             ->groupBy('bulan')
             ->orderBy('bulan')

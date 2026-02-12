@@ -39,3 +39,8 @@
 [x-cloak] {
     display: none !important;
 }
+
+
+.badge {
+    @apply text-xs font-medium text-ellipsis whitespace-nowrap overflow-hidden;
+}

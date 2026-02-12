@@ -35,6 +35,8 @@ use App\Http\Controllers\Laporan\LaporanUsahaController as LaporanUsahaGlobalCon
 // ─── Kependudukan Controllers ──────────────────────────────────
 use App\Http\Controllers\Verifikator\DashboardController as VerifikatorDashboard;
 use App\Http\Controllers\Warga\DashboardController as WargaDashboard;
+use App\Http\Controllers\Warga\PermohonanController as WargaPermohonanController;
+use App\Http\Controllers\Warga\RiwayatController as WargaRiwayatController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -134,9 +136,15 @@ Route::middleware('auth')->group(function () {
     // ╚══════════════════════════════════════════════════════════════╝
     Route::middleware('role:warga')->prefix('warga')->name('warga.')->group(function () {
         Route::get('/dashboard', [WargaDashboard::class, 'index'])->name('dashboard');
-        Route::get('/permohonan', fn () => 'Ajukan Permohonan page')->name('permohonan.index');
-        Route::get('/riwayat', fn () => 'Riwayat & Tracking page')->name('riwayat');
-        Route::get('/dokumen', fn () => 'Unduh Dokumen page')->name('dokumen');
+
+        // Permohonan Surat
+        Route::get('/permohonan', [WargaPermohonanController::class, 'index'])->name('permohonan.index');
+        Route::get('/permohonan/create', [WargaPermohonanController::class, 'create'])->name('permohonan.create');
+        Route::post('/permohonan', [WargaPermohonanController::class, 'store'])->name('permohonan.store');
+        Route::get('/permohonan/{permohonan}', [WargaPermohonanController::class, 'show'])->name('permohonan.show');
+
+        // Riwayat & Tracking
+        Route::get('/riwayat', [WargaRiwayatController::class, 'index'])->name('riwayat.index');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
