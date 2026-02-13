@@ -30,5 +30,10 @@ class Rt extends Model {
     {
         return $this->hasMany(Keluarga::class);
     }
+
+    public function umkms()
+    {
+        return $this->hasMany(Umkm::class);
+    }
 }
 

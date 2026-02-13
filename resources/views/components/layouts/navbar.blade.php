@@ -1,19 +1,13 @@
 {{--
     Navbar Component
-    Top navigation bar with hamburger, title, search, notifications, user dropdown
+    Top navigation bar with hamburger, title, search, user dropdown
 --}}
 
 @props(['title' => 'Dashboard'])
 
 <header class="navbar bg-base-100 shadow-sm sticky top-0 z-30 px-4 lg:px-6">
     <div class="flex justify-center items-center gap-2">
-        {{-- Sidebar toggle (desktop) --}}
-        <button class="btn btn-ghost btn-sm btn-square hidden lg:flex" @click="sidebarOpen = !sidebarOpen">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-        </button>
+
 
         {{-- Sidebar toggle (mobile) --}}
         <button class="btn btn-ghost btn-sm btn-square lg:hidden" @click="sidebarMobileOpen = true">
@@ -31,65 +25,89 @@
 
     <div class="flex-none flex items-center gap-2">
         {{-- Search --}}
-        <div class="form-control hidden md:block">
+        <div class="form-control hidden md:block" x-data="globalSearch()" @click.away="open = false"
+            @keydown.escape.window="open = false">
             <div class="relative">
-                <input type="text" placeholder="Cari..." class="input input-sm input-bordered w-48 lg:w-64 pr-8" />
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 absolute right-2.5 top-2.5 text-base-content/40"
-                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <input type="text" placeholder="Cari... (Ctrl+K)"
+                    class="input input-sm input-bordered w-48 lg:w-72 pr-8" x-model="query"
+                    @input.debounce.300ms="search()" @focus="if (results.length) open = true"
+                    @keydown.ctrl.k.window.prevent="$el.focus()" @keydown.arrow-down.prevent="moveDown()"
+                    @keydown.arrow-up.prevent="moveUp()" @keydown.enter.prevent="goToSelected()" />
+                {{-- Search icon / Loading spinner --}}
+                <template x-if="!loading">
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                        class="h-4 w-4 absolute right-2.5 top-2.5 text-base-content/40" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </template>
+                <template x-if="loading">
+                    <span class="loading loading-spinner loading-xs absolute right-2.5 top-2.5 text-primary"></span>
+                </template>
+
+                {{-- Search Results Dropdown --}}
+                <div x-show="open" x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    class="absolute top-full right-0 mt-2 w-96 bg-base-100 rounded-box shadow-xl border border-base-300 z-50 overflow-hidden">
+                    {{-- Results --}}
+                    <div class="max-h-80 overflow-y-auto" x-ref="resultsList">
+                        <template x-if="results.length === 0 && query.length >= 2 && !loading">
+                            <div class="p-4 text-center text-base-content/60">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 opacity-40"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p class="text-sm">Tidak ada hasil untuk "<span x-text="query"
+                                        class="font-semibold"></span>"</p>
+                            </div>
+                        </template>
+
+                        <template x-for="(result, index) in results" :key="index">
+                            <a :href="result.url"
+                                class="flex items-center gap-3 px-4 py-2.5 hover:bg-base-200 cursor-pointer transition-colors border-b border-base-200 last:border-b-0"
+                                :class="{ 'bg-base-200': selectedIndex === index }" @mouseenter="selectedIndex = index">
+                                <div
+                                    class="flex-shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                    <span x-html="getIcon(result.icon)" class="text-primary w-4 h-4"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium truncate" x-text="result.title"></p>
+                                    <p class="text-xs text-base-content/60 truncate" x-text="result.subtitle"></p>
+                                </div>
+                                <span class="badge badge-xs badge-ghost" x-text="result.category"></span>
+                            </a>
+                        </template>
+                    </div>
+
+                    {{-- Footer --}}
+                    <template x-if="results.length > 0">
+                        <div class="px-4 py-2 border-t border-base-200 bg-base-200/30">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs text-base-content/50"><span x-text="results.length"></span> hasil
+                                    ditemukan</span>
+                                <div class="flex items-center gap-1 text-xs text-base-content/50">
+                                    <kbd class="kbd kbd-xs">&uarr;</kbd>
+                                    <kbd class="kbd kbd-xs">&darr;</kbd>
+                                    <span>navigasi</span>
+                                    <kbd class="kbd kbd-xs">Enter</kbd>
+                                    <span>pilih</span>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
             </div>
         </div>
 
-        {{-- Theme toggle --}}
-        <label class="btn btn-ghost btn-sm btn-circle swap swap-rotate">
-            <input type="checkbox" class="theme-controller" value="dark" />
-            <svg class="swap-off fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                    d="M5.64,17l-.71.71a1,1,0,0,0,0,1.41,1,1,0,0,0,1.41,0l.71-.71A1,1,0,0,0,5.64,17ZM5,12a1,1,0,0,0-1-1H3a1,1,0,0,0,0,2H4A1,1,0,0,0,5,12Zm7-7a1,1,0,0,0,1-1V3a1,1,0,0,0-2,0V4A1,1,0,0,0,12,5ZM5.64,7.05a1,1,0,0,0,.7.29,1,1,0,0,0,.71-.29,1,1,0,0,0,0-1.41l-.71-.71A1,1,0,0,0,4.93,6.34Zm12,.29a1,1,0,0,0,.7-.29l.71-.71a1,1,0,1,0-1.41-1.41L17,5.64a1,1,0,0,0,0,1.41A1,1,0,0,0,17.66,7.34ZM21,11H20a1,1,0,0,0,0,2h1a1,1,0,0,0,0-2Zm-9,8a1,1,0,0,0-1,1v1a1,1,0,0,0,2,0V20A1,1,0,0,0,12,19ZM18.36,17A1,1,0,0,0,17,18.36l.71.71a1,1,0,0,0,1.41,0,1,1,0,0,0,0-1.41ZM12,6.5A5.5,5.5,0,1,0,17.5,12,5.51,5.51,0,0,0,12,6.5Zm0,9A3.5,3.5,0,1,1,15.5,12,3.5,3.5,0,0,1,12,15.5Z" />
-            </svg>
-            <svg class="swap-on fill-current w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path
-                    d="M21.64,13a1,1,0,0,0-1.05-.14,8.05,8.05,0,0,1-3.37.73A8.15,8.15,0,0,1,9.08,5.49a8.59,8.59,0,0,1,.25-2A1,1,0,0,0,8,2.36,10.14,10.14,0,1,0,22,14.05,1,1,0,0,0,21.64,13ZM18,22A10.07,10.07,0,0,1,2,12,10,10,0,0,1,9.35,2.17a6.17,6.17,0,0,0,4.48,11.67A6.17,6.17,0,0,0,18,22Z" />
-            </svg>
-        </label>
 
-        {{-- Notifications --}}
-        <div class="dropdown dropdown-end">
-            <label tabindex="0" class="btn btn-ghost btn-sm btn-circle indicator">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span class="badge badge-xs badge-primary indicator-item"></span>
-            </label>
-            <div tabindex="0" class="dropdown-content menu bg-base-100 rounded-box w-72 shadow-lg mt-2 p-0">
-                <div class="p-3 border-b border-base-200">
-                    <h3 class="font-semibold text-sm">Notifikasi</h3>
-                </div>
-                <div class="p-2 max-h-60 overflow-y-auto">
-                    <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-base-200 cursor-pointer">
-                        <div class="w-2 h-2 bg-primary rounded-full mt-2 shrink-0"></div>
-                        <div>
-                            <p class="text-sm">Surat menunggu verifikasi</p>
-                            <p class="text-xs text-base-content/60">2 menit yang lalu</p>
-                        </div>
-                    </div>
-                    <div class="flex items-start gap-3 p-2 rounded-lg hover:bg-base-200 cursor-pointer">
-                        <div class="w-2 h-2 bg-warning rounded-full mt-2 shrink-0"></div>
-                        <div>
-                            <p class="text-sm">Data penduduk perlu dilengkapi</p>
-                            <p class="text-xs text-base-content/60">1 jam yang lalu</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-2 border-t border-base-200">
-                    <a href="#" class="btn btn-ghost btn-sm btn-block text-primary">Lihat Semua</a>
-                </div>
-            </div>
-        </div>
+
+
 
         {{-- User dropdown --}}
         <div class="dropdown dropdown-end">
@@ -107,7 +125,7 @@
                         class="text-xs text-base-content/60">{{ auth()->user()->email ?? 'admin@kelurahan.go.id' }}</span>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="{{ route('profile.show') }}">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -116,18 +134,7 @@
                         Profil Saya
                     </a>
                 </li>
-                <li>
-                    <a href="#">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Pengaturan
-                    </a>
-                </li>
+
                 <div class="divider my-1"></div>
                 <li>
                     <form method="POST" action="{{ route('logout') }}">
@@ -146,3 +153,111 @@
         </div>
     </div>
 </header>
+
+@pushOnce('scripts')
+<script>
+function globalSearch() {
+    return {
+        query: '',
+        results: [],
+        loading: false,
+        open: false,
+        selectedIndex: -1,
+        abortController: null,
+
+        async search() {
+            if (this.query.length < 2) {
+                this.results = [];
+                this.open = false;
+                return;
+            }
+
+            // Cancel pending request
+            if (this.abortController) {
+                this.abortController.abort();
+            }
+
+            this.loading = true;
+            this.abortController = new AbortController();
+
+            try {
+                const response = await fetch(`{{ route('global-search') }}?q=${encodeURIComponent(this.query)}`, {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    signal: this.abortController.signal,
+                });
+
+                if (!response.ok) throw new Error('Search failed');
+
+                const data = await response.json();
+                this.results = data.results;
+                this.open = true;
+                this.selectedIndex = -1;
+            } catch (e) {
+                if (e.name !== 'AbortError') {
+                    this.results = [];
+                }
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        moveDown() {
+            if (this.selectedIndex < this.results.length - 1) {
+                this.selectedIndex++;
+                this.scrollToSelected();
+            }
+        },
+
+        moveUp() {
+            if (this.selectedIndex > 0) {
+                this.selectedIndex--;
+                this.scrollToSelected();
+            }
+        },
+
+        scrollToSelected() {
+            this.$nextTick(() => {
+                const list = this.$refs.resultsList;
+                if (!list) return;
+                const items = list.querySelectorAll('a');
+                if (items[this.selectedIndex]) {
+                    items[this.selectedIndex].scrollIntoView({
+                        block: 'nearest'
+                    });
+                }
+            });
+        },
+
+        goToSelected() {
+            if (this.selectedIndex >= 0 && this.results[this.selectedIndex]) {
+                window.location.href = this.results[this.selectedIndex].url;
+            }
+        },
+
+        getIcon(name) {
+            const icons = {
+                'users': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-1.997M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>',
+                'home': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>',
+                'document-text': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>',
+                'user-circle': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+                'briefcase': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 00.75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 00-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0112 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 01-.673-.38m0 0A2.18 2.18 0 013 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 013.413-.387m7.5 0V5.25A2.25 2.25 0 0013.5 3h-3a2.25 2.25 0 00-2.25 2.25v.894m7.5 0a48.667 48.667 0 00-7.5 0M12 12.75h.008v.008H12v-.008z"/></svg>',
+                'pencil': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125"/></svg>',
+                'building-storefront': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z"/></svg>',
+                'paper-airplane': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>',
+                'heart': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"/></svg>',
+                'academic-cap': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/></svg>',
+                'star': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"/></svg>',
+                'truck': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.143-.504 1.125-1.125a17.902 17.902 0 00-3.213-9.174L15.78 6.498a2.25 2.25 0 00-1.832-.948H13.5V18M8.25 18.75H13.5m0 0V6.75"/></svg>',
+                'sparkles': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"/></svg>',
+                'calendar': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>',
+                'chart-bar': '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>',
+            };
+            return icons[name] || icons['document-text'];
+        }
+    };
+}
+</script>
+@endPushOnce

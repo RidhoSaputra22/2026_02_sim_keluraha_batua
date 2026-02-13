@@ -40,7 +40,7 @@ class PendudukControllerTest extends TestCase
     {
         Penduduk::factory()->count(3)->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.index'));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.index'));
 
         $response->assertStatus(200);
         $response->assertViewHas('penduduk');
@@ -52,7 +52,7 @@ class PendudukControllerTest extends TestCase
     {
         Penduduk::factory()->create(['nik' => '7371012345678901', 'nama' => 'Ahmad Test']);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.index', ['search' => '7371012345678901']));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.index', ['search' => '7371012345678901']));
 
         $response->assertStatus(200);
         $response->assertSee('Ahmad Test');
@@ -62,7 +62,7 @@ class PendudukControllerTest extends TestCase
     {
         Penduduk::factory()->create(['nama' => 'Siti Rahma Unik']);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.index', ['search' => 'Siti Rahma Unik']));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.index', ['search' => 'Siti Rahma Unik']));
 
         $response->assertStatus(200);
         $response->assertSee('Siti Rahma Unik');
@@ -73,7 +73,7 @@ class PendudukControllerTest extends TestCase
         $rt = Rt::factory()->create();
         Penduduk::factory()->create(['rt_id' => $rt->id, 'nama' => 'Warga RT Filter']);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.index', ['rt' => $rt->id]));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.index', ['rt' => $rt->id]));
 
         $response->assertStatus(200);
     }
@@ -83,7 +83,7 @@ class PendudukControllerTest extends TestCase
         Penduduk::factory()->create(['jenis_kelamin' => 'L', 'nama' => 'Pria Test']);
         Penduduk::factory()->create(['jenis_kelamin' => 'P', 'nama' => 'Wanita Test']);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.index', ['jenis_kelamin' => 'L']));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.index', ['jenis_kelamin' => 'L']));
 
         $response->assertStatus(200);
     }
@@ -92,7 +92,7 @@ class PendudukControllerTest extends TestCase
 
     public function test_admin_can_view_create_penduduk_form(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.create'));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.create'));
 
         $response->assertStatus(200);
     }
@@ -114,9 +114,9 @@ class PendudukControllerTest extends TestCase
             'status_data'    => 'aktif',
         ];
 
-        $response = $this->actingAs($this->admin)->post(route('admin.penduduk.store'), $data);
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.penduduk.store'), $data);
 
-        $response->assertRedirect(route('admin.penduduk.index'));
+        $response->assertRedirect(route('kependudukan.penduduk.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('penduduks', [
             'nik'  => '7371012345678901',
@@ -126,7 +126,7 @@ class PendudukControllerTest extends TestCase
 
     public function test_store_penduduk_validates_nik_required(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.penduduk.store'), [
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.penduduk.store'), [
             'nama'          => 'Test',
             'jenis_kelamin' => 'L',
         ]);
@@ -136,7 +136,7 @@ class PendudukControllerTest extends TestCase
 
     public function test_store_penduduk_validates_nik_max_length(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.penduduk.store'), [
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.penduduk.store'), [
             'nik'           => str_repeat('1', 33),
             'nama'          => 'Test',
             'jenis_kelamin' => 'L',
@@ -149,7 +149,7 @@ class PendudukControllerTest extends TestCase
     {
         Penduduk::factory()->create(['nik' => '7371012345678901']);
 
-        $response = $this->actingAs($this->admin)->post(route('admin.penduduk.store'), [
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.penduduk.store'), [
             'nik'           => '7371012345678901',
             'nama'          => 'Duplicate',
             'jenis_kelamin' => 'L',
@@ -166,7 +166,7 @@ class PendudukControllerTest extends TestCase
             'jenis_kelamin' => 'L',
         ];
 
-        $this->actingAs($this->admin)->post(route('admin.penduduk.store'), $data);
+        $this->actingAs($this->admin)->post(route('kependudukan.penduduk.store'), $data);
 
         $penduduk = Penduduk::where('nik', '7371012345678901')->first();
         $this->assertNotNull($penduduk);
@@ -180,7 +180,7 @@ class PendudukControllerTest extends TestCase
     {
         $penduduk = Penduduk::factory()->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.show', $penduduk));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.show', $penduduk));
 
         $response->assertStatus(200);
         $response->assertViewHas('penduduk');
@@ -192,7 +192,7 @@ class PendudukControllerTest extends TestCase
     {
         $penduduk = Penduduk::factory()->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.penduduk.edit', $penduduk));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.penduduk.edit', $penduduk));
 
         $response->assertStatus(200);
         $response->assertViewHas('penduduk');
@@ -204,13 +204,13 @@ class PendudukControllerTest extends TestCase
     {
         $penduduk = Penduduk::factory()->create();
 
-        $response = $this->actingAs($this->admin)->put(route('admin.penduduk.update', $penduduk), [
+        $response = $this->actingAs($this->admin)->put(route('kependudukan.penduduk.update', $penduduk), [
             'nik'           => $penduduk->nik,
             'nama'          => 'Nama Updated',
             'jenis_kelamin' => 'P',
         ]);
 
-        $response->assertRedirect(route('admin.penduduk.index'));
+        $response->assertRedirect(route('kependudukan.penduduk.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('penduduks', [
             'id'   => $penduduk->id,
@@ -224,9 +224,9 @@ class PendudukControllerTest extends TestCase
     {
         $penduduk = Penduduk::factory()->create();
 
-        $response = $this->actingAs($this->admin)->delete(route('admin.penduduk.destroy', $penduduk));
+        $response = $this->actingAs($this->admin)->delete(route('kependudukan.penduduk.destroy', $penduduk));
 
-        $response->assertRedirect(route('admin.penduduk.index'));
+        $response->assertRedirect(route('kependudukan.penduduk.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseMissing('penduduks', ['id' => $penduduk->id]);
     }

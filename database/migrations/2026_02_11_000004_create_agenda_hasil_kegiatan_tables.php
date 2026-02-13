@@ -14,7 +14,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('kelurahan_id')->constrained('kelurahans')->cascadeOnUpdate()->restrictOnDelete();
             $table->date('hari_kegiatan');
-            $table->time('jam')->nullable();
+            $table->string('jam', 50)->nullable();
             $table->string('lokasi')->nullable();
             $table->foreignId('instansi_id')->nullable()->constrained('instansis')->nullOnDelete();
             $table->string('perihal')->nullable();

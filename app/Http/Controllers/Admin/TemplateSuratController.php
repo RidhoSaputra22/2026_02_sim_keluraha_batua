@@ -64,7 +64,7 @@ class TemplateSuratController extends Controller
 
         TemplateSurat::create($validated);
 
-        return redirect()->route('admin.template-surat.index')
+        return redirect()->route('master.template-surat.index')
             ->with('success', 'Template surat berhasil ditambahkan.');
     }
 
@@ -103,7 +103,7 @@ class TemplateSuratController extends Controller
 
         $templateSurat->update($validated);
 
-        return redirect()->route('admin.template-surat.index')
+        return redirect()->route('master.template-surat.index')
             ->with('success', 'Template surat berhasil diperbarui.');
     }
 
@@ -111,7 +111,7 @@ class TemplateSuratController extends Controller
     {
         $templateSurat->delete();
 
-        return redirect()->route('admin.template-surat.index')
+        return redirect()->route('master.template-surat.index')
             ->with('success', 'Template surat berhasil dihapus.');
     }
 }

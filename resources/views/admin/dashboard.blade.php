@@ -2,65 +2,54 @@
 
     {{-- Page Header --}}
     <x-slot:header>
-        <x-layouts.page-header
-            title="Dashboard"
-            description="Ringkasan data dan aktivitas Kelurahan Batua"
-        />
+        <x-layouts.page-header title="Dashboard" description="Ringkasan data dan aktivitas Kelurahan Batua" />
     </x-slot:header>
 
     {{-- Statistics Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <x-ui.card class="bg-primary/5">
-            <x-ui.stat
-                title="Total Penduduk"
-                value="{{ number_format($totalPenduduk) }}"
-                description="Data terakhir"
-            >
+            <x-ui.stat title="Total Penduduk" value="{{ number_format($totalPenduduk) }}" description="Data terakhir">
                 <x-slot:icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </x-slot:icon>
             </x-ui.stat>
         </x-ui.card>
 
         <x-ui.card class="bg-secondary/5">
-            <x-ui.stat
-                title="Kartu Keluarga"
-                value="{{ number_format($totalKK) }}"
-                description="Terdaftar"
-            >
+            <x-ui.stat title="Kartu Keluarga" value="{{ number_format($totalKK) }}" description="Terdaftar">
                 <x-slot:icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                 </x-slot:icon>
             </x-ui.stat>
         </x-ui.card>
 
         <x-ui.card class="bg-accent/5">
-            <x-ui.stat
-                title="Surat Bulan Ini"
-                value="{{ $totalSuratBulanIni }}"
-                description="Diproses"
-            >
+            <x-ui.stat title="Surat Bulan Ini" value="{{ $totalSuratBulanIni }}" description="Diproses">
                 <x-slot:icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </x-slot:icon>
             </x-ui.stat>
         </x-ui.card>
 
         <x-ui.card class="bg-warning/5">
-            <x-ui.stat
-                title="Menunggu Verifikasi"
-                value="{{ $suratMenunggu }}"
-                description="Perlu tindakan"
-            >
+            <x-ui.stat title="Menunggu Verifikasi" value="{{ $suratMenunggu }}" description="Perlu tindakan">
                 <x-slot:icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-warning" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                 </x-slot:icon>
             </x-ui.stat>
@@ -93,20 +82,20 @@
                                 <td>{{ $surat->tanggal_surat?->format('d M Y') ?? '-' }}</td>
                                 <td>
                                     @php
-                                        $statusColor = match($surat->status_esign) {
-                                            'signed' => 'success',
-                                            'proses' => 'info',
-                                            'draft' => 'warning',
-                                            'reject' => 'error',
-                                            default => 'ghost',
-                                        };
-                                        $statusLabel = match($surat->status_esign) {
-                                            'signed' => 'Selesai',
-                                            'proses' => 'Proses',
-                                            'draft' => 'Draft',
-                                            'reject' => 'Ditolak',
-                                            default => '-',
-                                        };
+                                    $statusColor = match($surat->status_esign) {
+                                    'signed' => 'success',
+                                    'proses' => 'info',
+                                    'draft' => 'warning',
+                                    'reject' => 'error',
+                                    default => 'ghost',
+                                    };
+                                    $statusLabel = match($surat->status_esign) {
+                                    'signed' => 'Selesai',
+                                    'proses' => 'Proses',
+                                    'draft' => 'Draft',
+                                    'reject' => 'Ditolak',
+                                    default => '-',
+                                    };
                                     @endphp
                                     <x-ui.badge type="{{ $statusColor }}" size="sm">{{ $statusLabel }}</x-ui.badge>
                                 </td>
@@ -164,20 +153,27 @@
             {{-- Quick Actions --}}
             <x-ui.card title="Aksi Cepat">
                 <div class="space-y-2">
-                    <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2" href="{{ route('admin.penduduk.create') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2"
+                        href="{{ route('kependudukan.penduduk.create') }}">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                         </svg>
                         Tambah Penduduk
                     </x-ui.button>
-                    <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2" href="{{ route('admin.keluarga.create') }}" :outline="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2"
+                        href="{{ route('kependudukan.keluarga.create') }}" :outline="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Tambah Kartu Keluarga
                     </x-ui.button>
-                    <x-ui.button type="accent" size="sm" class="w-full justify-start gap-2" href="{{ route('admin.users.create') }}" :outline="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <x-ui.button type="accent" size="sm" class="w-full justify-start gap-2"
+                        href="{{ route('admin.users.create') }}" :outline="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
                         Tambah Pengguna
@@ -193,18 +189,19 @@
         <x-ui.card title="Rekap Surat per Jenis (Bulan Ini)">
             <div class="space-y-3">
                 @php
-                    $totalSurat = $suratPerJenis->sum('surats_count') ?: 1;
+                $totalSurat = $suratPerJenis->sum('surats_count') ?: 1;
                 @endphp
                 @forelse($suratPerJenis as $jenis)
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span>{{ $jenis->nama }}</span>
-                            <span class="font-medium">{{ $jenis->surats_count }}</span>
-                        </div>
-                        <progress class="progress progress-primary w-full" value="{{ round(($jenis->surats_count / $totalSurat) * 100) }}" max="100"></progress>
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>{{ $jenis->nama }}</span>
+                        <span class="font-medium">{{ $jenis->surats_count }}</span>
                     </div>
+                    <progress class="progress progress-primary w-full"
+                        value="{{ round(($jenis->surats_count / $totalSurat) * 100) }}" max="100"></progress>
+                </div>
                 @empty
-                    <p class="text-sm text-base-content/60 text-center py-4">Belum ada data surat bulan ini.</p>
+                <p class="text-sm text-base-content/60 text-center py-4">Belum ada data surat bulan ini.</p>
                 @endforelse
             </div>
         </x-ui.card>
@@ -256,7 +253,8 @@
                 @endforeach
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →
+                </x-ui.button>
             </x-slot:actions>
         </x-ui.card>
 
@@ -285,7 +283,8 @@
             </div>
             @endif
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('admin.wilayah.index') }}">Kelola Wilayah →</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('master.wilayah.index') }}">Kelola Wilayah →
+                </x-ui.button>
             </x-slot:actions>
         </x-ui.card>
 
@@ -294,10 +293,12 @@
             <div class="space-y-3">
                 @forelse($recentUsers as $user)
                 <div class="flex items-start gap-3">
-                    <div class="w-2 h-2 bg-{{ $user->is_active ? 'success' : 'error' }} rounded-full mt-2 shrink-0"></div>
+                    <div class="w-2 h-2 bg-{{ $user->is_active ? 'success' : 'error' }} rounded-full mt-2 shrink-0">
+                    </div>
                     <div>
                         <p class="text-sm font-medium">{{ $user->name }}</p>
-                        <p class="text-xs text-base-content/60">{{ $user->role->name ?? '-' }} — {{ $user->created_at?->diffForHumans() }}</p>
+                        <p class="text-xs text-base-content/60">{{ $user->role->name ?? '-' }} —
+                            {{ $user->created_at?->diffForHumans() }}</p>
                     </div>
                 </div>
                 @empty

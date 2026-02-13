@@ -2,7 +2,7 @@
     <x-slot:header>
         <x-layouts.page-header title="Jenis Surat" description="Kelola master data jenis surat yang tersedia di sistem">
             <x-slot:actions>
-                <x-ui.button type="primary" size="sm" href="{{ route('admin.jenis-surat.create') }}">
+                <x-ui.button type="primary" size="sm" href="{{ route('master.jenis-surat.create') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -20,13 +20,13 @@
 
     {{-- Search --}}
     <x-ui.card class="mb-6">
-        <form method="GET" action="{{ route('admin.jenis-surat.index') }}" class="flex flex-col md:flex-row gap-4">
+        <form method="GET" action="{{ route('master.jenis-surat.index') }}" class="flex flex-col md:flex-row gap-4">
             <div class="flex-1">
                 <x-ui.input name="search" placeholder="Cari nama jenis surat..." value="{{ request('search') }}" />
             </div>
             <div class="flex gap-2">
                 <x-ui.button type="primary" size="md">Cari</x-ui.button>
-                <x-ui.button type="ghost" size="md" href="{{ route('admin.jenis-surat.index') }}">Reset</x-ui.button>
+                <x-ui.button type="ghost" size="md" href="{{ route('master.jenis-surat.index') }}">Reset</x-ui.button>
             </div>
         </form>
     </x-ui.card>
@@ -59,14 +59,14 @@
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">
-                                <x-ui.button type="ghost" size="xs" href="{{ route('admin.jenis-surat.edit', $js) }}">
+                                <x-ui.button type="ghost" size="xs" href="{{ route('master.jenis-surat.edit', $js) }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                 </x-ui.button>
-                                <form method="POST" action="{{ route('admin.jenis-surat.destroy', $js) }}"
+                                <form method="POST" action="{{ route('master.jenis-surat.destroy', $js) }}"
                                     onsubmit="return confirm('Hapus jenis surat &quot;{{ $js->nama }}&quot;?')">
                                     @csrf @method('DELETE')
                                     <x-ui.button type="error" size="xs" :outline="true">

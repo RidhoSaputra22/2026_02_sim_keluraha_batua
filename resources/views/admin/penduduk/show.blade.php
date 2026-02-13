@@ -2,14 +2,14 @@
     <x-slot:header>
         <x-layouts.page-header title="Detail Data Penduduk" description="{{ $penduduk->nama }}">
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('admin.penduduk.index') }}">← Kembali</x-ui.button>
-                <x-ui.button type="primary" size="sm" href="{{ route('admin.penduduk.edit', $penduduk) }}">Edit</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('kependudukan.penduduk.index') }}">← Kembali</x-ui.button>
+                <x-ui.button type="primary" size="sm" href="{{ route('kependudukan.penduduk.edit', $penduduk) }}">Edit</x-ui.button>
             </x-slot:actions>
         </x-layouts.page-header>
     </x-slot:header>
 
     <x-layouts.breadcrumb :items="[
-        ['label' => 'Data Penduduk', 'url' => route('admin.penduduk.index')],
+        ['label' => 'Data Penduduk', 'url' => route('kependudukan.penduduk.index')],
         ['label' => $penduduk->nama],
     ]" />
 
@@ -102,7 +102,7 @@
                     </div>
                 </div>
                 <x-slot:actions>
-                    <x-ui.button type="ghost" size="xs" href="{{ route('admin.keluarga.show', $penduduk->keluarga) }}">Detail KK →</x-ui.button>
+                    <x-ui.button type="ghost" size="xs" href="{{ route('kependudukan.keluarga.show', $penduduk->keluarga) }}">Detail KK →</x-ui.button>
                 </x-slot:actions>
             </x-ui.card>
             @endif

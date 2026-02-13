@@ -85,14 +85,15 @@ $user = auth()->user();
                     Data Master
                 </summary>
                 <ul>
-                    <li><a href="{{ route('admin.wilayah.index') }}"
-                            class="{{ request()->routeIs('admin.wilayah.*', 'master.wilayah.*') ? 'active' : '' }}">Wilayah
+                    <li><a href="{{ route('master.wilayah.index') }}"
+                            class="{{ request()->routeIs('master.wilayah.*', 'master.wilayah.*') ? 'active' : '' }}">Wilayah
                             (RW/RT)</a></li>
-                    <li><a href="{{ route('admin.penandatangan.index') }}"
-                            class="{{ request()->routeIs('admin.penandatangan.*', 'master.penandatangan.*') ? 'active' : '' }}">Penandatangan</a>
+                    <li><a href="{{ route('master.penandatangan.index') }}"
+                            class="{{ request()->routeIs('master.penandatangan.*', 'master.penandatangan.*') ? 'active' : '' }}">Penandatangan</a>
                     </li>
-                    <li><a href="{{ route('admin.pegawai.index') }}"
-                            class="{{ request()->routeIs('admin.pegawai.*') ? 'active' : '' }}">Pegawai / Staff</a></li>
+                    <li><a href="{{ route('master.pegawai.index') }}"
+                            class="{{ request()->routeIs('master.pegawai.*') ? 'active' : '' }}">Pegawai / Staff</a>
+                    </li>
                     <li><a href="{{ route('master.jenis-surat.index') }}"
                             class="{{ request()->routeIs('master.jenis-surat.*') ? 'active' : '' }}">Jenis Surat</a>
                     </li>
@@ -115,7 +116,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
         </li>
         <li>
-            <details {{ request()->routeIs('kependudukan.*', 'admin.penduduk.*', 'admin.keluarga.*') ? 'open' : '' }}>
+            <details {{ request()->routeIs('kependudukan.*', 'kependudukan.penduduk.*', 'admin.keluarga.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -125,11 +126,11 @@ $user = auth()->user();
                     Kependudukan
                 </summary>
                 <ul>
-                    <li><a href="{{ route('admin.penduduk.index') }}"
-                            class="{{ request()->routeIs('admin.penduduk.*', 'kependudukan.penduduk.*') ? 'active' : '' }}">Data
+                    <li><a href="{{ route('kependudukan.penduduk.index') }}"
+                            class="{{ request()->routeIs('kependudukan.penduduk.*', 'kependudukan.penduduk.*') ? 'active' : '' }}">Data
                             Penduduk</a></li>
-                    <li><a href="{{ route('admin.keluarga.index') }}"
-                            class="{{ request()->routeIs('admin.keluarga.*', 'kependudukan.kk.*') ? 'active' : '' }}">Kartu
+                    <li><a href="{{ route('kependudukan.keluarga.index') }}"
+                            class="{{ request()->routeIs('kependudukan.keluarga.*', 'kependudukan.kk.*') ? 'active' : '' }}">Kartu
                             Keluarga</a></li>
                     <li><a href="{{ route('kependudukan.mutasi.index') }}"
                             class="{{ request()->routeIs('kependudukan.mutasi.*') ? 'active' : '' }}">Mutasi

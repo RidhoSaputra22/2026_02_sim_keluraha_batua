@@ -89,7 +89,7 @@ class AdminMiddlewareTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($operator)->get(route('admin.penduduk.index'));
+        $response = $this->actingAs($operator)->get(route('kependudukan.penduduk.index'));
 
         $response->assertStatus(403);
     }

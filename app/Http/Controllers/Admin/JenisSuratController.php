@@ -34,7 +34,7 @@ class JenisSuratController extends Controller
 
         SuratJenis::create($validated);
 
-        return redirect()->route('admin.jenis-surat.index')
+        return redirect()->route('master.jenis-surat.index')
             ->with('success', 'Jenis surat berhasil ditambahkan.');
     }
 
@@ -58,7 +58,7 @@ class JenisSuratController extends Controller
 
         $jenisSurat->update($validated);
 
-        return redirect()->route('admin.jenis-surat.index')
+        return redirect()->route('master.jenis-surat.index')
             ->with('success', 'Jenis surat berhasil diperbarui.');
     }
 
@@ -66,7 +66,7 @@ class JenisSuratController extends Controller
     {
         $jenisSurat->delete();
 
-        return redirect()->route('admin.jenis-surat.index')
+        return redirect()->route('master.jenis-surat.index')
             ->with('success', 'Jenis surat berhasil dihapus.');
     }
 }

@@ -16,10 +16,12 @@ class LaporanUsahaController extends Controller
         // Per jenis usaha
         $perJenis = JenisUsaha::withCount('umkms')->orderBy('nama')->get();
 
-        // Per RW
-        $perRw = Rw::withCount(['rts as umkm_count' => function ($q) {
-            $q->withCount('umkms');
-        }])->orderBy('nomor')->get();
+        // Per sektor
+        $perSektor = Umkm::selectRaw('sektor_umkm, COUNT(*) as total')
+            ->whereNotNull('sektor_umkm')
+            ->groupBy('sektor_umkm')
+            ->orderBy('total', 'desc')
+            ->get();
 
         // Summary stats
         $totalUsaha = Umkm::count();
@@ -27,15 +29,15 @@ class LaporanUsahaController extends Controller
         $totalTidakAktif = Umkm::where('status', 'tidak_aktif')->count();
         $totalJenis = JenisUsaha::count();
 
-        // Recent usaha
-        $recentUsaha = Umkm::with(['jenisUsaha', 'rt.rw'])
+        // Usaha terbaru
+        $usahaTerbaru = Umkm::with(['jenisUsaha', 'rt.rw'])
             ->latest()
             ->take(10)
             ->get();
 
-        return view('usaha.laporan', compact(
-            'perJenis', 'perRw', 'totalUsaha', 'totalAktif',
-            'totalTidakAktif', 'totalJenis', 'recentUsaha'
+        return view('laporan.usaha', compact(
+            'perJenis', 'perSektor', 'totalUsaha', 'totalAktif',
+            'totalTidakAktif', 'totalJenis', 'usahaTerbaru'
         ));
     }
 }

@@ -38,7 +38,7 @@ class PegawaiControllerTest extends TestCase
     {
         PegawaiStaff::factory()->count(3)->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.pegawai.index'));
+        $response = $this->actingAs($this->admin)->get(route('master.pegawai.index'));
 
         $response->assertStatus(200);
         $response->assertViewHas('pegawai');
@@ -49,7 +49,7 @@ class PegawaiControllerTest extends TestCase
         PegawaiStaff::factory()->create(['nama' => 'Pak Dosen Unik']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.pegawai.index', ['search' => 'Pak Dosen Unik']));
+            ->get(route('master.pegawai.index', ['search' => 'Pak Dosen Unik']));
 
         $response->assertStatus(200);
         $response->assertSee('Pak Dosen Unik');
@@ -63,7 +63,7 @@ class PegawaiControllerTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.pegawai.index', ['search' => '199901012022011001']));
+            ->get(route('master.pegawai.index', ['search' => '199901012022011001']));
 
         $response->assertStatus(200);
         $response->assertSee('Pegawai NIP Test');
@@ -75,7 +75,7 @@ class PegawaiControllerTest extends TestCase
         PegawaiStaff::factory()->create(['status_pegawai' => 'nonaktif', 'nama' => 'Nonaktif Staff']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.pegawai.index', ['status_pegawai' => 'aktif']));
+            ->get(route('master.pegawai.index', ['status_pegawai' => 'aktif']));
 
         $response->assertStatus(200);
     }
@@ -86,7 +86,7 @@ class PegawaiControllerTest extends TestCase
         PegawaiStaff::factory()->create(['no_urut' => 1, 'nama' => 'Pegawai A']);
         PegawaiStaff::factory()->create(['no_urut' => 2, 'nama' => 'Pegawai B']);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.pegawai.index'));
+        $response = $this->actingAs($this->admin)->get(route('master.pegawai.index'));
 
         $response->assertStatus(200);
         $pegawai = $response->viewData('pegawai');
@@ -97,7 +97,7 @@ class PegawaiControllerTest extends TestCase
 
     public function test_admin_can_view_create_pegawai_form(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('admin.pegawai.create'));
+        $response = $this->actingAs($this->admin)->get(route('master.pegawai.create'));
 
         $response->assertStatus(200);
     }
@@ -116,9 +116,9 @@ class PegawaiControllerTest extends TestCase
             'no_urut'        => 5,
         ];
 
-        $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), $data);
+        $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), $data);
 
-        $response->assertRedirect(route('admin.pegawai.index'));
+        $response->assertRedirect(route('master.pegawai.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('pegawai_staff', [
             'nama'    => 'Andi Pegawai',
@@ -129,7 +129,7 @@ class PegawaiControllerTest extends TestCase
 
     public function test_store_pegawai_validates_nama_required(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+        $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nip'            => '199901012022011099',
             'jabatan'        => 'Staff',
             'status_pegawai' => 'aktif',
@@ -140,7 +140,7 @@ class PegawaiControllerTest extends TestCase
 
     public function test_store_pegawai_validates_jabatan_required(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+        $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nip'            => '199901012022011099',
             'nama'           => 'Test',
             'status_pegawai' => 'aktif',
@@ -151,7 +151,7 @@ class PegawaiControllerTest extends TestCase
 
     public function test_store_pegawai_validates_status_in_valid_values(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+        $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nip'            => '199901012022011099',
             'nama'           => 'Test',
             'jabatan'        => 'Staff',
@@ -163,7 +163,7 @@ class PegawaiControllerTest extends TestCase
 
     public function test_store_pegawai_validates_nip_required(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.pegawai.store'), [
+        $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nama'           => 'Test',
             'jabatan'        => 'Staff',
             'status_pegawai' => 'aktif',
@@ -181,7 +181,7 @@ class PegawaiControllerTest extends TestCase
             'status_pegawai' => 'aktif',
         ];
 
-        $this->actingAs($this->admin)->post(route('admin.pegawai.store'), $data);
+        $this->actingAs($this->admin)->post(route('master.pegawai.store'), $data);
 
         $pegawai = PegawaiStaff::where('nama', 'Test Petugas')->first();
         $this->assertNotNull($pegawai);
@@ -195,7 +195,7 @@ class PegawaiControllerTest extends TestCase
     {
         $pegawai = PegawaiStaff::factory()->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.pegawai.edit', $pegawai));
+        $response = $this->actingAs($this->admin)->get(route('master.pegawai.edit', $pegawai));
 
         $response->assertStatus(200);
         $response->assertViewHas('pegawai');
@@ -207,14 +207,14 @@ class PegawaiControllerTest extends TestCase
     {
         $pegawai = PegawaiStaff::factory()->create();
 
-        $response = $this->actingAs($this->admin)->put(route('admin.pegawai.update', $pegawai), [
+        $response = $this->actingAs($this->admin)->put(route('master.pegawai.update', $pegawai), [
             'nip'            => $pegawai->nip,
             'nama'           => 'Nama Updated',
             'jabatan'        => 'Sekretaris Lurah',
             'status_pegawai' => 'nonaktif',
         ]);
 
-        $response->assertRedirect(route('admin.pegawai.index'));
+        $response->assertRedirect(route('master.pegawai.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('pegawai_staff', [
             'id'             => $pegawai->id,
@@ -229,9 +229,9 @@ class PegawaiControllerTest extends TestCase
     {
         $pegawai = PegawaiStaff::factory()->create();
 
-        $response = $this->actingAs($this->admin)->delete(route('admin.pegawai.destroy', $pegawai));
+        $response = $this->actingAs($this->admin)->delete(route('master.pegawai.destroy', $pegawai));
 
-        $response->assertRedirect(route('admin.pegawai.index'));
+        $response->assertRedirect(route('master.pegawai.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseMissing('pegawai_staff', ['id' => $pegawai->id]);
     }
