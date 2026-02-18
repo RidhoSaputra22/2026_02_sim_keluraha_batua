@@ -112,11 +112,13 @@ $user = auth()->user();
         {{-- Kependudukan — Admin, Operator --}}
         {{-- ============================================================ --}}
         @if($user && $user->hasRole(['admin', 'operator']))
+        <span class="text-xs uppercase tracking-wider text-base-content/40">Persuratan</span>
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
         </li>
         <li>
-            <details {{ request()->routeIs('kependudukan.*', 'kependudukan.penduduk.*', 'admin.keluarga.*') ? 'open' : '' }}>
+            <details
+                {{ request()->routeIs('kependudukan.*', 'kependudukan.penduduk.*', 'admin.keluarga.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
