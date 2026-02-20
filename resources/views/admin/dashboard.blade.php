@@ -49,7 +49,7 @@
         </div>
 
         {{-- Surat Bulan Ini --}}
-        <div class="card bg-base-100 shadow border border-accent/10">
+        <!-- <div class="card bg-base-100 shadow border border-accent/10">
             <div class="card-body p-5">
                 <div class="flex items-start justify-between">
                     <div>
@@ -66,7 +66,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         {{-- Menunggu Verifikasi --}}
         <div class="card bg-base-100 shadow border border-warning/20">
