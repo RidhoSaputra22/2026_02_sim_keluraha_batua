@@ -50,7 +50,7 @@ class WilayahController extends Controller
         $totalAktif = RtRwPengurus::where('status', 'aktif')->count();
         $totalNonaktif = RtRwPengurus::where('status', 'nonaktif')->count();
 
-        return view('admin.wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
+        return view('master.wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
     }
 
     public function create()
@@ -82,7 +82,7 @@ class WilayahController extends Controller
 
         RtRwPengurus::create($validated);
 
-        return redirect()->route('admin.wilayah.index')
+        return redirect()->route('master.wilayah.index')
             ->with('success', 'Data pengurus RT/RW berhasil ditambahkan.');
     }
 
@@ -116,7 +116,7 @@ class WilayahController extends Controller
 
         $wilayah->update($validated);
 
-        return redirect()->route('admin.wilayah.index')
+        return redirect()->route('master.wilayah.index')
             ->with('success', 'Data pengurus RT/RW berhasil diperbarui.');
     }
 
@@ -124,7 +124,7 @@ class WilayahController extends Controller
     {
         $wilayah->delete();
 
-        return redirect()->route('admin.wilayah.index')
+        return redirect()->route('master.wilayah.index')
             ->with('success', 'Data pengurus RT/RW berhasil dihapus.');
     }
 }

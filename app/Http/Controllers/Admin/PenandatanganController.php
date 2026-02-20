@@ -50,7 +50,7 @@ class PenandatanganController extends Controller
 
         Penandatanganan::create($validated);
 
-        return redirect()->route('admin.penandatangan.index')
+        return redirect()->route('master.penandatangan.index')
             ->with('success', 'Data penandatangan berhasil ditambahkan.');
     }
 
@@ -72,7 +72,7 @@ class PenandatanganController extends Controller
 
         $penandatangan->update($validated);
 
-        return redirect()->route('admin.penandatangan.index')
+        return redirect()->route('master.penandatangan.index')
             ->with('success', 'Data penandatangan berhasil diperbarui.');
     }
 
@@ -80,7 +80,7 @@ class PenandatanganController extends Controller
     {
         $penandatangan->delete();
 
-        return redirect()->route('admin.penandatangan.index')
+        return redirect()->route('master.penandatangan.index')
             ->with('success', 'Data penandatangan berhasil dihapus.');
     }
 }

@@ -94,12 +94,12 @@ $user = auth()->user();
                     <li><a href="{{ route('master.pegawai.index') }}"
                             class="{{ request()->routeIs('master.pegawai.*') ? 'active' : '' }}">Pegawai / Staff</a>
                     </li>
-                    <li><a href="{{ route('master.jenis-surat.index') }}"
+                    <!-- <li><a href="{{ route('master.jenis-surat.index') }}"
                             class="{{ request()->routeIs('master.jenis-surat.*') ? 'active' : '' }}">Jenis Surat</a>
-                    </li>
-                    <li><a href="{{ route('master.template-surat.index') }}"
+                    </li> -->
+                    <!-- <li><a href="{{ route('master.template-surat.index') }}"
                             class="{{ request()->routeIs('master.template-surat.*') ? 'active' : '' }}">Template
-                            Surat</a></li>
+                            Surat</a></li> -->
                     <li><a href="{{ route('master.referensi.index') }}"
                             class="{{ request()->routeIs('master.referensi.*') ? 'active' : '' }}">Data Referensi</a>
                     </li>
@@ -151,7 +151,7 @@ $user = auth()->user();
         {{-- ============================================================ --}}
         {{-- Persuratan — Admin, Operator, Verifikator, Penandatangan (warga has separate menu) --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator', 'verifikator', 'penandatangan']))
+        <!-- @if($user && $user->hasRole(['admin', 'operator', 'verifikator', 'penandatangan']))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Persuratan</span>
         </li>
@@ -200,7 +200,7 @@ $user = auth()->user();
                 </ul>
             </details>
         </li>
-        @endif
+        @endif -->
 
         {{-- ============================================================ --}}
         {{-- Ekspedisi — Admin, Operator --}}
@@ -331,8 +331,8 @@ $user = auth()->user();
                     @endif
 
                     {{-- Laporan Persuratan: All roles that handle surat workflow --}}
-                    <li><a href="{{ route('laporan.persuratan') }}"
-                            class="{{ request()->routeIs('laporan.persuratan') ? 'active' : '' }}">Persuratan</a></li>
+                    <!-- <li><a href="{{ route('laporan.persuratan') }}"
+                            class="{{ request()->routeIs('laporan.persuratan') ? 'active' : '' }}">Persuratan</a></li> -->
 
                     {{-- Laporan Usaha: Admin, Operator only --}}
                     @if($user->hasRole(['admin', 'operator']))
@@ -372,7 +372,7 @@ $user = auth()->user();
                 Data Keluarga
             </a>
         </li> -->
-        <li>
+        <!-- <li>
             <a href="{{ route('rtrw.pengantar.index') }}"
                 class="{{ request()->routeIs('rtrw.pengantar.*') ? 'active' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
@@ -382,7 +382,7 @@ $user = auth()->user();
                 </svg>
                 Surat Pengantar
             </a>
-        </li>
+        </li> -->
         <li>
             <a href="{{ route('rtrw.laporan.index') }}"
                 class="{{ request()->routeIs('rtrw.laporan.*') ? 'active' : '' }}">

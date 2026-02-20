@@ -4,10 +4,11 @@
     </x-slot:header>
 
     @php
-        $role = $user->getRoleName();
-        $roleLabel = $user->role?->label ?? '-';
-        $isStaff = in_array($role, [\App\Models\Role::ADMIN, \App\Models\Role::OPERATOR, \App\Models\Role::VERIFIKATOR, \App\Models\Role::PENANDATANGAN]);
-        $isRtRwOrWarga = in_array($role, [\App\Models\Role::RT_RW, \App\Models\Role::WARGA]);
+    $role = $user->getRoleName();
+    $roleLabel = $user->role?->label ?? '-';
+    $isStaff = in_array($role, [\App\Models\Role::ADMIN, \App\Models\Role::OPERATOR, \App\Models\Role::VERIFIKATOR,
+    \App\Models\Role::PENANDATANGAN]);
+    $isRtRwOrWarga = in_array($role, [\App\Models\Role::RT_RW, \App\Models\Role::WARGA]);
     @endphp
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -29,12 +30,16 @@
                         <div class="flex items-center justify-between">
                             <span class="text-base-content/60">Status</span>
                             @if($user->is_active)
-                                <span class="badge badge-success badge-sm gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                                    Aktif
-                                </span>
+                            <span class="badge badge-success badge-sm gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
+                                </svg>
+                                Aktif
+                            </span>
                             @else
-                                <span class="badge badge-error badge-sm">Nonaktif</span>
+                            <span class="badge badge-error badge-sm">Nonaktif</span>
                             @endif
                         </div>
 
@@ -72,18 +77,18 @@
 
                         {{-- Wilayah (RT/RW) --}}
                         @if($role === \App\Models\Role::RT_RW)
-                            @if($user->wilayah_rw)
-                            <div class="flex items-center justify-between">
-                                <span class="text-base-content/60">RW</span>
-                                <span>{{ $user->wilayah_rw }}</span>
-                            </div>
-                            @endif
-                            @if($user->wilayah_rt)
-                            <div class="flex items-center justify-between">
-                                <span class="text-base-content/60">RT</span>
-                                <span>{{ $user->wilayah_rt }}</span>
-                            </div>
-                            @endif
+                        @if($user->wilayah_rw)
+                        <div class="flex items-center justify-between">
+                            <span class="text-base-content/60">RW</span>
+                            <span>{{ $user->wilayah_rw }}</span>
+                        </div>
+                        @endif
+                        @if($user->wilayah_rt)
+                        <div class="flex items-center justify-between">
+                            <span class="text-base-content/60">RT</span>
+                            <span>{{ $user->wilayah_rt }}</span>
+                        </div>
+                        @endif
                         @endif
 
                         {{-- Last Login --}}
@@ -118,64 +123,33 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {{-- Nama --}}
-                        <x-ui.input
-                            name="name"
-                            label="Nama Lengkap"
-                            :value="$user->name"
-                            :error="$errors->first('name')"
-                            :required="true"
-                        />
+                        <x-ui.input name="name" label="Nama Lengkap" :value="$user->name"
+                            :error="$errors->first('name')" :required="true" />
 
                         {{-- Email --}}
-                        <x-ui.input
-                            name="email"
-                            type="email"
-                            label="Email"
-                            :value="$user->email"
-                            :error="$errors->first('email')"
-                            :required="true"
-                        />
+                        <x-ui.input name="email" type="email" label="Email" :value="$user->email"
+                            :error="$errors->first('email')" :required="true" />
 
                         {{-- Telepon --}}
-                        <x-ui.input
-                            name="phone"
-                            label="No. Telepon"
-                            placeholder="08xxxxxxxxxx"
-                            :value="$user->phone"
-                            :error="$errors->first('phone')"
-                        />
+                        <x-ui.input name="phone" label="No. Telepon" placeholder="08xxxxxxxxxx" :value="$user->phone"
+                            :error="$errors->first('phone')" />
 
                         {{-- NIP (Staff only) --}}
                         @if($isStaff)
-                        <x-ui.input
-                            name="nip"
-                            label="NIP"
-                            placeholder="Nomor Induk Pegawai"
-                            :value="$user->nip"
-                            :error="$errors->first('nip')"
-                        />
+                        <x-ui.input name="nip" label="NIP" placeholder="Nomor Induk Pegawai" :value="$user->nip"
+                            :error="$errors->first('nip')" />
                         @endif
 
                         {{-- NIK (RT/RW & Warga) --}}
                         @if($isRtRwOrWarga)
-                        <x-ui.input
-                            name="nik"
-                            label="NIK"
-                            placeholder="Nomor Induk Kependudukan"
-                            :value="$user->nik"
-                            :error="$errors->first('nik')"
-                        />
+                        <x-ui.input name="nik" label="NIK" placeholder="Nomor Induk Kependudukan" :value="$user->nik"
+                            :error="$errors->first('nik')" />
                         @endif
 
                         {{-- Jabatan (Staff only) --}}
                         @if($isStaff)
-                        <x-ui.input
-                            name="jabatan"
-                            label="Jabatan"
-                            placeholder="Jabatan di kelurahan"
-                            :value="$user->jabatan"
-                            :error="$errors->first('jabatan')"
-                        />
+                        <x-ui.input name="jabatan" label="Jabatan" placeholder="Jabatan di kelurahan"
+                            :value="$user->jabatan" :error="$errors->first('jabatan')" />
                         @endif
                     </div>
 
@@ -184,7 +158,8 @@
                         {{-- Role (read-only) --}}
                         <div class="form-control w-full">
                             <label class="label"><span class="label-text">Role</span></label>
-                            <input type="text" class="input input-bordered w-full bg-base-200" value="{{ $roleLabel }}" disabled />
+                            <input type="text" class="input input-bordered w-full bg-base-200" value="{{ $roleLabel }}"
+                                disabled />
                             <label class="label">
                                 <span class="label-text-alt text-base-content/50">Role tidak dapat diubah sendiri</span>
                             </label>
@@ -195,9 +170,11 @@
                         <div class="form-control w-full">
                             <label class="label"><span class="label-text">Wilayah</span></label>
                             <input type="text" class="input input-bordered w-full bg-base-200"
-                                value="RT {{ $user->wilayah_rt ?? '-' }} / RW {{ $user->wilayah_rw ?? '-' }}" disabled />
+                                value="RT {{ $user->wilayah_rt ?? '-' }} / RW {{ $user->wilayah_rw ?? '-' }}"
+                                disabled />
                             <label class="label">
-                                <span class="label-text-alt text-base-content/50">Hubungi admin untuk mengubah wilayah</span>
+                                <span class="label-text-alt text-base-content/50">Hubungi admin untuk mengubah
+                                    wilayah</span>
                             </label>
                         </div>
                         @endif
@@ -205,8 +182,10 @@
 
                     <div class="flex justify-end mt-6">
                         <x-ui.button type="primary">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
                             </svg>
                             Simpan Perubahan
                         </x-ui.button>
@@ -217,7 +196,8 @@
             {{-- Ubah Password --}}
             <x-ui.card>
                 <h3 class="text-lg font-semibold mb-1">Ubah Password</h3>
-                <p class="text-sm text-base-content/60 mb-4">Pastikan akun Anda menggunakan password yang kuat dan unik.</p>
+                <p class="text-sm text-base-content/60 mb-4">Pastikan akun Anda menggunakan password yang kuat dan unik.
+                </p>
 
                 <form method="POST" action="{{ route('profile.password') }}">
                     @csrf
@@ -226,40 +206,26 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {{-- Current Password --}}
                         <div class="md:col-span-2">
-                            <x-ui.input
-                                name="current_password"
-                                type="password"
-                                label="Password Saat Ini"
-                                placeholder="Masukkan password lama"
-                                :error="$errors->first('current_password')"
-                                :required="true"
-                            />
+                            <x-ui.input name="current_password" type="password" label="Password Saat Ini"
+                                placeholder="Masukkan password lama" :error="$errors->first('current_password')"
+                                :required="true" />
                         </div>
 
                         {{-- New Password --}}
-                        <x-ui.input
-                            name="password"
-                            type="password"
-                            label="Password Baru"
-                            placeholder="Minimal 8 karakter"
-                            :error="$errors->first('password')"
-                            :required="true"
-                        />
+                        <x-ui.input name="password" type="password" label="Password Baru"
+                            placeholder="Minimal 8 karakter" :error="$errors->first('password')" :required="true" />
 
                         {{-- Confirm Password --}}
-                        <x-ui.input
-                            name="password_confirmation"
-                            type="password"
-                            label="Konfirmasi Password Baru"
-                            placeholder="Ulangi password baru"
-                            :required="true"
-                        />
+                        <x-ui.input name="password_confirmation" type="password" label="Konfirmasi Password Baru"
+                            placeholder="Ulangi password baru" :required="true" />
                     </div>
 
                     <div class="flex justify-end mt-6">
                         <x-ui.button type="warning">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                             Ubah Password
                         </x-ui.button>
@@ -273,55 +239,57 @@
                 <p class="text-sm text-base-content/60 mb-4">Ringkasan modul yang dapat Anda akses berdasarkan role.</p>
 
                 @php
-                    $accessMap = [
-                        \App\Models\Role::ADMIN => [
-                            ['label' => 'Manajemen Pengguna & Role', 'icon' => 'users'],
-                            ['label' => 'Data Master (Wilayah, Template, Referensi)', 'icon' => 'database'],
-                            ['label' => 'Kependudukan (Penduduk, Keluarga, Mutasi)', 'icon' => 'id-card'],
-                            ['label' => 'Persuratan (Semua Proses)', 'icon' => 'document'],
-                            ['label' => 'Data Usaha / UMKM', 'icon' => 'shop'],
-                            ['label' => 'Audit Log & Laporan', 'icon' => 'chart'],
-                            ['label' => 'Seluruh Modul Sistem', 'icon' => 'star'],
-                        ],
-                        \App\Models\Role::OPERATOR => [
-                            ['label' => 'Input Data Kependudukan', 'icon' => 'id-card'],
-                            ['label' => 'Registrasi Permohonan Surat', 'icon' => 'document'],
-                            ['label' => 'Ekspedisi Surat', 'icon' => 'mail'],
-                            ['label' => 'Data Usaha / UMKM', 'icon' => 'shop'],
-                            ['label' => 'Data Umum (Faskes, Sekolah, dll)', 'icon' => 'database'],
-                            ['label' => 'Agenda & Kegiatan', 'icon' => 'calendar'],
-                        ],
-                        \App\Models\Role::VERIFIKATOR => [
-                            ['label' => 'Verifikasi Permohonan Surat', 'icon' => 'check'],
-                            ['label' => 'Validasi Data & Berkas', 'icon' => 'document'],
-                            ['label' => 'Laporan Persuratan', 'icon' => 'chart'],
-                        ],
-                        \App\Models\Role::PENANDATANGAN => [
-                            ['label' => 'Tanda Tangan Surat', 'icon' => 'pencil'],
-                            ['label' => 'Review Dokumen Terverifikasi', 'icon' => 'document'],
-                            ['label' => 'Laporan', 'icon' => 'chart'],
-                        ],
-                        \App\Models\Role::RT_RW => [
-                            ['label' => 'Data Warga di Wilayah RT/RW', 'icon' => 'users'],
-                            ['label' => 'Surat Pengantar', 'icon' => 'document'],
-                            ['label' => 'Laporan Wilayah', 'icon' => 'chart'],
-                        ],
-                        \App\Models\Role::WARGA => [
-                            ['label' => 'Permohonan Surat Online', 'icon' => 'document'],
-                            ['label' => 'Tracking Status Surat', 'icon' => 'search'],
-                            ['label' => 'Riwayat & Download Surat', 'icon' => 'download'],
-                        ],
-                    ];
+                $accessMap = [
+                \App\Models\Role::ADMIN => [
+                ['label' => 'Manajemen Pengguna & Role', 'icon' => 'users'],
+                ['label' => 'Data Master (Wilayah, Template, Referensi)', 'icon' => 'database'],
+                ['label' => 'Kependudukan (Penduduk, Keluarga, Mutasi)', 'icon' => 'id-card'],
+                // ['label' => 'Persuratan (Semua Proses)', 'icon' => 'document'],
+                ['label' => 'Data Usaha / UMKM', 'icon' => 'shop'],
+                ['label' => 'Audit Log & Laporan', 'icon' => 'chart'],
+                ['label' => 'Seluruh Modul Sistem', 'icon' => 'star'],
+                ],
+                \App\Models\Role::OPERATOR => [
+                ['label' => 'Input Data Kependudukan', 'icon' => 'id-card'],
+                ['label' => 'Registrasi Permohonan Surat', 'icon' => 'document'],
+                ['label' => 'Ekspedisi Surat', 'icon' => 'mail'],
+                ['label' => 'Data Usaha / UMKM', 'icon' => 'shop'],
+                ['label' => 'Data Umum (Faskes, Sekolah, dll)', 'icon' => 'database'],
+                ['label' => 'Agenda & Kegiatan', 'icon' => 'calendar'],
+                ],
+                \App\Models\Role::VERIFIKATOR => [
+                ['label' => 'Verifikasi Permohonan Surat', 'icon' => 'check'],
+                ['label' => 'Validasi Data & Berkas', 'icon' => 'document'],
+                // ['label' => 'Laporan Persuratan', 'icon' => 'chart'],
+                ],
+                \App\Models\Role::PENANDATANGAN => [
+                ['label' => 'Tanda Tangan Surat', 'icon' => 'pencil'],
+                ['label' => 'Review Dokumen Terverifikasi', 'icon' => 'document'],
+                ['label' => 'Laporan', 'icon' => 'chart'],
+                ],
+                \App\Models\Role::RT_RW => [
+                ['label' => 'Data Warga di Wilayah RT/RW', 'icon' => 'users'],
+                // ['label' => 'Surat Pengantar', 'icon' => 'document'],
+                ['label' => 'Laporan Wilayah', 'icon' => 'chart'],
+                ],
+                \App\Models\Role::WARGA => [
+                ['label' => 'Permohonan Surat Online', 'icon' => 'document'],
+                ['label' => 'Tracking Status Surat', 'icon' => 'search'],
+                ['label' => 'Riwayat & Download Surat', 'icon' => 'download'],
+                ],
+                ];
 
-                    $currentAccess = $accessMap[$role] ?? [];
+                $currentAccess = $accessMap[$role] ?? [];
                 @endphp
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     @foreach($currentAccess as $access)
                     <div class="flex items-center gap-3 p-3 rounded-lg bg-base-200/50">
                         <div class="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-primary" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
                         <span class="text-sm">{{ $access['label'] }}</span>

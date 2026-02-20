@@ -24,15 +24,15 @@ class WilayahControllerTest extends TestCase
         parent::setUp();
 
         $adminRole = Role::create([
-            'name'        => Role::ADMIN,
-            'label'       => 'Admin Sistem',
+            'name' => Role::ADMIN,
+            'label' => 'Admin Sistem',
             'description' => 'Full system access',
             'permissions' => ['*'],
-            'is_active'   => true,
+            'is_active' => true,
         ]);
 
         $this->admin = User::factory()->create([
-            'role_id'   => $adminRole->id,
+            'role_id' => $adminRole->id,
             'is_active' => true,
         ]);
     }
@@ -43,7 +43,7 @@ class WilayahControllerTest extends TestCase
     {
         RtRwPengurus::factory()->count(3)->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.wilayah.index'));
+        $response = $this->actingAs($this->admin)->get(route('master.wilayah.index'));
 
         $response->assertStatus(200);
         $response->assertViewHas('wilayah');
@@ -61,7 +61,7 @@ class WilayahControllerTest extends TestCase
         RtRwPengurus::factory()->create(['penduduk_id' => $penduduk->id]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.wilayah.index', ['search' => 'Pak Usman Unik']));
+            ->get(route('master.wilayah.index', ['search' => 'Pak Usman Unik']));
 
         $response->assertStatus(200);
     }
@@ -72,7 +72,7 @@ class WilayahControllerTest extends TestCase
         RtRwPengurus::factory()->create(['status' => 'nonaktif']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.wilayah.index', ['status' => 'aktif']));
+            ->get(route('master.wilayah.index', ['status' => 'aktif']));
 
         $response->assertStatus(200);
     }
@@ -83,7 +83,7 @@ class WilayahControllerTest extends TestCase
         RtRwPengurus::factory()->create(['rw_id' => $rw->id]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.wilayah.index', ['rw' => $rw->id]));
+            ->get(route('master.wilayah.index', ['rw' => $rw->id]));
 
         $response->assertStatus(200);
     }
@@ -101,30 +101,30 @@ class WilayahControllerTest extends TestCase
 
     public function test_admin_can_store_new_wilayah(): void
     {
-        $penduduk  = Penduduk::factory()->create();
+        $penduduk = Penduduk::factory()->create();
         $kelurahan = Kelurahan::factory()->create();
-        $jabatan   = JabatanRtRw::factory()->create();
-        $rw        = Rw::factory()->create();
-        $rt        = Rt::factory()->create();
+        $jabatan = JabatanRtRw::factory()->create();
+        $rw = Rw::factory()->create();
+        $rt = Rt::factory()->create();
 
         $data = [
-            'penduduk_id'  => $penduduk->id,
+            'penduduk_id' => $penduduk->id,
             'kelurahan_id' => $kelurahan->id,
-            'jabatan_id'   => $jabatan->id,
-            'rw_id'        => $rw->id,
-            'rt_id'        => $rt->id,
-            'status'       => 'aktif',
-            'alamat'       => 'Jl. Batua Raya',
-            'no_telp'      => '08123456789',
+            'jabatan_id' => $jabatan->id,
+            'rw_id' => $rw->id,
+            'rt_id' => $rt->id,
+            'status' => 'aktif',
+            'alamat' => 'Jl. Batua Raya',
+            'no_telp' => '08123456789',
         ];
 
         $response = $this->actingAs($this->admin)->post(route('admin.wilayah.store'), $data);
 
-        $response->assertRedirect(route('admin.wilayah.index'));
+        $response->assertRedirect(route('master.wilayah.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('rt_rw_pengurus', [
             'penduduk_id' => $penduduk->id,
-            'jabatan_id'  => $jabatan->id,
+            'jabatan_id' => $jabatan->id,
         ]);
     }
 
@@ -134,7 +134,7 @@ class WilayahControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)->post(route('admin.wilayah.store'), [
             'jabatan_id' => $jabatan->id,
-            'status'     => 'aktif',
+            'status' => 'aktif',
         ]);
 
         $response->assertSessionHasErrors('penduduk_id');
@@ -143,12 +143,12 @@ class WilayahControllerTest extends TestCase
     public function test_store_wilayah_validates_status_in_aktif_nonaktif(): void
     {
         $penduduk = Penduduk::factory()->create();
-        $jabatan  = JabatanRtRw::factory()->create();
+        $jabatan = JabatanRtRw::factory()->create();
 
         $response = $this->actingAs($this->admin)->post(route('admin.wilayah.store'), [
             'penduduk_id' => $penduduk->id,
-            'jabatan_id'  => $jabatan->id,
-            'status'      => 'invalid_status',
+            'jabatan_id' => $jabatan->id,
+            'status' => 'invalid_status',
         ]);
 
         $response->assertSessionHasErrors('status');
@@ -170,20 +170,20 @@ class WilayahControllerTest extends TestCase
 
     public function test_admin_can_update_wilayah(): void
     {
-        $wilayah    = RtRwPengurus::factory()->create();
+        $wilayah = RtRwPengurus::factory()->create();
         $newJabatan = JabatanRtRw::factory()->create();
 
         $response = $this->actingAs($this->admin)->put(route('admin.wilayah.update', $wilayah), [
-            'penduduk_id'  => $wilayah->penduduk_id,
+            'penduduk_id' => $wilayah->penduduk_id,
             'kelurahan_id' => $wilayah->kelurahan_id,
-            'jabatan_id'   => $newJabatan->id,
-            'status'       => 'aktif',
+            'jabatan_id' => $newJabatan->id,
+            'status' => 'aktif',
         ]);
 
-        $response->assertRedirect(route('admin.wilayah.index'));
+        $response->assertRedirect(route('master.wilayah.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('rt_rw_pengurus', [
-            'id'         => $wilayah->id,
+            'id' => $wilayah->id,
             'jabatan_id' => $newJabatan->id,
         ]);
     }
@@ -196,7 +196,7 @@ class WilayahControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)->delete(route('admin.wilayah.destroy', $wilayah));
 
-        $response->assertRedirect(route('admin.wilayah.index'));
+        $response->assertRedirect(route('master.wilayah.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseMissing('rt_rw_pengurus', ['id' => $wilayah->id]);
     }
