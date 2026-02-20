@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\RtRwPengurus;
 use App\Models\JabatanRtRw;
+use App\Models\Kelurahan;
 use App\Models\Penduduk;
 use App\Models\Rt;
+use App\Models\RtRwPengurus;
 use App\Models\Rw;
-use App\Models\Kelurahan;
 use Illuminate\Http\Request;
 
 class WilayahController extends Controller
@@ -23,7 +23,7 @@ class WilayahController extends Controller
                     $qp->where('nama', 'like', "%{$search}%")
                         ->orWhere('nik', 'like', "%{$search}%");
                 })
-                ->orWhere('no_telp', 'like', "%{$search}%");
+                    ->orWhere('no_telp', 'like', "%{$search}%");
             });
         }
 
@@ -68,16 +68,16 @@ class WilayahController extends Controller
     {
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'penduduk_id'  => ['required', 'exists:penduduks,id'],
-            'jabatan_id'   => ['required', 'exists:jabatan_rt_rw,id'],
-            'rw_id'        => ['nullable', 'exists:rws,id'],
-            'rt_id'        => ['nullable', 'exists:rts,id'],
-            'tgl_mulai'    => ['nullable', 'date'],
-            'status'       => ['required', 'in:aktif,nonaktif'],
-            'alamat'       => ['nullable', 'string'],
-            'no_telp'      => ['nullable', 'string', 'max:20'],
-            'no_rekening'  => ['nullable', 'string', 'max:30'],
-            'no_npwp'      => ['nullable', 'string', 'max:30'],
+            'penduduk_id' => ['required', 'exists:penduduks,id'],
+            'jabatan_id' => ['required', 'exists:jabatan_rt_rw,id'],
+            'rw_id' => ['nullable', 'exists:rws,id'],
+            'rt_id' => ['nullable', 'exists:rts,id'],
+            'tgl_mulai' => ['nullable', 'date'],
+            'status' => ['required', 'in:aktif,nonaktif'],
+            'alamat' => ['nullable', 'string'],
+            'no_telp' => ['nullable', 'string', 'max:20'],
+            'no_rekening' => ['nullable', 'string', 'max:30'],
+            'no_npwp' => ['nullable', 'string', 'max:30'],
         ]);
 
         RtRwPengurus::create($validated);
@@ -102,16 +102,16 @@ class WilayahController extends Controller
     {
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'penduduk_id'  => ['required', 'exists:penduduks,id'],
-            'jabatan_id'   => ['required', 'exists:jabatan_rt_rw,id'],
-            'rw_id'        => ['nullable', 'exists:rws,id'],
-            'rt_id'        => ['nullable', 'exists:rts,id'],
-            'tgl_mulai'    => ['nullable', 'date'],
-            'status'       => ['required', 'in:aktif,nonaktif'],
-            'alamat'       => ['nullable', 'string'],
-            'no_telp'      => ['nullable', 'string', 'max:20'],
-            'no_rekening'  => ['nullable', 'string', 'max:30'],
-            'no_npwp'      => ['nullable', 'string', 'max:30'],
+            'penduduk_id' => ['required', 'exists:penduduks,id'],
+            'jabatan_id' => ['required', 'exists:jabatan_rt_rw,id'],
+            'rw_id' => ['nullable', 'exists:rws,id'],
+            'rt_id' => ['nullable', 'exists:rts,id'],
+            'tgl_mulai' => ['nullable', 'date'],
+            'status' => ['required', 'in:aktif,nonaktif'],
+            'alamat' => ['nullable', 'string'],
+            'no_telp' => ['nullable', 'string', 'max:20'],
+            'no_rekening' => ['nullable', 'string', 'max:30'],
+            'no_npwp' => ['nullable', 'string', 'max:30'],
         ]);
 
         $wilayah->update($validated);

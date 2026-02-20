@@ -2,17 +2,27 @@
 
 namespace App\Http\Controllers\Kependudukan;
 
+use App\Http\Controllers\Concerns\HasWilayahScope;
 use App\Http\Controllers\Controller;
 use App\Models\MutasiPenduduk;
-use App\Models\Penduduk;
-use App\Models\Rt;
 use Illuminate\Http\Request;
 
 class MutasiController extends Controller
 {
+    use HasWilayahScope;
+
     public function index(Request $request)
     {
         $query = MutasiPenduduk::with(['penduduk', 'rtAsal.rw', 'rtTujuan.rw', 'petugas']);
+
+        // RT/RW hanya melihat mutasi yang melibatkan wilayahnya
+        if ($this->isRtRw()) {
+            $rtIds = $this->wilayahRtIds();
+            $query->where(function ($q) use ($rtIds) {
+                $q->whereIn('rt_asal_id', $rtIds)
+                  ->orWhereIn('rt_tujuan_id', $rtIds);
+            });
+        }
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -40,8 +50,8 @@ class MutasiController extends Controller
 
     public function create()
     {
-        $pendudukList = Penduduk::orderBy('nama')->get();
-        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
+        $pendudukList = $this->wilayahPendudukList();
+        $rtList       = $this->wilayahRtList();
 
         return view('kependudukan.mutasi.create', compact('pendudukList', 'rtList'));
     }
@@ -49,20 +59,20 @@ class MutasiController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'penduduk_id' => ['required', 'exists:penduduks,id'],
-            'jenis_mutasi' => ['required', 'in:pindah,datang'],
+            'penduduk_id'    => ['required', 'exists:penduduks,id'],
+            'jenis_mutasi'   => ['required', 'in:pindah,datang'],
             'tanggal_mutasi' => ['required', 'date'],
-            'alamat_asal' => ['nullable', 'string', 'max:255'],
-            'alamat_tujuan' => ['nullable', 'string', 'max:255'],
-            'rt_asal_id' => ['nullable', 'exists:rts,id'],
-            'rt_tujuan_id' => ['nullable', 'exists:rts,id'],
-            'alasan' => ['nullable', 'string', 'max:255'],
-            'keterangan' => ['nullable', 'string', 'max:500'],
-            'no_surat_pindah' => ['nullable', 'string', 'max:100'],
+            'alamat_asal'    => ['nullable', 'string', 'max:255'],
+            'alamat_tujuan'  => ['nullable', 'string', 'max:255'],
+            'rt_asal_id'     => $this->rtIdRules(),
+            'rt_tujuan_id'   => $this->rtIdRules(),
+            'alasan'         => ['nullable', 'string', 'max:255'],
+            'keterangan'     => ['nullable', 'string', 'max:500'],
+            'no_surat_pindah'=> ['nullable', 'string', 'max:100'],
         ]);
 
         $validated['petugas_id'] = auth()->id();
-        $validated['status'] = 'proses';
+        $validated['status']     = 'proses';
 
         MutasiPenduduk::create($validated);
 
@@ -72,26 +82,30 @@ class MutasiController extends Controller
 
     public function edit(MutasiPenduduk $mutasi)
     {
-        $pendudukList = Penduduk::orderBy('nama')->get();
-        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
+        $this->authorizeWilayahByRtId($mutasi->rt_asal_id);
+
+        $pendudukList = $this->wilayahPendudukList();
+        $rtList       = $this->wilayahRtList();
 
         return view('kependudukan.mutasi.edit', compact('mutasi', 'pendudukList', 'rtList'));
     }
 
     public function update(Request $request, MutasiPenduduk $mutasi)
     {
+        $this->authorizeWilayahByRtId($mutasi->rt_asal_id);
+
         $validated = $request->validate([
-            'penduduk_id' => ['required', 'exists:penduduks,id'],
-            'jenis_mutasi' => ['required', 'in:pindah,datang'],
+            'penduduk_id'    => ['required', 'exists:penduduks,id'],
+            'jenis_mutasi'   => ['required', 'in:pindah,datang'],
             'tanggal_mutasi' => ['required', 'date'],
-            'alamat_asal' => ['nullable', 'string', 'max:255'],
-            'alamat_tujuan' => ['nullable', 'string', 'max:255'],
-            'rt_asal_id' => ['nullable', 'exists:rts,id'],
-            'rt_tujuan_id' => ['nullable', 'exists:rts,id'],
-            'alasan' => ['nullable', 'string', 'max:255'],
-            'keterangan' => ['nullable', 'string', 'max:500'],
-            'no_surat_pindah' => ['nullable', 'string', 'max:100'],
-            'status' => ['nullable', 'in:proses,selesai,batal'],
+            'alamat_asal'    => ['nullable', 'string', 'max:255'],
+            'alamat_tujuan'  => ['nullable', 'string', 'max:255'],
+            'rt_asal_id'     => $this->rtIdRules(),
+            'rt_tujuan_id'   => $this->rtIdRules(),
+            'alasan'         => ['nullable', 'string', 'max:255'],
+            'keterangan'     => ['nullable', 'string', 'max:500'],
+            'no_surat_pindah'=> ['nullable', 'string', 'max:100'],
+            'status'         => ['nullable', 'in:proses,selesai,batal'],
         ]);
 
         $mutasi->update($validated);
@@ -102,6 +116,8 @@ class MutasiController extends Controller
 
     public function destroy(MutasiPenduduk $mutasi)
     {
+        $this->authorizeWilayahByRtId($mutasi->rt_asal_id);
+
         $mutasi->delete();
 
         return redirect()->route('kependudukan.mutasi.index')

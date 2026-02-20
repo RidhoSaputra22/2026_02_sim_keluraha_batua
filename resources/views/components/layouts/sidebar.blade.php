@@ -111,8 +111,8 @@ $user = auth()->user();
         {{-- ============================================================ --}}
         {{-- Kependudukan — Admin, Operator --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator']))
-        <span class="text-xs uppercase tracking-wider text-base-content/40">Persuratan</span>
+        @if($user && $user->hasRole(['admin', 'operator', 'rt_rw']))
+
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
         </li>
@@ -351,7 +351,7 @@ $user = auth()->user();
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Layanan RT/RW</span>
         </li>
-        <li>
+        <!-- <li>
             <a href="{{ route('rtrw.warga.index') }}" class="{{ request()->routeIs('rtrw.warga.*') ? 'active' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -371,7 +371,7 @@ $user = auth()->user();
                 </svg>
                 Data Keluarga
             </a>
-        </li>
+        </li> -->
         <li>
             <a href="{{ route('rtrw.pengantar.index') }}"
                 class="{{ request()->routeIs('rtrw.pengantar.*') ? 'active' : '' }}">

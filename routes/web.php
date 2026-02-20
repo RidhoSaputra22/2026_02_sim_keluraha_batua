@@ -3,11 +3,11 @@
 use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Admin\JenisSuratController as AdminJenisSuratController;
-use App\Http\Controllers\Admin\KeluargaController as AdminKeluargaController;
+use App\Http\Controllers\Kependudukan\KeluargaController as AdminKeluargaController;
 // ─── Role-specific Dashboard Controllers ───────────────────────
 use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
 use App\Http\Controllers\Admin\PenandatanganController as AdminPenandatanganController;
-use App\Http\Controllers\Admin\PendudukController as AdminPendudukController;
+use App\Http\Controllers\Kependudukan\PendudukController as AdminPendudukController;
 use App\Http\Controllers\Admin\ReferensiController as AdminReferensiController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
 use App\Http\Controllers\Admin\TemplateSuratController as AdminTemplateSuratController;

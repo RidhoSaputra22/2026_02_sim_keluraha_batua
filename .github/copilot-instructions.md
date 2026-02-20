@@ -388,56 +388,28 @@ npm run build # Production build
 ---
 
 ### 5. RT/RW (Ketua RT atau RW)
-
-**Login**: `rtrw@batua.com` / `password`
-**Access**: Data level RT/RW (view-only kependudukan), surat pengantar, monitoring layanan, pengaduan warga.
+**Login**: `rtrw@batua.com` / `password`  
+**Access**: Neighborhood-level data, surat pengantar, monitoring
 
 **Capabilities**:
+- ✅ **Kependudukan - (CRUD Penduduk miliknya)**: Manage residents in their RT/RW jurisdiction (add new residents, update data, report deaths/moves to operator)
+- ✅ **Mutasi - (CRUD Penduduk miliknya)**: Report incoming/outgoing residents (pindah/datang), births, deaths to operator
 
-* ✅ **Kependudukan (View Only)**: Melihat **KK & penduduk** yang berada di RT/RW-nya (tanpa edit).
-* ✅ **Mutasi / Informasi Perubahan (Usulan/Notifikasi)**: Melaporkan **pendatang baru, pindah keluar, kelahiran, kematian, pecah KK/perubahan KK** ke kelurahan (diproses oleh operator).
-* ✅ **Surat Pengantar RT/RW**: Membuat & menerbitkan pengantar/endorsement untuk kebutuhan layanan kelurahan.
-* ✅ **Monitoring Layanan Warga**: Memantau **status permohonan** warga dari wilayahnya (registrasi warga, permintaan surat/dokumen).
-* ✅ **Laporan Wilayah (RT/RW)**: Melihat statistik wilayah: **jumlah penduduk, jumlah KK, komposisi dasar** (mis. umur/jenis kelamin bila tersedia), dan rekap layanan.
-* ✅ **Pengaduan**: Menerima pengaduan warga wilayahnya, memberi catatan, dan **meneruskan** ke kelurahan.
+- ✅ **Surat Pengantar**: Issue RT/RW endorsement letters (required for many kelurahan services)
+- ✅ **Monitoring**: Track warga registrations, document requests from their area
+- ✅ **Laporan Wilayah**: View RT/RW-specific statistics (population, KK count, etc.)
+- ✅ **Pengaduan**: Receive & forward citizen complaints to kelurahan
 
 **Typical Workflows**:
+1. **Surat Pengantar**:
+   - Warga request pengantar from RT/RW
+   - RT/RW verify warga domicile (actually lives there)
+   - Issue pengantar with RT/RW stamp
+   - Warga brings pengantar to kelurahan for official surat
+   
+2. **Data Updates**: Inform kelurahan of new residents, deaths, moves (for operator to process)
 
-1. **Surat Pengantar RT/RW**
-
-   * Warga mengajukan permintaan pengantar (pilih jenis & keperluan).
-   * RT/RW melakukan verifikasi singkat:
-
-     * Warga **terdaftar/berdomisili** di RT/RW tersebut.
-     * Alamat sesuai dan benar-benar tinggal di wilayah.
-     * Data dasar cocok (NIK/KK/nama).
-   * RT/RW menerbitkan pengantar (nomor, tanggal, jenis, keperluan, identitas pemohon).
-   * Warga membawa pengantar ke kelurahan untuk proses surat resmi (bila diperlukan).
-
-   **Jenis pengantar yang umum**:
-
-   * Pengantar **domisili**
-   * Pengantar **SKTM/rekomendasi**
-   * Pengantar **usaha**
-   * Pengantar **nikah**
-   * Pengantar **pindah datang/pindah keluar**
-   * Pengantar **kelakuan baik**
-   * Pengantar **kematian**
-
-2. **Pelaporan Perubahan Data (Mutasi)**
-
-   * RT/RW menerima informasi kejadian: pendatang, pindah, lahir, meninggal, perubahan KK.
-   * RT/RW membuat laporan/usulan (isi ringkas + lampiran bila ada).
-   * Operator kelurahan memverifikasi dan memproses perubahan resmi di data kependudukan.
-
-3. **Monitoring & Pengaduan**
-
-   * RT/RW memantau permohonan layanan warga di wilayahnya (diproses/ditolak/selesai).
-   * RT/RW menerima pengaduan warga (lingkungan, administrasi, keamanan, dll).
-   * Memberi catatan & meneruskan ke kelurahan untuk tindak lanjut.
-
-**Important**: RT/RW adalah **filter level pertama** (“kenal warga”).
-Hanya **mengesahkan/menandatangani** permohonan dari warga yang benar-benar tinggal di wilayah RT/RW tersebut, untuk mencegah penyalahgunaan layanan.
+**Important**: RT/RW acts as first-level filter — know your citizens. Only endorse requests from actual residents.
 
 ---
 
