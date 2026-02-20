@@ -50,7 +50,7 @@ class WilayahController extends Controller
         $totalAktif = RtRwPengurus::where('status', 'aktif')->count();
         $totalNonaktif = RtRwPengurus::where('status', 'nonaktif')->count();
 
-        return view('master.wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
+        return view('admin.wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
     }
 
     public function create()

@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers\DataUmum;
 
+use App\Http\Controllers\Concerns\HasWilayahScope;
 use App\Http\Controllers\Controller;
 use App\Models\Kelurahan;
-use App\Models\Rt;
-use App\Models\Rw;
 use App\Models\TempatIbadah;
 use Illuminate\Http\Request;
 
 class TempatIbadahController extends Controller
 {
+    use HasWilayahScope;
+
     public function index(Request $request)
     {
         $query = TempatIbadah::with(['kelurahan', 'rt', 'rw']);
+
+        $this->applyWilayahScope($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -37,21 +40,22 @@ class TempatIbadahController extends Controller
     public function create()
     {
         $kelurahanList = Kelurahan::orderBy('nama')->get();
-        $rwList = Rw::orderBy('nomor')->get();
-        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
+        $rwList        = $this->wilayahRwList();
+        $rtList        = $this->wilayahRtList();
+
         return view('data-umum.tempat-ibadah.create', compact('kelurahanList', 'rwList', 'rtList'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
+            'kelurahan_id'  => ['required', 'exists:kelurahans,id'],
             'tempat_ibadah' => ['required', 'string', 'max:100'],
-            'nama' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string', 'max:500'],
-            'rt_id' => ['nullable', 'exists:rts,id'],
-            'rw_id' => ['nullable', 'exists:rws,id'],
-            'pengurus' => ['nullable', 'string', 'max:255'],
+            'nama'          => ['required', 'string', 'max:255'],
+            'alamat'        => ['nullable', 'string', 'max:500'],
+            'rt_id'         => $this->rtIdRules(),
+            'rw_id'         => ['nullable', 'exists:rws,id'],
+            'pengurus'      => ['nullable', 'string', 'max:255'],
         ]);
 
         TempatIbadah::create($validated);
@@ -62,22 +66,27 @@ class TempatIbadahController extends Controller
 
     public function edit(TempatIbadah $tempatIbadah)
     {
+        $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
+
         $kelurahanList = Kelurahan::orderBy('nama')->get();
-        $rwList = Rw::orderBy('nomor')->get();
-        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
+        $rwList        = $this->wilayahRwList();
+        $rtList        = $this->wilayahRtList();
+
         return view('data-umum.tempat-ibadah.edit', compact('tempatIbadah', 'kelurahanList', 'rwList', 'rtList'));
     }
 
     public function update(Request $request, TempatIbadah $tempatIbadah)
     {
+        $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
+
         $validated = $request->validate([
-            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
+            'kelurahan_id'  => ['required', 'exists:kelurahans,id'],
             'tempat_ibadah' => ['required', 'string', 'max:100'],
-            'nama' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string', 'max:500'],
-            'rt_id' => ['nullable', 'exists:rts,id'],
-            'rw_id' => ['nullable', 'exists:rws,id'],
-            'pengurus' => ['nullable', 'string', 'max:255'],
+            'nama'          => ['required', 'string', 'max:255'],
+            'alamat'        => ['nullable', 'string', 'max:500'],
+            'rt_id'         => $this->rtIdRules(),
+            'rw_id'         => ['nullable', 'exists:rws,id'],
+            'pengurus'      => ['nullable', 'string', 'max:255'],
         ]);
 
         $tempatIbadah->update($validated);
@@ -88,6 +97,8 @@ class TempatIbadahController extends Controller
 
     public function destroy(TempatIbadah $tempatIbadah)
     {
+        $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
+
         $tempatIbadah->delete();
 
         return redirect()->route('data-umum.tempat-ibadah.index')

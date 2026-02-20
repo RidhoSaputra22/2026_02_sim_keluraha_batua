@@ -2,17 +2,21 @@
 
 namespace App\Http\Controllers\DataUmum;
 
+use App\Http\Controllers\Concerns\HasWilayahScope;
 use App\Http\Controllers\Controller;
 use App\Models\Faskes;
 use App\Models\Kelurahan;
-use App\Models\Rw;
 use Illuminate\Http\Request;
 
 class FaskesController extends Controller
 {
+    use HasWilayahScope;
+
     public function index(Request $request)
     {
         $query = Faskes::with(['kelurahan', 'rw']);
+
+        $this->applyWilayahScopeByRw($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -35,22 +39,23 @@ class FaskesController extends Controller
     public function create()
     {
         $kelurahanList = Kelurahan::orderBy('nama')->get();
-        $rwList = Rw::with('kelurahan')->orderBy('nomor')->get();
+        $rwList        = $this->wilayahRwList();
+
         return view('data-umum.faskes.create', compact('kelurahanList', 'rwList'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'nama_rs' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string', 'max:500'],
-            'rw_id' => ['nullable', 'exists:rws,id'],
-            'jenis' => ['nullable', 'string', 'max:100'],
-            'kelas' => ['nullable', 'string', 'max:50'],
+            'kelurahan_id'    => ['required', 'exists:kelurahans,id'],
+            'nama_rs'         => ['required', 'string', 'max:255'],
+            'alamat'          => ['nullable', 'string', 'max:500'],
+            'rw_id'           => ['nullable', 'exists:rws,id'],
+            'jenis'           => ['nullable', 'string', 'max:100'],
+            'kelas'           => ['nullable', 'string', 'max:50'],
             'jenis_pelayanan' => ['nullable', 'string', 'max:255'],
-            'akreditasi' => ['nullable', 'string', 'max:100'],
-            'telp' => ['nullable', 'string', 'max:20'],
+            'akreditasi'      => ['nullable', 'string', 'max:100'],
+            'telp'            => ['nullable', 'string', 'max:20'],
         ]);
 
         Faskes::create($validated);
@@ -61,23 +66,28 @@ class FaskesController extends Controller
 
     public function edit(Faskes $faske)
     {
+        $this->authorizeWilayahByRwId($faske->rw_id);
+
         $kelurahanList = Kelurahan::orderBy('nama')->get();
-        $rwList = Rw::with('kelurahan')->orderBy('nomor')->get();
+        $rwList        = $this->wilayahRwList();
+
         return view('data-umum.faskes.edit', compact('faske', 'kelurahanList', 'rwList'));
     }
 
     public function update(Request $request, Faskes $faske)
     {
+        $this->authorizeWilayahByRwId($faske->rw_id);
+
         $validated = $request->validate([
-            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'nama_rs' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string', 'max:500'],
-            'rw_id' => ['nullable', 'exists:rws,id'],
-            'jenis' => ['nullable', 'string', 'max:100'],
-            'kelas' => ['nullable', 'string', 'max:50'],
+            'kelurahan_id'    => ['required', 'exists:kelurahans,id'],
+            'nama_rs'         => ['required', 'string', 'max:255'],
+            'alamat'          => ['nullable', 'string', 'max:500'],
+            'rw_id'           => ['nullable', 'exists:rws,id'],
+            'jenis'           => ['nullable', 'string', 'max:100'],
+            'kelas'           => ['nullable', 'string', 'max:50'],
             'jenis_pelayanan' => ['nullable', 'string', 'max:255'],
-            'akreditasi' => ['nullable', 'string', 'max:100'],
-            'telp' => ['nullable', 'string', 'max:20'],
+            'akreditasi'      => ['nullable', 'string', 'max:100'],
+            'telp'            => ['nullable', 'string', 'max:20'],
         ]);
 
         $faske->update($validated);
@@ -88,6 +98,8 @@ class FaskesController extends Controller
 
     public function destroy(Faskes $faske)
     {
+        $this->authorizeWilayahByRwId($faske->rw_id);
+
         $faske->delete();
 
         return redirect()->route('data-umum.faskes.index')

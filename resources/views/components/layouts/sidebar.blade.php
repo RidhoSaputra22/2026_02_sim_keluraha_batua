@@ -205,7 +205,7 @@ $user = auth()->user();
         {{-- ============================================================ --}}
         {{-- Ekspedisi — Admin, Operator --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator']))
+        <!-- @if($user && $user->hasRole(['admin', 'operator']))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Ekspedisi</span>
         </li>
@@ -219,12 +219,12 @@ $user = auth()->user();
                 Ekspedisi Surat
             </a>
         </li>
-        @endif
+        @endif -->
 
         {{-- ============================================================ --}}
         {{-- Data Usaha / PK5 — Admin, Operator --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator']))
+        @if($user && $user->hasRole(['admin', 'operator', 'rt_rw']))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Usaha</span>
         </li>
@@ -253,7 +253,7 @@ $user = auth()->user();
         {{-- ============================================================ --}}
         {{-- Data Umum — Admin, Operator --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole(['admin', 'operator']))
+        @if($user && $user->hasRole(['admin', 'operator', 'rt_rw']))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Umum</span>
         </li>
@@ -447,7 +447,7 @@ $user = auth()->user();
         {{-- ============================================================ --}}
         {{-- Administrasi Sistem — Admin only --}}
         {{-- ============================================================ --}}
-        @if($user && $user->hasRole('admin'))
+        <!-- @if($user && $user->hasRole('admin'))
         <li class="menu-title mt-3">
             <span class="text-xs uppercase tracking-wider text-base-content/40">Administrasi</span>
         </li>
@@ -473,6 +473,6 @@ $user = auth()->user();
                 </ul>
             </details>
         </li>
-        @endif
+        @endif -->
     </ul>
 </aside>

@@ -13,12 +13,14 @@ This is a **Laravel 12** application for managing kelurahan (village) administra
 - Database seeding: 39 seeders working with realistic data
 - 46 admin routes fully implemented
 - Migration system with FK constraints
+- **HasWilayahScope trait** for RT/RW data scoping across all shared modules
+- **RT/RW wilayah-scoped access** for: Kependudukan (Penduduk, Keluarga, Mutasi, Kelahiran, Kematian), DataUmum (Faskes, TempatIbadah, Sekolah, PetugasKebersihan, Kendaraan), Usaha (UMKM, JenisUsaha, LaporanUsaha)
+- Shared controller architecture: Kependudukan, DataUmum, Usaha modules accessible by admin, operator, AND rt_rw
 
 🚧 **In Progress / Pending**:
 - Operator panel features (data entry, document processing)
 - Verifikator features (document verification workflow)
 - Penandatangan features (digital signing)
-- RT/RW features (neighborhood data management)
 - Warga portal (citizen self-service)
 - Document template system
 - Reporting modules
@@ -50,6 +52,82 @@ Role::WARGA         → Citizen portal (optional)
 **Pattern**: Each role has a dedicated dashboard controller under `app/Http/Controllers/{Role}/DashboardController.php` and corresponding routes prefixed by role name.
 
 **Middleware Usage**: Apply `middleware('role:admin,operator')` to routes - admin automatically gets access to everything (see `app/Http/Middleware/CheckRole.php`).
+
+### 2. Wilayah Scoping with HasWilayahScope Trait
+
+When RT/RW users log in, they should only see/manage data within their assigned wilayah (RW and optionally specific RT). This is handled by the `HasWilayahScope` trait in `app/Http/Controllers/Concerns/HasWilayahScope.php`.
+
+**How it works**: User model has `wilayah_rw` (RW nomor) and `wilayah_rt` (RT nomor) fields. The trait resolves these to actual `Rw`/`Rt` model IDs:
+
+```php
+use App\Http\Controllers\Concerns\HasWilayahScope;
+
+class MyController extends Controller
+{
+    use HasWilayahScope;
+
+    public function index()
+    {
+        $query = MyModel::query();
+
+        // For models with rt_id column:
+        $this->applyWilayahScope($query);
+
+        // For models with rw_id column (e.g., Faskes):
+        $this->applyWilayahScopeByRw($query);
+
+        // For models without rt_id but with penduduk relation:
+        $this->applyWilayahScopeViaRelation($query, 'penduduk');
+    }
+
+    public function create()
+    {
+        $rtList = $this->wilayahRtList();       // Scoped RT dropdown
+        $rwList = $this->wilayahRwList();       // Scoped RW dropdown
+        $pendudukList = $this->wilayahPendudukList(); // Scoped penduduk dropdown
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'rt_id' => $this->rtIdRules(),  // Auto-adds 'in:...' rule for RT/RW users
+        ]);
+    }
+
+    public function edit(MyModel $model)
+    {
+        // Authorization checks:
+        $this->authorizeWilayahByRtId($model->rt_id);   // For models with rt_id
+        $this->authorizeWilayahByRwId($model->rw_id);   // For models with rw_id
+        $this->authorizeWilayah($model->penduduk);       // For Penduduk-related models
+    }
+}
+```
+
+**Key trait methods**:
+| Method | Purpose |
+|--------|---------|
+| `isRtRw()` | Check if current user is RT/RW role |
+| `wilayahRtIds()` | Get array of RT IDs in user's jurisdiction |
+| `wilayahRwIds()` | Get array of RW IDs in user's jurisdiction |
+| `applyWilayahScope($query)` | Filter query by `rt_id` column |
+| `applyWilayahScopeByRw($query)` | Filter query by `rw_id` column |
+| `applyWilayahScopeViaRelation($query, $rel)` | Filter via joined relation |
+| `wilayahRtList()` | Get RT models for dropdowns |
+| `wilayahRwList()` | Get RW models for dropdowns |
+| `wilayahPendudukList()` | Get Penduduk models for dropdowns |
+| `rtIdRules()` | Validation rules for `rt_id` field |
+| `authorizeWilayah($penduduk)` | Abort 403 if penduduk not in jurisdiction |
+| `authorizeWilayahByRtId($rtId)` | Abort 403 if RT not in jurisdiction |
+| `authorizeWilayahByRwId($rwId)` | Abort 403 if RW not in jurisdiction |
+
+**Scoping behavior**: For admin/operator, all methods are no-ops (return all data). Only RT/RW users get filtered results.
+
+**Which scoping method to use per model**:
+- `applyWilayahScope()` → models with `rt_id`: Penduduk, Keluarga, Kelahiran, TempatIbadah, Umkm
+- `applyWilayahScopeByRw()` → models with `rw_id`: Faskes
+- `applyWilayahScopeViaRelation()` → models without rt/rw but related to penduduk: Kematian
+- No scoping → kelurahan-level data only: Sekolah, PetugasKebersihan, Kendaraan, JenisUsaha
 
 ### 2. Dashboard Routing Pattern
 
@@ -222,6 +300,10 @@ npm run build # Production build
 - **Controllers**: `app/Http/Controllers/`
   - Admin: `Admin/{Dashboard,User,Role,Penduduk,Keluarga,Wilayah,Penandatangan,Pegawai}Controller.php`
   - Role Dashboards: `{Operator,Verifikator,Penandatangan,RtRw,Warga}/DashboardController.php`
+  - Kependudukan (shared): `Kependudukan/{Penduduk,Keluarga,Mutasi,Kelahiran,Kematian}Controller.php`
+  - DataUmum (shared): `DataUmum/{Faskes,Sekolah,TempatIbadah,PetugasKebersihan,Kendaraan}Controller.php`
+  - Usaha (shared): `Usaha/{Usaha,JenisUsaha,LaporanUsaha}Controller.php`
+- **Trait**: `app/Http/Controllers/Concerns/HasWilayahScope.php` (RT/RW data scoping)
 - **Models**: `app/Models/{User,Role,DataPenduduk,DataKeluarga,DataRtRw,Penandatanganan,PegawaiStaff}.php`
 - **Enums**: `app/Enums/{JenisKelaminEnum,StatusAktifEnum,JabatanRtRwEnum}.php`
 - **Middleware**: `app/Http/Middleware/CheckRole.php`
@@ -258,7 +340,8 @@ npm run build # Production build
 // Shared routes (multi-role access)
 /kependudukan/* (admin, operator, rt_rw)
 /persuratan/* (admin, operator, verifikator, penandatangan, warga)
-/usaha/* (admin, operator)
+/usaha/* (admin, operator, rt_rw)
+/data-umum/* (admin, operator, rt_rw)
 /laporan/* (admin, operator, verifikator)
 ```
 
@@ -394,8 +477,10 @@ npm run build # Production build
 **Capabilities**:
 - ✅ **Kependudukan - (CRUD Penduduk miliknya)**: Manage residents in their RT/RW jurisdiction (add new residents, update data, report deaths/moves to operator)
 - ✅ **Mutasi - (CRUD Penduduk miliknya)**: Report incoming/outgoing residents (pindah/datang), births, deaths to operator
-
-- ✅ **Surat Pengantar**: Issue RT/RW endorsement letters (required for many kelurahan services)
+- ✅ **Mutasi - (CRUD Penduduk miliknya)**: Report incoming/outgoing residents 
+- ✅ **Data Umum**: View/manage faskes (scoped by RW), tempat ibadah (scoped by RT), sekolah, petugas kebersihan, kendaraan (kelurahan-level, all visible)
+- ✅ **Usaha (UMKM)**: View/manage business registrations scoped to their RT/RW jurisdiction
+- ✅ **Laporan Usaha**: View business statistics scoped to their wilayah
 - ✅ **Monitoring**: Track warga registrations, document requests from their area
 - ✅ **Laporan Wilayah**: View RT/RW-specific statistics (population, KK count, etc.)
 - ✅ **Pengaduan**: Receive & forward citizen complaints to kelurahan

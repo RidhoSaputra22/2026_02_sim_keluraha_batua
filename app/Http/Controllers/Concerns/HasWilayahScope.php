@@ -181,6 +181,55 @@ trait HasWilayahScope
     }
 
     /**
+     * Kembalikan array RW IDs yang menjadi wilayah user yang sedang login.
+     *
+     * RT/RW → hanya RW miliknya.
+     * Non-RT/RW → array kosong (tidak difilter).
+     */
+    protected function wilayahRwIds(): array
+    {
+        $user    = auth()->user();
+        $rwNomor = $user->wilayah_rw ? (int) $user->wilayah_rw : null;
+
+        if (! $rwNomor) {
+            return [];
+        }
+
+        $rw = Rw::where('nomor', $rwNomor)->first();
+
+        return $rw ? [$rw->id] : [];
+    }
+
+    /**
+     * Terapkan scope wilayah berdasarkan kolom rw_id.
+     * Berguna untuk model yang memiliki rw_id langsung (Faskes, TempatIbadah, dll).
+     *
+     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function applyWilayahScopeByRw($query)
+    {
+        if ($this->isRtRw()) {
+            $rwIds = $this->wilayahRwIds();
+            $query->whereIn('rw_id', $rwIds);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Pastikan rw_id tertentu berada dalam wilayah RT/RW user yang login.
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\HttpException (403)
+     */
+    protected function authorizeWilayahByRwId(?int $rwId, string $message = 'Data tidak berada di wilayah Anda.'): void
+    {
+        if ($this->isRtRw() && $rwId !== null && ! in_array($rwId, $this->wilayahRwIds())) {
+            abort(403, $message);
+        }
+    }
+
+    /**
      * Pastikan rt_id tertentu berada dalam wilayah RT/RW user yang login.
      * Berguna untuk model dengan kolom rt_id (Keluarga, Kelahiran, dsb).
      * Tidak melakukan apa-apa bila user bukan RT/RW atau rt_id bernilai null.

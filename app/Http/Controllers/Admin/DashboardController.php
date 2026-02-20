@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Keluarga;
+use App\Models\Kelahiran;
+use App\Models\Kematian;
+use App\Models\MutasiPenduduk;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
@@ -12,7 +15,6 @@ use App\Models\SuratJenis;
 use App\Models\Umkm;
 use App\Models\PegawaiStaff;
 use App\Models\Penandatanganan;
-use App\Models\RtRwPengurus;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -31,16 +33,22 @@ class DashboardController extends Controller
                 ->whereYear('tanggal_surat', now()->year)->count(),
             'suratMenunggu' => Surat::where('status_esign', 'draft')->count(),
 
-            // Mutasi bulan ini (placeholder — no mutasi table yet)
-            'mutasiLahir' => 0,
-            'mutasiMeninggal' => 0,
-            'mutasiDatang' => 0,
-            'mutasiPindah' => 0,
+            // Mutasi bulan ini
+            'mutasiLahir' => Kelahiran::whereMonth('tanggal_lahir', now()->month)
+                ->whereYear('tanggal_lahir', now()->year)->count(),
+            'mutasiMeninggal' => Kematian::whereMonth('tanggal_meninggal', now()->month)
+                ->whereYear('tanggal_meninggal', now()->year)->count(),
+            'mutasiDatang' => MutasiPenduduk::where('jenis_mutasi', 'datang')
+                ->whereMonth('tanggal_mutasi', now()->month)
+                ->whereYear('tanggal_mutasi', now()->year)->count(),
+            'mutasiPindah' => MutasiPenduduk::where('jenis_mutasi', 'pindah')
+                ->whereMonth('tanggal_mutasi', now()->month)
+                ->whereYear('tanggal_mutasi', now()->year)->count(),
 
             // Data usaha
             'totalUsaha' => Umkm::count(),
-            'usahaAktif' => Umkm::count(),
-            'usahaTidakAktif' => 0,
+            'usahaAktif' => Umkm::where('status', 'aktif')->count(),
+            'usahaTidakAktif' => Umkm::where('status', 'tidak_aktif')->count(),
 
             // Wilayah
             'totalRW' => Rw::count(),

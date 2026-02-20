@@ -2,19 +2,22 @@
 
 namespace App\Http\Controllers\Usaha;
 
+use App\Http\Controllers\Concerns\HasWilayahScope;
 use App\Http\Controllers\Controller;
 use App\Models\JenisUsaha;
 use App\Models\Kelurahan;
-use App\Models\Penduduk;
-use App\Models\Rt;
 use App\Models\Umkm;
 use Illuminate\Http\Request;
 
 class UsahaController extends Controller
 {
+    use HasWilayahScope;
+
     public function index(Request $request)
     {
         $query = Umkm::with(['kelurahan', 'rt.rw', 'penduduk', 'jenisUsaha']);
+
+        $this->applyWilayahScope($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -46,9 +49,9 @@ class UsahaController extends Controller
 
     public function create()
     {
-        $kelurahanList = Kelurahan::orderBy('nama')->get();
-        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
-        $pendudukList = Penduduk::orderBy('nama')->get();
+        $kelurahanList  = Kelurahan::orderBy('nama')->get();
+        $rtList         = $this->wilayahRtList();
+        $pendudukList   = $this->wilayahPendudukList();
         $jenisUsahaList = JenisUsaha::orderBy('nama')->get();
 
         return view('usaha.create', compact('kelurahanList', 'rtList', 'pendudukList', 'jenisUsahaList'));
@@ -57,17 +60,17 @@ class UsahaController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'rt_id' => ['nullable', 'exists:rts,id'],
-            'penduduk_id' => ['nullable', 'exists:penduduks,id'],
-            'nama_pemilik' => ['required', 'string', 'max:255'],
-            'nik_pemilik' => ['nullable', 'string', 'max:20'],
-            'no_hp' => ['nullable', 'string', 'max:20'],
-            'nama_ukm' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string', 'max:500'],
-            'sektor_umkm' => ['nullable', 'string', 'max:255'],
+            'kelurahan_id'   => ['required', 'exists:kelurahans,id'],
+            'rt_id'          => $this->rtIdRules(),
+            'penduduk_id'    => ['nullable', 'exists:penduduks,id'],
+            'nama_pemilik'   => ['required', 'string', 'max:255'],
+            'nik_pemilik'    => ['nullable', 'string', 'max:20'],
+            'no_hp'          => ['nullable', 'string', 'max:20'],
+            'nama_ukm'       => ['required', 'string', 'max:255'],
+            'alamat'         => ['nullable', 'string', 'max:500'],
+            'sektor_umkm'    => ['nullable', 'string', 'max:255'],
             'jenis_usaha_id' => ['nullable', 'exists:jenis_usaha,id'],
-            'status' => ['nullable', 'string', 'in:aktif,tidak_aktif'],
+            'status'         => ['nullable', 'string', 'in:aktif,tidak_aktif'],
         ]);
 
         Umkm::create($validated);
@@ -78,10 +81,12 @@ class UsahaController extends Controller
 
     public function edit(Umkm $usaha)
     {
+        $this->authorizeWilayahByRtId($usaha->rt_id);
+
         $usaha->load(['kelurahan', 'rt.rw', 'penduduk', 'jenisUsaha']);
-        $kelurahanList = Kelurahan::orderBy('nama')->get();
-        $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
-        $pendudukList = Penduduk::orderBy('nama')->get();
+        $kelurahanList  = Kelurahan::orderBy('nama')->get();
+        $rtList         = $this->wilayahRtList();
+        $pendudukList   = $this->wilayahPendudukList();
         $jenisUsahaList = JenisUsaha::orderBy('nama')->get();
 
         return view('usaha.edit', compact('usaha', 'kelurahanList', 'rtList', 'pendudukList', 'jenisUsahaList'));
@@ -89,18 +94,20 @@ class UsahaController extends Controller
 
     public function update(Request $request, Umkm $usaha)
     {
+        $this->authorizeWilayahByRtId($usaha->rt_id);
+
         $validated = $request->validate([
-            'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'rt_id' => ['nullable', 'exists:rts,id'],
-            'penduduk_id' => ['nullable', 'exists:penduduks,id'],
-            'nama_pemilik' => ['required', 'string', 'max:255'],
-            'nik_pemilik' => ['nullable', 'string', 'max:20'],
-            'no_hp' => ['nullable', 'string', 'max:20'],
-            'nama_ukm' => ['required', 'string', 'max:255'],
-            'alamat' => ['nullable', 'string', 'max:500'],
-            'sektor_umkm' => ['nullable', 'string', 'max:255'],
+            'kelurahan_id'   => ['required', 'exists:kelurahans,id'],
+            'rt_id'          => $this->rtIdRules(),
+            'penduduk_id'    => ['nullable', 'exists:penduduks,id'],
+            'nama_pemilik'   => ['required', 'string', 'max:255'],
+            'nik_pemilik'    => ['nullable', 'string', 'max:20'],
+            'no_hp'          => ['nullable', 'string', 'max:20'],
+            'nama_ukm'       => ['required', 'string', 'max:255'],
+            'alamat'         => ['nullable', 'string', 'max:500'],
+            'sektor_umkm'    => ['nullable', 'string', 'max:255'],
             'jenis_usaha_id' => ['nullable', 'exists:jenis_usaha,id'],
-            'status' => ['nullable', 'string', 'in:aktif,tidak_aktif'],
+            'status'         => ['nullable', 'string', 'in:aktif,tidak_aktif'],
         ]);
 
         $usaha->update($validated);
@@ -111,6 +118,8 @@ class UsahaController extends Controller
 
     public function destroy(Umkm $usaha)
     {
+        $this->authorizeWilayahByRtId($usaha->rt_id);
+
         $usaha->delete();
 
         return redirect()->route('usaha.index')

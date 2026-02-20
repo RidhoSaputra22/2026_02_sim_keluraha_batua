@@ -237,9 +237,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
-    // ║  SHARED: DATA USAHA / PK5 — Admin, Operator                ║
+    // ║  SHARED: DATA USAHA / PK5 — Admin, Operator, RT/RW         ║
     // ╚══════════════════════════════════════════════════════════════╝
-    Route::middleware('role:admin,operator')->prefix('usaha')->name('usaha.')->group(function () {
+    Route::middleware('role:admin,operator,rt_rw')->prefix('usaha')->name('usaha.')->group(function () {
         // Daftar Usaha (CRUD)
         Route::get('/', [UsahaController::class, 'index'])->name('index');
         Route::get('/create', [UsahaController::class, 'create'])->name('create');
@@ -271,9 +271,9 @@ Route::middleware('auth')->group(function () {
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
-    // ║  SHARED: DATA UMUM — Admin, Operator                       ║
+    // ║  SHARED: DATA UMUM — Admin, Operator, RT/RW                ║
     // ╚══════════════════════════════════════════════════════════════╝
-    Route::middleware('role:admin,operator')->prefix('data-umum')->name('data-umum.')->group(function () {
+    Route::middleware('role:admin,operator,rt_rw')->prefix('data-umum')->name('data-umum.')->group(function () {
         // Fasilitas Kesehatan
         Route::resource('faskes', FaskesController::class)->except(['show']);
         // Sekolah
