@@ -90,7 +90,6 @@ class AuditLog extends Model
             Penduduk::class          => 'Penduduk',
             Keluarga::class          => 'Keluarga',
             PegawaiStaff::class      => 'Pegawai',
-            Penandatanganan::class   => 'Penandatangan',
             RtRwPengurus::class      => 'Wilayah RT/RW',
             SuratJenis::class        => 'Jenis Surat',
             TemplateSurat::class     => 'Template Surat',

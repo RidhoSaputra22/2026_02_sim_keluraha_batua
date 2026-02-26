@@ -54,7 +54,8 @@
                 <div class="flex items-start justify-between">
                     <div>
                         <p class="text-sm text-base-content/60 font-medium">Mutasi Bulan Ini</p>
-                        <p class="text-3xl font-bold text-base-content mt-1">{{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</p>
+                        <p class="text-3xl font-bold text-base-content mt-1">
+                            {{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</p>
                         <p class="text-xs text-base-content/50 mt-1">{{ now()->translatedFormat('F Y') }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
@@ -293,9 +294,7 @@
                 @forelse($recentUsers as $user)
                 <div class="flex items-center gap-3">
                     <div class="avatar placeholder shrink-0">
-                        <div class="w-8 rounded-full bg-neutral text-neutral-content text-xs">
-                            <span>{{ strtoupper(substr($user->name, 0, 2)) }}</span>
-                        </div>
+                        <x-ui.avatar :name="$user->name" size="sm" />
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-sm font-medium truncate">{{ $user->name }}</p>

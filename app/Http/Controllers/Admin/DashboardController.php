@@ -12,7 +12,6 @@ use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Umkm;
 use App\Models\PegawaiStaff;
-use App\Models\Penandatanganan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -51,9 +50,8 @@ class DashboardController extends Controller
             'totalUsers' => User::count(),
             'activeUsers' => User::where('is_active', true)->count(),
 
-            // Pegawai & Penandatangan
+            // Pegawai
             'totalPegawai' => PegawaiStaff::count(),
-            'totalPenandatangan' => Penandatanganan::where('status', 'aktif')->count(),
 
             // Users per role
             'usersPerRole' => Role::withCount('users')->get(),

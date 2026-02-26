@@ -75,7 +75,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Master</span>
         </li>
         <li>
-            <details {{ request()->routeIs('master.*') ? 'open' : '' }}>
+            <details open>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -88,9 +88,6 @@ $user = auth()->user();
                     <li><a href="{{ route('master.wilayah.index') }}"
                             class="{{ request()->routeIs('master.wilayah.*', 'master.wilayah.*') ? 'active' : '' }}">Wilayah
                             (RW/RT)</a></li>
-                    <li><a href="{{ route('master.penandatangan.index') }}"
-                            class="{{ request()->routeIs('master.penandatangan.*', 'master.penandatangan.*') ? 'active' : '' }}">Penandatangan</a>
-                    </li>
                     <li><a href="{{ route('master.pegawai.index') }}"
                             class="{{ request()->routeIs('master.pegawai.*') ? 'active' : '' }}">Pegawai /
                             Staff</a>
@@ -113,8 +110,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
         </li>
         <li>
-            <details
-                {{ request()->routeIs('kependudukan.*', 'kependudukan.penduduk.*', 'admin.keluarga.*') ? 'open' : '' }}>
+            <details open>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -152,7 +148,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Usaha</span>
         </li>
         <li>
-            <details {{ request()->routeIs('usaha.*') ? 'open' : '' }}>
+            <details open>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -182,7 +178,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Umum</span>
         </li>
         <li>
-            <details {{ request()->routeIs('data-umum.*') ? 'open' : '' }}>
+            <details open>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -213,6 +209,26 @@ $user = auth()->user();
         @endif
 
         {{-- ============================================================ --}}
+        {{-- Peta Kelurahan — Admin & RT/RW --}}
+        {{-- ============================================================ --}}
+        @if ($user && $user->hasRole('admin', 'rt_rw'))
+        <li class="menu-title mt-3">
+            <span class="text-xs uppercase tracking-wider text-base-content/40">Peta</span>
+        </li>
+        <li>
+            <a href="{{ route('peta.index') }}"
+                class="{{ request()->routeIs('peta.*') ? 'active' : '' }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                Peta Kelurahan
+            </a>
+        </li>
+        @endif
+
+        {{-- ============================================================ --}}
         {{-- Laporan — Admin only --}}
         {{-- ============================================================ --}}
         @if ($user && $user->hasRole('admin'))
@@ -220,7 +236,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Laporan</span>
         </li>
         <li>
-            <details {{ request()->routeIs('laporan.*') ? 'open' : '' }}>
+            <details open>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">

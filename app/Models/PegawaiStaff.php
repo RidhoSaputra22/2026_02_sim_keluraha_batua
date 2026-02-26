@@ -6,8 +6,9 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class PegawaiStaff extends Model {
-    use HasFactory, Auditable;
+class PegawaiStaff extends Model
+{
+    use Auditable, HasFactory;
 
     protected $table = 'pegawai_staff';
 
@@ -20,17 +21,10 @@ class PegawaiStaff extends Model {
         'status_pegawai',
         'tgl_input',
         'petugas_input_id',
-        'no_urut'
+        'no_urut',
     ];
 
     protected $casts = [
-        'tgl_input' => 'datetime'
+        'tgl_input' => 'datetime',
     ];
-
-
-    public function penandatanganans()
-    {
-        return $this->hasMany(Penandatanganan::class, 'pegawai_id');
-    }
 }
-

@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
      * Urutan seeder berdasarkan dependency FK:
      * 1. Master data (tanpa dependensi)
      * 2. User (depends: roles)
-     * 3. Pegawai & Penandatangan (depends: users)
+     * 3. Pegawai (depends: users)
      * 4. Penduduk & Keluarga (depends: wilayah, users)
      * 5. Data transaksional (depends: semua di atas)
      */
@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             // ║  DEMO DATA (sample / transactional)           ║
             // ╚════════════════════════════════════════════════╝
             UserSeeder::class,                  // 9 users (1+ per role)
-            PegawaiPenandatanganSeeder::class,  // 10 pegawai, 3 penandatangan
+            PegawaiPenandatanganSeeder::class,  // 10 pegawai
             PendudukKeluargaSeeder::class,      // 15 keluarga, ~50 penduduk, KTP tercetak
             RtRwPengurusSeeder::class,          // Pengurus RT/RW
             DataUmumSeeder::class,              // UMKM, sekolah, faskes, tempat ibadah, dll.

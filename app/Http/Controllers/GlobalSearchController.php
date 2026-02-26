@@ -6,7 +6,6 @@ use App\Models\Faskes;
 use App\Models\Keluarga;
 use App\Models\Kendaraan;
 use App\Models\PegawaiStaff;
-use App\Models\Penandatanganan;
 use App\Models\Penduduk;
 use App\Models\PetugasKebersihan;
 use App\Models\Role;
@@ -39,7 +38,6 @@ class GlobalSearchController extends Controller
                 $this->searchKeluarga($query, $limit),
                 $this->searchUsers($query, $limit),
                 $this->searchPegawai($query, $limit),
-                $this->searchPenandatangan($query, $limit),
                 $this->searchUsaha($query, $limit),
                 $this->searchFaskes($query, $limit),
                 $this->searchSekolah($query, $limit),
@@ -129,28 +127,6 @@ class GlobalSearchController extends Controller
                 'title' => $item->nama,
                 'subtitle' => $item->jabatan ?? ($item->nip ?? '-'),
                 'url' => route('master.pegawai.edit', $item->id),
-            ])
-            ->toArray();
-    }
-
-    private function searchPenandatangan(string $query, int $limit): array
-    {
-        return Penandatanganan::whereHas(
-            'pegawai',
-            fn($q) => $q
-                ->where('nama', 'like', "%{$query}%")
-                ->orWhere('nip', 'like', "%{$query}%")
-                ->orWhere('jabatan', 'like', "%{$query}%")
-        )
-            ->with('pegawai')
-            ->limit($limit)
-            ->get()
-            ->map(fn($item) => [
-                'category' => 'Penandatangan',
-                'icon' => 'pencil',
-                'title' => $item->pegawai?->nama ?? 'Penandatangan',
-                'subtitle' => $item->pegawai?->jabatan ?? '-',
-                'url' => route('master.penandatangan.edit', $item->id),
             ])
             ->toArray();
     }

@@ -33,17 +33,6 @@ return new class extends Migration
                 ->cascadeOnDelete();
         });
 
-        // Fix penandatanganans.pegawai_id
-        Schema::table('penandatanganans', function (Blueprint $table) {
-            $table->dropForeign(['pegawai_id']);
-        });
-        Schema::table('penandatanganans', function (Blueprint $table) {
-            $table->foreign('pegawai_id')
-                ->references('id')->on('pegawai_staff')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-        });
-
         // Fix wilayah hierarchy
         Schema::table('kelurahans', function (Blueprint $table) {
             $table->dropForeign(['kecamatan_id']);
@@ -95,16 +84,6 @@ return new class extends Migration
                 ->restrictOnDelete();
             $table->foreign('jabatan_id')
                 ->references('id')->on('jabatan_rt_rw')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
-        });
-
-        Schema::table('penandatanganans', function (Blueprint $table) {
-            $table->dropForeign(['pegawai_id']);
-        });
-        Schema::table('penandatanganans', function (Blueprint $table) {
-            $table->foreign('pegawai_id')
-                ->references('id')->on('pegawai_staff')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
         });

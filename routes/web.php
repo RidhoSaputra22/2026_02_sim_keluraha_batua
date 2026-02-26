@@ -5,7 +5,6 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
 use App\Http\Controllers\Kependudukan\KeluargaController as AdminKeluargaController;
 // ─── Role-specific Dashboard Controllers ───────────────────────
 use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
-use App\Http\Controllers\Admin\PenandatanganController as AdminPenandatanganController;
 use App\Http\Controllers\Kependudukan\PendudukController as AdminPendudukController;
 use App\Http\Controllers\Admin\ReferensiController as AdminReferensiController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
@@ -21,6 +20,7 @@ use App\Http\Controllers\DataUmum\SekolahController;
 use App\Http\Controllers\DataUmum\TempatIbadahController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\Kependudukan\KelahiranController;
+use App\Http\Controllers\PetaController;
 use App\Http\Controllers\Kependudukan\KematianController;
 use App\Http\Controllers\Kependudukan\MutasiController;
 use App\Http\Controllers\Laporan\LaporanKependudukanController;
@@ -93,7 +93,6 @@ Route::middleware('auth')->group(function () {
 
         // Data Master (admin-scoped)
         Route::resource('wilayah', AdminWilayahController::class);
-        Route::resource('penandatangan', AdminPenandatanganController::class);
         Route::resource('pegawai', AdminPegawaiController::class);
 
         // Referensi
@@ -168,6 +167,16 @@ Route::middleware('auth')->group(function () {
         Route::resource('petugas-kebersihan', PetugasKebersihanController::class)->except(['show'])->parameters(['petugas-kebersihan' => 'petugasKebersihan']);
         // Kendaraan
         Route::resource('kendaraan', KendaraanController::class)->except(['show']);
+    });
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  PETA KELURAHAN — Admin, RT/RW                               ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin,rt_rw')->prefix('peta')->name('peta.')->group(function () {
+        Route::get('/', [PetaController::class, 'index'])->name('index');
+        Route::get('/geojson/kelurahan', [PetaController::class, 'geojsonKelurahan'])->name('geojson.kelurahan');
+        Route::get('/geojson/rw', [PetaController::class, 'geojsonRw'])->name('geojson.rw');
+        Route::get('/stats', [PetaController::class, 'stats'])->name('stats');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗

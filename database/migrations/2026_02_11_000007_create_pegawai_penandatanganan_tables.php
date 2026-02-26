@@ -24,21 +24,12 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('penandatanganans', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('pegawai_id')->constrained('pegawai_staff')->cascadeOnUpdate()->restrictOnDelete();
-            $table->string('status')->nullable();
-            $table->string('no_telp')->nullable();
-            $table->dateTime('tgl_input')->nullable();
-            $table->foreignId('petugas_input_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
-        });
+
     }
 
     public function down(): void
     {
 
-        Schema::dropIfExists('penandatanganans');
         Schema::dropIfExists('pegawai_staff');
     }
 };

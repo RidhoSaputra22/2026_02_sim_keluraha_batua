@@ -7,7 +7,6 @@ use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\PegawaiStaff;
-use App\Models\Penandatanganan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -50,7 +49,6 @@ class DashboardTest extends TestCase
         Penduduk::factory()->count(5)->create();
         Keluarga::factory()->count(3)->create();
         PegawaiStaff::factory()->count(2)->create();
-        Penandatanganan::factory()->create(['status' => 'aktif']);
 
         $response = $this->actingAs($this->admin)->get(route('admin.dashboard'));
 
@@ -60,7 +58,6 @@ class DashboardTest extends TestCase
         $response->assertViewHas('totalRT');
         $response->assertViewHas('totalRW');
         $response->assertViewHas('totalPegawai');
-        $response->assertViewHas('totalPenandatangan');
     }
 
     public function test_dashboard_shows_user_counts(): void

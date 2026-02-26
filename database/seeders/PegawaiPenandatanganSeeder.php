@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\PegawaiStaff;
-use App\Models\Penandatanganan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -108,37 +107,10 @@ class PegawaiPenandatanganSeeder extends Seeder
             ],
         ];
 
-        $pegawaiMap = [];
         foreach ($pegawaiData as $data) {
             $data['tgl_input'] = $now;
             $data['petugas_input_id'] = $petugasId;
-            $pegawai = PegawaiStaff::create($data);
-            $pegawaiMap[$data['nip']] = $pegawai->id;
-        }
-
-        // ─── Penandatangan (pejabat yang berhak tanda tangan) ─
-        $penandatangan = [
-            [
-                'pegawai_id' => $pegawaiMap['197803252005011001'],  // Lurah
-                'status'     => 'Aktif',
-                'no_telp'    => '08114321005',
-            ],
-            [
-                'pegawai_id' => $pegawaiMap['198201102008012001'],  // Sekretaris Lurah
-                'status'     => 'Aktif',
-                'no_telp'    => '08114321010',
-            ],
-            [
-                'pegawai_id' => $pegawaiMap['198506102010012003'],  // Kasi Pemerintahan
-                'status'     => 'Aktif',
-                'no_telp'    => '08114321004',
-            ],
-        ];
-
-        foreach ($penandatangan as $data) {
-            $data['tgl_input'] = $now;
-            $data['petugas_input_id'] = $petugasId;
-            Penandatanganan::create($data);
+            PegawaiStaff::create($data);
         }
     }
 }
