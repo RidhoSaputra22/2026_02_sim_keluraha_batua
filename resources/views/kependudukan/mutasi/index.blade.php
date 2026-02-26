@@ -59,9 +59,9 @@
                         </td>
                         <td>
                             @if($m->jenis_mutasi === 'pindah')
-                                <span class="badge badge-warning badge-sm">Pindah</span>
+                                <x-ui.badge type="warning" size="sm">Pindah</x-ui.badge>
                             @else
-                                <span class="badge badge-info badge-sm">Datang</span>
+                                <x-ui.badge type="info" size="sm">Datang</x-ui.badge>
                             @endif
                         </td>
                         <td class="text-sm">{{ $m->tanggal_mutasi->format('d/m/Y') }}</td>
@@ -77,14 +77,14 @@
                         <td class="text-sm">{{ Str::limit($m->alasan, 30) ?? '-' }}</td>
                         <td class="text-center">
                             @php
-                                $statusClass = match($m->status) {
-                                    'proses' => 'badge-warning',
-                                    'selesai' => 'badge-success',
-                                    'batal' => 'badge-error',
-                                    default => 'badge-ghost',
+                                $statusType = match($m->status) {
+                                    'proses' => 'warning',
+                                    'selesai' => 'success',
+                                    'batal' => 'error',
+                                    default => 'ghost',
                                 };
                             @endphp
-                            <span class="badge {{ $statusClass }} badge-sm">{{ ucfirst($m->status) }}</span>
+                            <x-ui.badge :type="$statusType" size="sm">{{ ucfirst($m->status) }}</x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">

@@ -80,7 +80,7 @@
                                     <p class="text-sm font-medium truncate" x-text="result.title"></p>
                                     <p class="text-xs text-base-content/60 truncate" x-text="result.subtitle"></p>
                                 </div>
-                                <span class="badge badge-xs badge-ghost" x-text="result.category"></span>
+                                <x-ui.badge type="ghost" size="xs" x-text="result.category" />
                             </a>
                         </template>
                     </div>

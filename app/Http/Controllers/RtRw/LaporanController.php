@@ -10,7 +10,6 @@ use App\Models\MutasiPenduduk;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
-use App\Models\Surat;
 use Illuminate\Http\Request;
 
 class LaporanController extends Controller
@@ -64,14 +63,6 @@ class LaporanController extends Controller
             })
             ->whereYear('tanggal_meninggal', now()->year)->count();
 
-        // Surat statistics (current month)
-        $suratBulanIni = Surat::whereHas('pemohon.penduduk', function ($q) use ($rtIds) {
-                $q->whereIn('rt_id', $rtIds);
-            })
-            ->whereMonth('tanggal_surat', now()->month)
-            ->whereYear('tanggal_surat', now()->year)
-            ->count();
-
         // Per-RT breakdown
         $perRtStats = Rt::whereIn('id', $rtIds)
             ->with('rw')
@@ -114,7 +105,6 @@ class LaporanController extends Controller
             'mutasiPindah',
             'kelahiranTahunIni',
             'kematianTahunIni',
-            'suratBulanIni',
             'perRtStats',
             'agamaStats',
             'pendidikanStats',

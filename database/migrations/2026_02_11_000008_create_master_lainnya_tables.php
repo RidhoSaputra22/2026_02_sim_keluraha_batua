@@ -73,30 +73,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('ekspedisis', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('kelurahan_id')->nullable()->constrained('kelurahans')->nullOnDelete();
-            $table->string('pemilik_usaha')->nullable();
-            $table->string('ekspedisi');
-            $table->string('alamat')->nullable();
-            $table->string('penanggung_jawab')->nullable();
-            $table->string('telp_hp')->nullable();
-            $table->string('kegiatan_ekspedisi')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('imbs', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('kelurahan_id')->nullable()->constrained('kelurahans')->nullOnDelete();
-            $table->string('nama_pemohon')->nullable();
-            $table->string('alamat_pemohon')->nullable();
-            $table->string('alamat_bangunan')->nullable();
-            $table->string('status_luas_tanah')->nullable();
-            $table->string('nama_pada_surat')->nullable();
-            $table->string('penggunaan_fungsi_gedung')->nullable();
-            $table->timestamps();
-        });
-
         Schema::create('tempat_ibadahs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('kelurahan_id')->nullable()->constrained('kelurahans')->nullOnDelete();
@@ -108,41 +84,6 @@ return new class extends Migration
             $table->string('pengurus')->nullable();
             $table->string('arsip_path')->nullable();
             $table->timestamps();
-        });
-
-        Schema::create('pk5s', function (Blueprint $table) {
-            $table->id();
-            $table->string('nip')->nullable();
-            $table->string('nama');
-            $table->string('jabatan')->nullable();
-            $table->string('pangkat')->nullable();
-            $table->string('status')->nullable();
-            $table->string('no_telp')->nullable();
-            $table->dateTime('tgl_input')->nullable();
-            $table->foreignId('petugas_input_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
-        });
-
-        Schema::create('warga_miskins', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('kelurahan_id')->constrained('kelurahans')->cascadeOnUpdate()->restrictOnDelete();
-            $table->foreignId('penduduk_id')->constrained('penduduks')->cascadeOnUpdate()->restrictOnDelete();
-            $table->foreignId('rt_id')->nullable()->constrained('rts')->nullOnDelete();
-            $table->foreignId('rw_id')->nullable()->constrained('rws')->nullOnDelete();
-            $table->string('no_peserta')->nullable();
-            $table->string('keterangan')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('desa_wisma_pkk_entries', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('penduduk_id')->constrained('penduduks')->cascadeOnUpdate()->restrictOnDelete();
-            $table->foreignId('keluarga_id')->nullable()->constrained('keluargas')->nullOnDelete();
-            $table->foreignId('rt_id')->nullable()->constrained('rts')->nullOnDelete();
-            $table->foreignId('kelurahan_id')->nullable()->constrained('kelurahans')->nullOnDelete();
-            $table->string('keterangan')->nullable();
-            $table->timestamps();
-            $table->unique(['penduduk_id']);
         });
 
         Schema::create('kendaraans', function (Blueprint $table) {
@@ -163,12 +104,7 @@ return new class extends Migration
     {
 
         Schema::dropIfExists('kendaraans');
-        Schema::dropIfExists('desa_wisma_pkk_entries');
-        Schema::dropIfExists('warga_miskins');
-        Schema::dropIfExists('pk5s');
         Schema::dropIfExists('tempat_ibadahs');
-        Schema::dropIfExists('imbs');
-        Schema::dropIfExists('ekspedisis');
         Schema::dropIfExists('petugas_kebersihans');
         Schema::dropIfExists('faskes');
         Schema::dropIfExists('sekolahs');

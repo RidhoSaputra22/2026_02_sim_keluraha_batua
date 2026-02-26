@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AgendaKegiatan;
 use App\Models\Faskes;
 use App\Models\Keluarga;
 use App\Models\Kendaraan;
@@ -12,7 +11,6 @@ use App\Models\Penduduk;
 use App\Models\PetugasKebersihan;
 use App\Models\Role;
 use App\Models\Sekolah;
-use App\Models\Surat;
 use App\Models\TempatIbadah;
 use App\Models\Umkm;
 use App\Models\User;
@@ -39,7 +37,6 @@ class GlobalSearchController extends Controller
             $results = array_merge(
                 $this->searchPenduduk($query, $limit),
                 $this->searchKeluarga($query, $limit),
-                $this->searchSurat($query, $limit),
                 $this->searchUsers($query, $limit),
                 $this->searchPegawai($query, $limit),
                 $this->searchPenandatangan($query, $limit),
@@ -49,7 +46,6 @@ class GlobalSearchController extends Controller
                 $this->searchTempatIbadah($query, $limit),
                 $this->searchKendaraan($query, $limit),
                 $this->searchPetugasKebersihan($query, $limit),
-                $this->searchAgenda($query, $limit),
             );
         } else {
             // RT/RW role gets scoped results
@@ -57,7 +53,6 @@ class GlobalSearchController extends Controller
                 Role::RT_RW => array_merge(
                     $this->searchPenduduk($query, $limit),
                     $this->searchKeluarga($query, $limit),
-                    $this->searchSurat($query, $limit, 'pengantar'),
                 ),
                 default => [],
             };
@@ -102,29 +97,6 @@ class GlobalSearchController extends Controller
                 'url' => route('kependudukan.keluarga.show', $item->id),
             ])
             ->toArray();
-    }
-
-    private function searchSurat(string $query, int $limit, ?string $context = null): array
-    {
-        $surats = Surat::where('nomor_surat', 'like', "%{$query}%")
-            ->orWhere('perihal', 'like', "%{$query}%")
-            ->orWhere('nama_dalam_surat', 'like', "%{$query}%")
-            ->orWhere('uraian', 'like', "%{$query}%")
-            ->limit($limit)
-            ->get();
-
-        $routeName = match ($context) {
-            'pengantar' => 'rtrw.pengantar.index',
-            default => 'rtrw.pengantar.index', // TODO: update when persuratan routes are implemented
-        };
-
-        return $surats->map(fn($item) => [
-            'category' => 'Surat',
-            'icon' => 'document-text',
-            'title' => $item->perihal ?? 'Surat',
-            'subtitle' => $item->nomor_surat ?? 'Belum ada nomor',
-            'url' => route($routeName),
-        ])->toArray();
     }
 
     private function searchUsers(string $query, int $limit): array
@@ -284,24 +256,6 @@ class GlobalSearchController extends Controller
                 'title' => $item->nama,
                 'subtitle' => $item->lokasi ?? '-',
                 'url' => route('data-umum.petugas-kebersihan.index'),
-            ])
-            ->toArray();
-    }
-
-    private function searchAgenda(string $query, int $limit): array
-    {
-        return AgendaKegiatan::where('perihal', 'like', "%{$query}%")
-            ->orWhere('lokasi', 'like', "%{$query}%")
-            ->orWhere('penanggung_jawab', 'like', "%{$query}%")
-            ->orWhere('keterangan', 'like', "%{$query}%")
-            ->limit($limit)
-            ->get()
-            ->map(fn($item) => [
-                'category' => 'Agenda',
-                'icon' => 'calendar',
-                'title' => $item->perihal ?? 'Agenda',
-                'subtitle' => $item->lokasi ?? '-',
-                'url' => route('agenda.index'),
             ])
             ->toArray();
     }

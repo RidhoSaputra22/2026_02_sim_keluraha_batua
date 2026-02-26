@@ -12,17 +12,6 @@ return new class extends Migration
      */
     public function up(): void
     {
-        // Fix penilaian_rt_rw_details.pengurus_id
-        Schema::table('penilaian_rt_rw_details', function (Blueprint $table) {
-            $table->dropForeign(['pengurus_id']);
-        });
-        Schema::table('penilaian_rt_rw_details', function (Blueprint $table) {
-            $table->foreign('pengurus_id')
-                ->references('id')->on('rt_rw_pengurus')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-        });
-
         // Fix rt_rw_pengurus foreign keys
         Schema::table('rt_rw_pengurus', function (Blueprint $table) {
             $table->dropForeign(['kelurahan_id']);
@@ -55,18 +44,7 @@ return new class extends Migration
                 ->cascadeOnDelete();
         });
 
-        // Fix penilaian_periodes.kelurahan_id
-        Schema::table('penilaian_periodes', function (Blueprint $table) {
-            $table->dropForeign(['kelurahan_id']);
-        });
-        Schema::table('penilaian_periodes', function (Blueprint $table) {
-            $table->foreign('kelurahan_id')
-                ->references('id')->on('kelurahans')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-        });
-
-        // Fix wilayah hierarchy (optional - makes it easier to delete)
+        // Fix wilayah hierarchy
         Schema::table('kelurahans', function (Blueprint $table) {
             $table->dropForeign(['kecamatan_id']);
         });
@@ -96,32 +74,11 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
         });
-
-        // Fix surats.kelurahan_id
-        Schema::table('surats', function (Blueprint $table) {
-            $table->dropForeign(['kelurahan_id']);
-        });
-        Schema::table('surats', function (Blueprint $table) {
-            $table->foreign('kelurahan_id')
-                ->references('id')->on('kelurahans')
-                ->cascadeOnUpdate()
-                ->cascadeOnDelete();
-        });
     }
 
     public function down(): void
     {
-        // Revert back to restrictOnDelete (not recommended)
-        Schema::table('penilaian_rt_rw_details', function (Blueprint $table) {
-            $table->dropForeign(['pengurus_id']);
-        });
-        Schema::table('penilaian_rt_rw_details', function (Blueprint $table) {
-            $table->foreign('pengurus_id')
-                ->references('id')->on('rt_rw_pengurus')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
-        });
-
+        // Revert rt_rw_pengurus
         Schema::table('rt_rw_pengurus', function (Blueprint $table) {
             $table->dropForeign(['kelurahan_id']);
             $table->dropForeign(['penduduk_id']);
@@ -152,16 +109,6 @@ return new class extends Migration
                 ->restrictOnDelete();
         });
 
-        Schema::table('penilaian_periodes', function (Blueprint $table) {
-            $table->dropForeign(['kelurahan_id']);
-        });
-        Schema::table('penilaian_periodes', function (Blueprint $table) {
-            $table->foreign('kelurahan_id')
-                ->references('id')->on('kelurahans')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
-        });
-
         Schema::table('kelurahans', function (Blueprint $table) {
             $table->dropForeign(['kecamatan_id']);
         });
@@ -188,16 +135,6 @@ return new class extends Migration
         Schema::table('rts', function (Blueprint $table) {
             $table->foreign('rw_id')
                 ->references('id')->on('rws')
-                ->cascadeOnUpdate()
-                ->restrictOnDelete();
-        });
-
-        Schema::table('surats', function (Blueprint $table) {
-            $table->dropForeign(['kelurahan_id']);
-        });
-        Schema::table('surats', function (Blueprint $table) {
-            $table->foreign('kelurahan_id')
-                ->references('id')->on('kelurahans')
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
         });

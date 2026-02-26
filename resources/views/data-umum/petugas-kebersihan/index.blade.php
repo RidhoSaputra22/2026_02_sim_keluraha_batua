@@ -55,13 +55,13 @@
                         <td class="text-sm">{{ Str::limit($item->lokasi, 30) }}</td>
                         <td>
                             @php
-                                $statusClass = match($item->status) {
-                                    'aktif' => 'badge-success',
-                                    'tidak_aktif' => 'badge-error',
-                                    default => 'badge-ghost',
+                                $statusType = match($item->status) {
+                                    'aktif' => 'success',
+                                    'tidak_aktif' => 'error',
+                                    default => 'ghost',
                                 };
                             @endphp
-                            <span class="badge {{ $statusClass }} badge-sm">{{ ucfirst(str_replace('_', ' ', $item->status ?? '-')) }}</span>
+                            <x-ui.badge :type="$statusType" size="sm">{{ ucfirst(str_replace('_', ' ', $item->status ?? '-')) }}</x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">

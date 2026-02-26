@@ -20,7 +20,7 @@
                     <h3 class="mt-4 text-xl font-bold">{{ $user->name }}</h3>
                     <p class="text-sm text-base-content/60">{{ $user->email }}</p>
 
-                    <div class="badge badge-primary badge-lg mt-3">{{ $roleLabel }}</div>
+                    <x-ui.badge type="primary" size="lg">{{ $roleLabel }}</x-ui.badge>
 
                     <div class="divider"></div>
 
@@ -29,16 +29,16 @@
                         <div class="flex items-center justify-between">
                             <span class="text-base-content/60">Status</span>
                             @if ($user->is_active)
-                                <span class="badge badge-success badge-sm gap-1">
+                                <x-ui.badge type="success" size="sm">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M5 13l4 4L19 7" />
                                     </svg>
                                     Aktif
-                                </span>
+                                </x-ui.badge>
                             @else
-                                <span class="badge badge-error badge-sm">Nonaktif</span>
+                                <x-ui.badge type="error" size="sm">Nonaktif</x-ui.badge>
                             @endif
                         </div>
 
@@ -155,27 +155,14 @@
                     {{-- Read-only fields --}}
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         {{-- Role (read-only) --}}
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text">Role</span></label>
-                            <input type="text" class="input input-bordered w-full bg-base-200"
-                                value="{{ $roleLabel }}" disabled />
-                            <label class="label">
-                                <span class="label-text-alt text-base-content/50">Role tidak dapat diubah sendiri</span>
-                            </label>
-                        </div>
+                        <x-ui.input name="role" label="Role" :value="$roleLabel" disabled
+                            helpText="Role tidak dapat diubah sendiri" />
 
                         {{-- Wilayah RT/RW (read-only for RT/RW role) --}}
                         @if ($role === \App\Models\Role::RT_RW)
-                            <div class="form-control w-full">
-                                <label class="label"><span class="label-text">Wilayah</span></label>
-                                <input type="text" class="input input-bordered w-full bg-base-200"
-                                    value="RT {{ $user->wilayah_rt ?? '-' }} / RW {{ $user->wilayah_rw ?? '-' }}"
-                                    disabled />
-                                <label class="label">
-                                    <span class="label-text-alt text-base-content/50">Hubungi admin untuk mengubah
-                                        wilayah</span>
-                                </label>
-                            </div>
+                            <x-ui.input name="wilayah" label="Wilayah"
+                                value="RT {{ $user->wilayah_rt ?? '-' }} / RW {{ $user->wilayah_rw ?? '-' }}"
+                                disabled helpText="Hubungi admin untuk mengubah wilayah" />
                         @endif
                     </div>
 

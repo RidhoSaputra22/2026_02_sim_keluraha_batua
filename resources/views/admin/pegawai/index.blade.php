@@ -55,15 +55,15 @@
                         </td>
                         <td>
                             @php
-                                $statusClass = match($p->status_pegawai) {
-                                    'aktif' => 'badge-success',
-                                    'nonaktif' => 'badge-error',
-                                    'pensiun' => 'badge-warning',
-                                    'mutasi' => 'badge-info',
-                                    default => 'badge-ghost',
+                                $statusType = match($p->status_pegawai) {
+                                    'aktif' => 'success',
+                                    'nonaktif' => 'error',
+                                    'pensiun' => 'warning',
+                                    'mutasi' => 'info',
+                                    default => 'ghost',
                                 };
                             @endphp
-                            <span class="badge {{ $statusClass }} badge-sm">{{ ucfirst($p->status_pegawai ?? '-') }}</span>
+                            <x-ui.badge :type="$statusType" size="sm">{{ ucfirst($p->status_pegawai ?? '-') }}</x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">

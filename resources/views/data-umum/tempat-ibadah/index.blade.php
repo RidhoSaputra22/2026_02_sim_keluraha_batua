@@ -48,7 +48,7 @@
                     @forelse($tempatIbadahList as $item)
                     <tr class="hover">
                         <td class="text-sm text-base-content/60">{{ $tempatIbadahList->firstItem() + $loop->index }}</td>
-                        <td><span class="badge badge-outline badge-sm">{{ $item->tempat_ibadah }}</span></td>
+                        <td><x-ui.badge type="primary" size="sm" :outline="true">{{ $item->tempat_ibadah }}</x-ui.badge></td>
                         <td class="font-medium">{{ $item->nama }}</td>
                         <td class="text-sm">{{ Str::limit($item->alamat, 35) }}</td>
                         <td class="text-sm">

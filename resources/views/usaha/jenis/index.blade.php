@@ -50,7 +50,7 @@
                         <td class="font-medium">{{ $jenis->nama }}</td>
                         <td class="text-sm text-base-content/70">{{ $jenis->keterangan ?? '-' }}</td>
                         <td class="text-center">
-                            <span class="badge badge-primary badge-sm">{{ $jenis->umkms_count }}</span>
+                            <x-ui.badge type="primary" size="sm">{{ $jenis->umkms_count }}</x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">
@@ -76,7 +76,7 @@
                                 <x-ui.input label="Keterangan" name="keterangan" placeholder="Keterangan singkat (opsional)" value="{{ old('keterangan', $jenis->keterangan) }}" />
                             </div>
                             <x-slot:actions>
-                                <form method="dialog"><button class="btn btn-ghost">Batal</button></form>
+                                <form method="dialog"><x-ui.button type="ghost" :isSubmit="false">Batal</x-ui.button></form>
                                 <x-ui.button type="primary">Simpan</x-ui.button>
                             </x-slot:actions>
                         </form>
@@ -112,7 +112,7 @@
                 <x-ui.input label="Keterangan" name="keterangan" placeholder="Keterangan singkat (opsional)" value="{{ old('keterangan') }}" />
             </div>
             <x-slot:actions>
-                <form method="dialog"><button class="btn btn-ghost">Batal</button></form>
+                <form method="dialog"><x-ui.button type="ghost" :isSubmit="false">Batal</x-ui.button></form>
                 <x-ui.button type="primary">Simpan</x-ui.button>
             </x-slot:actions>
         </form>

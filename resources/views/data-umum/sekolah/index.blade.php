@@ -59,7 +59,7 @@
                             <div class="text-xs text-base-content/60">{{ Str::limit($item->alamat, 35) }}</div>
                         </td>
                         <td class="text-sm">{{ $item->npsn ?? '-' }}</td>
-                        <td><span class="badge badge-outline badge-sm">{{ $item->jenjang ?? '-' }}</span></td>
+                        <td><x-ui.badge type="primary" size="sm" :outline="true">{{ $item->jenjang ?? '-' }}</x-ui.badge></td>
                         <td class="text-sm">{{ $item->status ?? '-' }}</td>
                         <td class="text-sm text-center">{{ number_format($item->jumlah_siswa ?? 0) }}</td>
                         <td class="text-sm text-center">{{ $item->jumlah_guru ?? 0 }}</td>

@@ -31,18 +31,6 @@
             </x-ui.stat>
         </x-ui.card>
 
-        <x-ui.card class="bg-accent/5">
-            <x-ui.stat title="Surat Bulan Ini" value="{{ $totalPengantarBulanIni }}" description="Surat warga wilayah">
-                <x-slot:icon>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                </x-slot:icon>
-            </x-ui.stat>
-        </x-ui.card>
-
         <x-ui.card class="bg-info/5">
             <x-ui.stat title="Komposisi" value="{{ $lakiLaki }}L / {{ $perempuan }}P"
                 description="Laki-laki / Perempuan">
@@ -170,8 +158,8 @@
         </div>
     </div>
 
-    {{-- Mutasi & Surat Terbaru --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {{-- Mutasi Terbaru --}}
+    <div class="grid grid-cols-1 gap-6">
         <x-ui.card title="Mutasi Warga Terbaru">
             <div class="space-y-3">
                 @forelse($recentMutasi as $mutasi)
@@ -220,37 +208,6 @@
                 @endforeach
                 @endif
             </div>
-        </x-ui.card>
-
-        <x-ui.card title="Surat Terbaru">
-            <div class="space-y-3">
-                @forelse($recentSurat as $surat)
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-sm font-medium">{{ $surat->jenis?->nama ?? 'Surat' }} &mdash;
-                            {{ $surat->pemohon?->nama ?? $surat->nama_dalam_surat ?? '-' }}</p>
-                        <p class="text-xs text-base-content/60">{{ $surat->tanggal_surat?->format('d M Y') }}</p>
-                    </div>
-                    @php
-                    $statusMap = [
-                    'draft' => 'warning',
-                    'proses' => 'info',
-                    'signed' => 'success',
-                    'reject' => 'error',
-                    ];
-                    $badgeType = $statusMap[$surat->status_esign] ?? 'warning';
-                    @endphp
-                    <x-ui.badge type="{{ $badgeType }}" size="xs">{{ ucfirst($surat->status_esign ?? 'Draft') }}
-                    </x-ui.badge>
-                </div>
-                @empty
-                <p class="text-sm text-base-content/50">Belum ada data surat.</p>
-                @endforelse
-            </div>
-            <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('rtrw.pengantar.index') }}">Lihat Semua &rarr;
-                </x-ui.button>
-            </x-slot:actions>
         </x-ui.card>
     </div>
 

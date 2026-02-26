@@ -10,8 +10,6 @@ use App\Models\MutasiPenduduk;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
-use App\Models\Surat;
-use App\Models\SuratJenis;
 use App\Models\Umkm;
 use App\Models\PegawaiStaff;
 use App\Models\Penandatanganan;
@@ -27,11 +25,6 @@ class DashboardController extends Controller
             // Kependudukan
             'totalPenduduk' => Penduduk::count(),
             'totalKK' => Keluarga::count(),
-
-            // Persuratan
-            'totalSuratBulanIni' => Surat::whereMonth('tanggal_surat', now()->month)
-                ->whereYear('tanggal_surat', now()->year)->count(),
-            'suratMenunggu' => Surat::where('status_esign', 'draft')->count(),
 
             // Mutasi bulan ini
             'mutasiLahir' => Kelahiran::whereMonth('tanggal_lahir', now()->month)
@@ -67,21 +60,6 @@ class DashboardController extends Controller
 
             // Recent users
             'recentUsers' => User::with('role')->latest()->take(5)->get(),
-
-            // Recent surat for dashboard table
-            'recentSurat' => Surat::with(['jenis', 'pemohon'])
-                ->latest('tanggal_surat')
-                ->take(5)
-                ->get(),
-
-            // Surat per jenis (this month) — use whereHas for SQLite compatibility
-            'suratPerJenis' => SuratJenis::withCount(['surats' => function ($q) {
-                $q->whereMonth('tanggal_surat', now()->month)
-                  ->whereYear('tanggal_surat', now()->year);
-            }])->whereHas('surats', function ($q) {
-                $q->whereMonth('tanggal_surat', now()->month)
-                  ->whereYear('tanggal_surat', now()->year);
-            })->orderByDesc('surats_count')->get(),
         ];
 
         return view('admin.dashboard', $data);

@@ -60,7 +60,7 @@
                         <td class="font-medium">{{ $w->penduduk->nama ?? '-' }}</td>
                         <td class="font-mono text-xs">{{ $w->penduduk->nik ?? '-' }}</td>
                         <td>
-                            <span class="badge badge-primary badge-sm">{{ $w->jabatan->nama ?? '-' }}</span>
+                            <x-ui.badge type="primary" size="sm">{{ $w->jabatan->nama ?? '-' }}</x-ui.badge>
                         </td>
                         <td class="text-sm">RT {{ $w->rt->nomor ?? '-' }} / RW {{ $w->rw->nomor ?? '-' }}</td>
                         <td class="text-sm">
@@ -68,9 +68,9 @@
                         </td>
                         <td class="text-sm">{{ $w->no_telp ?? '-' }}</td>
                         <td>
-                            <span class="badge {{ $w->status === 'aktif' ? 'badge-success' : 'badge-error' }} badge-sm">
+                            <x-ui.badge :type="$w->status === 'aktif' ? 'success' : 'error'" size="sm">
                                 {{ ucfirst($w->status ?? 'aktif') }}
-                            </span>
+                            </x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">

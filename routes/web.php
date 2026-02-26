@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
-use App\Http\Controllers\Admin\JenisSuratController as AdminJenisSuratController;
 use App\Http\Controllers\Kependudukan\KeluargaController as AdminKeluargaController;
 // ─── Role-specific Dashboard Controllers ───────────────────────
 use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
@@ -10,11 +9,9 @@ use App\Http\Controllers\Admin\PenandatanganController as AdminPenandatanganCont
 use App\Http\Controllers\Kependudukan\PendudukController as AdminPendudukController;
 use App\Http\Controllers\Admin\ReferensiController as AdminReferensiController;
 use App\Http\Controllers\Admin\RoleController as AdminRoleController;
-use App\Http\Controllers\Admin\TemplateSuratController as AdminTemplateSuratController;
 // ─── Admin Module Controllers ──────────────────────────────────
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WilayahController as AdminWilayahController;
-use App\Http\Controllers\Agenda\AgendaKegiatanController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataUmum\FaskesController;
@@ -27,13 +24,11 @@ use App\Http\Controllers\Kependudukan\KelahiranController;
 use App\Http\Controllers\Kependudukan\KematianController;
 use App\Http\Controllers\Kependudukan\MutasiController;
 use App\Http\Controllers\Laporan\LaporanKependudukanController;
-use App\Http\Controllers\Laporan\LaporanPersuratanController;
 use App\Http\Controllers\Laporan\LaporanUsahaController as LaporanUsahaGlobalController;
 use App\Http\Controllers\ProfileController;
 // ─── Data Umum, Agenda Controllers ──────────
 use App\Http\Controllers\RtRw\DashboardController as RtRwDashboard;
 use App\Http\Controllers\RtRw\LaporanController as RtRwLaporanController;
-use App\Http\Controllers\RtRw\PengantarController as RtRwPengantarController;
 use App\Http\Controllers\RtRw\WargaController as RtRwWargaController;
 use App\Http\Controllers\Usaha\JenisUsahaController;
 use App\Http\Controllers\Usaha\LaporanUsahaController;
@@ -101,9 +96,7 @@ Route::middleware('auth')->group(function () {
         Route::resource('penandatangan', AdminPenandatanganController::class);
         Route::resource('pegawai', AdminPegawaiController::class);
 
-        // Master Data
-        Route::resource('jenis-surat', AdminJenisSuratController::class)->parameters(['jenis-surat' => 'jenisSurat']);
-        Route::resource('template-surat', AdminTemplateSuratController::class)->parameters(['template-surat' => 'templateSurat']);
+        // Referensi
         Route::get('/referensi', [AdminReferensiController::class, 'index'])->name('referensi.index');
     });
 
@@ -117,10 +110,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/warga', [RtRwWargaController::class, 'index'])->name('warga.index');
         Route::get('/warga/{penduduk}', [RtRwWargaController::class, 'show'])->name('warga.show');
         Route::get('/keluarga', [RtRwWargaController::class, 'keluarga'])->name('keluarga.index');
-
-        // Surat Pengantar
-        Route::get('/pengantar', [RtRwPengantarController::class, 'index'])->name('pengantar.index');
-        Route::get('/pengantar/{surat}', [RtRwPengantarController::class, 'show'])->name('pengantar.show');
 
         // Laporan
         Route::get('/laporan', [RtRwLaporanController::class, 'index'])->name('laporan.index');
@@ -182,25 +171,10 @@ Route::middleware('auth')->group(function () {
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
-    // ║  SHARED: AGENDA & KEGIATAN — Admin only                     ║
-    // ╚══════════════════════════════════════════════════════════════╝
-    Route::middleware('role:admin')->prefix('agenda')->name('agenda.')->group(function () {
-        Route::get('/', [AgendaKegiatanController::class, 'index'])->name('index');
-        Route::get('/create', [AgendaKegiatanController::class, 'create'])->name('create');
-        Route::post('/', [AgendaKegiatanController::class, 'store'])->name('store');
-        Route::get('/{agenda}', [AgendaKegiatanController::class, 'show'])->name('show');
-        Route::get('/{agenda}/edit', [AgendaKegiatanController::class, 'edit'])->name('edit');
-        Route::put('/{agenda}', [AgendaKegiatanController::class, 'update'])->name('update');
-        Route::delete('/{agenda}', [AgendaKegiatanController::class, 'destroy'])->name('destroy');
-        Route::post('/{agenda}/hasil', [AgendaKegiatanController::class, 'storeHasil'])->name('hasil.store');
-    });
-
-    // ╔══════════════════════════════════════════════════════════════╗
     // ║  SHARED: LAPORAN — Admin only                                ║
     // ╚══════════════════════════════════════════════════════════════╝
     Route::middleware('role:admin')->prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/kependudukan', [LaporanKependudukanController::class, 'index'])->name('kependudukan');
-        Route::get('/persuratan', [LaporanPersuratanController::class, 'index'])->name('persuratan');
         Route::get('/usaha', [LaporanUsahaGlobalController::class, 'index'])->name('usaha');
     });
 });

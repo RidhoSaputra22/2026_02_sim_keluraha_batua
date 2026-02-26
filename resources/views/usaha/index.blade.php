@@ -92,13 +92,13 @@
                         </td>
                         <td class="text-center">
                             @php
-                                $statusClass = match($u->status) {
-                                    'aktif' => 'badge-success',
-                                    'tidak_aktif' => 'badge-error',
-                                    default => 'badge-ghost',
+                                $statusType = match($u->status) {
+                                    'aktif' => 'success',
+                                    'tidak_aktif' => 'error',
+                                    default => 'ghost',
                                 };
                             @endphp
-                            <span class="badge {{ $statusClass }} badge-sm">{{ ucfirst(str_replace('_', ' ', $u->status ?? 'N/A')) }}</span>
+                            <x-ui.badge :type="$statusType" size="sm">{{ ucfirst(str_replace('_', ' ', $u->status ?? 'N/A')) }}</x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">

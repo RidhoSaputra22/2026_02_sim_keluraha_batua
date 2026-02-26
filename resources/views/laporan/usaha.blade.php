@@ -33,7 +33,7 @@
                         <tr>
                             <td class="font-medium">{{ $jenis->nama }}</td>
                             <td class="text-center">
-                                <span class="badge badge-primary badge-sm">{{ $jenis->umkms_count }}</span>
+                                <x-ui.badge type="primary" size="sm">{{ $jenis->umkms_count }}</x-ui.badge>
                             </td>
                             <td>
                                 @php $pct = $totalUsaha > 0 ? round(($jenis->umkms_count / $totalUsaha) * 100, 1) : 0; @endphp
@@ -71,7 +71,7 @@
                         <tr>
                             <td class="font-medium">{{ $item->sektor_umkm }}</td>
                             <td class="text-center">
-                                <span class="badge badge-secondary badge-sm">{{ $item->total }}</span>
+                                <x-ui.badge type="secondary" size="sm">{{ $item->total }}</x-ui.badge>
                             </td>
                             <td>
                                 @php $pct = $totalUsaha > 0 ? round(($item->total / $totalUsaha) * 100, 1) : 0; @endphp
@@ -124,9 +124,9 @@
                         </td>
                         <td class="text-center">
                             @php
-                                $sc = match($u->status) { 'aktif' => 'badge-success', 'tidak_aktif' => 'badge-error', default => 'badge-ghost' };
+                                $sc = match($u->status) { 'aktif' => 'success', 'tidak_aktif' => 'error', default => 'ghost' };
                             @endphp
-                            <span class="badge {{ $sc }} badge-sm">{{ ucfirst(str_replace('_', ' ', $u->status ?? 'N/A')) }}</span>
+                            <x-ui.badge :type="$sc" size="sm">{{ ucfirst(str_replace('_', ' ', $u->status ?? 'N/A')) }}</x-ui.badge>
                         </td>
                     </tr>
                     @empty

@@ -15,7 +15,7 @@
                 <div class="flex-1">
                     <div class="flex items-center justify-between mb-1">
                         <h3 class="text-lg font-semibold">{{ $ref['title'] }}</h3>
-                        <span class="badge badge-{{ $ref['color'] }} badge-lg font-bold">{{ $ref['count'] }}</span>
+                        <x-ui.badge :type="$ref['color']" size="lg" class="font-bold">{{ $ref['count'] }}</x-ui.badge>
                     </div>
                     <p class="text-sm text-base-content/60">{{ $ref['description'] }}</p>
                 </div>
@@ -26,19 +26,19 @@
                 @if($ref['title'] === 'Agama')
                     <div class="flex flex-wrap gap-2">
                         @foreach(['Islam', 'Kristen Protestan', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'] as $item)
-                            <span class="badge badge-outline badge-sm">{{ $item }}</span>
+                            <x-ui.badge type="primary" size="sm" :outline="true">{{ $item }}</x-ui.badge>
                         @endforeach
                     </div>
                 @elseif($ref['title'] === 'Pendidikan')
                     <div class="flex flex-wrap gap-2">
                         @foreach(['Tidak/Belum Sekolah', 'SD/Sederajat', 'SMP/Sederajat', 'SMA/Sederajat', 'D1/D2', 'D3/Diploma', 'S1/Sarjana', 'S2/Magister', 'S3/Doktor'] as $item)
-                            <span class="badge badge-outline badge-sm">{{ $item }}</span>
+                            <x-ui.badge type="primary" size="sm" :outline="true">{{ $item }}</x-ui.badge>
                         @endforeach
                     </div>
                 @elseif($ref['title'] === 'Status Kawin')
                     <div class="flex flex-wrap gap-2">
                         @foreach(['Belum Kawin', 'Kawin', 'Cerai Hidup', 'Cerai Mati'] as $item)
-                            <span class="badge badge-outline badge-sm">{{ $item }}</span>
+                            <x-ui.badge type="primary" size="sm" :outline="true">{{ $item }}</x-ui.badge>
                         @endforeach
                     </div>
                 @elseif($ref['title'] === 'Pekerjaan')

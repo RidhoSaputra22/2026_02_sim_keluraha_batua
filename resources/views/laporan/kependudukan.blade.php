@@ -36,10 +36,10 @@
                             <td class="font-medium">RW {{ $rw->nomor }}</td>
                             <td class="text-center">{{ $rw->rts_count }}</td>
                             <td class="text-center">
-                                <span class="badge badge-primary badge-sm">{{ $rw->jumlah_penduduk }}</span>
+                                <x-ui.badge type="primary" size="sm">{{ $rw->jumlah_penduduk }}</x-ui.badge>
                             </td>
                             <td class="text-center">
-                                <span class="badge badge-accent badge-sm">{{ $rw->jumlah_kk }}</span>
+                                <x-ui.badge type="accent" size="sm">{{ $rw->jumlah_kk }}</x-ui.badge>
                             </td>
                         </tr>
                         @empty
@@ -70,7 +70,7 @@
                         <tr>
                             <td class="font-medium">{{ $item->agama ?? 'Tidak diketahui' }}</td>
                             <td class="text-center">
-                                <span class="badge badge-primary badge-sm">{{ number_format($item->total) }}</span>
+                                <x-ui.badge type="primary" size="sm">{{ number_format($item->total) }}</x-ui.badge>
                             </td>
                             <td>
                                 @php $pct = $totalPenduduk > 0 ? round(($item->total / $totalPenduduk) * 100, 1) : 0; @endphp
@@ -108,7 +108,7 @@
                         <tr>
                             <td class="font-medium">{{ $item->pendidikan ?? 'Tidak diketahui' }}</td>
                             <td class="text-center">
-                                <span class="badge badge-secondary badge-sm">{{ number_format($item->total) }}</span>
+                                <x-ui.badge type="secondary" size="sm">{{ number_format($item->total) }}</x-ui.badge>
                             </td>
                             <td>
                                 @php $pct = $totalPenduduk > 0 ? round(($item->total / $totalPenduduk) * 100, 1) : 0; @endphp
@@ -146,7 +146,7 @@
                         <tr>
                             <td class="font-medium">{{ $item->status_kawin ?? 'Tidak diketahui' }}</td>
                             <td class="text-center">
-                                <span class="badge badge-accent badge-sm">{{ number_format($item->total) }}</span>
+                                <x-ui.badge type="accent" size="sm">{{ number_format($item->total) }}</x-ui.badge>
                             </td>
                             <td>
                                 @php $pct = $totalPenduduk > 0 ? round(($item->total / $totalPenduduk) * 100, 1) : 0; @endphp

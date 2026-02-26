@@ -36,7 +36,7 @@
                     </div>
                     <div class="py-2 flex justify-between">
                         <span class="text-sm text-base-content/60">Anggota</span>
-                        <span class="badge badge-primary badge-sm">{{ $keluarga->jumlah_anggota_keluarga ?? 0 }} orang</span>
+                        <x-ui.badge type="primary" size="sm">{{ $keluarga->jumlah_anggota_keluarga ?? 0 }} orang</x-ui.badge>
                     </div>
                     <div class="py-2 flex justify-between">
                         <span class="text-sm text-base-content/60">RT/RW</span>
@@ -68,7 +68,7 @@
                                 <td>
                                     <span class="font-medium">{{ $a->nama }}</span>
                                     @if($a->id === $keluarga->kepala_keluarga_id)
-                                        <span class="badge badge-primary badge-xs ml-1">KK</span>
+                                        <x-ui.badge type="primary" size="xs" class="ml-1">KK</x-ui.badge>
                                     @endif
                                 </td>
                                 <td>{{ $a->jenis_kelamin ?? '-' }}</td>

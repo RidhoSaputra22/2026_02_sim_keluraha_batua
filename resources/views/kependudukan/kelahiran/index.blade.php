@@ -57,9 +57,9 @@
                             @endif
                         </td>
                         <td>
-                            <span class="badge badge-{{ $k->jenis_kelamin === 'L' ? 'info' : 'secondary' }} badge-sm">
+                            <x-ui.badge :type="$k->jenis_kelamin === 'L' ? 'info' : 'secondary'" size="sm">
                                 {{ $k->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}
-                            </span>
+                            </x-ui.badge>
                         </td>
                         <td class="text-sm">
                             <div>{{ $k->tempat_lahir ?? '-' }}</div>

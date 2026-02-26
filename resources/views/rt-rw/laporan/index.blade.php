@@ -49,12 +49,6 @@
                 <div class="text-xs text-base-content/60 mt-1">Meninggal</div>
             </div>
         </x-ui.card>
-        <x-ui.card>
-            <div class="text-center">
-                <div class="text-2xl font-bold text-accent">{{ $suratBulanIni }}</div>
-                <div class="text-xs text-base-content/60 mt-1">Surat (bln ini)</div>
-            </div>
-        </x-ui.card>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

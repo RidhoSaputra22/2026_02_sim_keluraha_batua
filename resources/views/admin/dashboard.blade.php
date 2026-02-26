@@ -48,123 +48,53 @@
             </div>
         </div>
 
-        {{-- Surat Bulan Ini --}}
-        <!-- <div class="card bg-base-100 shadow border border-accent/10">
+        {{-- Mutasi Bulan Ini --}}
+        <div class="card bg-base-100 shadow border border-accent/10">
             <div class="card-body p-5">
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-sm text-base-content/60 font-medium">Surat Bulan Ini</p>
-                        <p class="text-3xl font-bold text-base-content mt-1">{{ $totalSuratBulanIni }}</p>
+                        <p class="text-sm text-base-content/60 font-medium">Mutasi Bulan Ini</p>
+                        <p class="text-3xl font-bold text-base-content mt-1">{{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</p>
                         <p class="text-xs text-base-content/50 mt-1">{{ now()->translatedFormat('F Y') }}</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-accent" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                         </svg>
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
 
-        {{-- Menunggu Verifikasi --}}
-        <!-- <div class="card bg-base-100 shadow border border-warning/20">
+        {{-- Pengguna Aktif --}}
+        <div class="card bg-base-100 shadow border border-warning/20">
             <div class="card-body p-5">
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-sm text-base-content/60 font-medium">Menunggu Verifikasi</p>
-                        <p
-                            class="text-3xl font-bold mt-1 {{ $suratMenunggu > 0 ? 'text-warning' : 'text-base-content' }}">
-                            {{ $suratMenunggu }}</p>
-                        <p class="text-xs mt-1 {{ $suratMenunggu > 0 ? 'text-warning' : 'text-base-content/50' }}">
-                            {{ $suratMenunggu > 0 ? 'Perlu segera ditindak' : 'Tidak ada antrian' }}
-                        </p>
+                        <p class="text-sm text-base-content/60 font-medium">Pengguna Aktif</p>
+                        <p class="text-3xl font-bold text-base-content mt-1">{{ $activeUsers }}</p>
+                        <p class="text-xs text-base-content/50 mt-1">dari {{ $totalUsers }} total pengguna</p>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none"
                             viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
 
     </div>
 
-    {{-- Two-column layout --}}
-    <!-- <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    {{-- Mutasi Penduduk & Aksi Cepat --}}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-        {{-- Layanan Terbaru --}}
+        {{-- Mutasi Penduduk --}}
         <div class="lg:col-span-2">
-            <x-ui.card title="Layanan Surat Terbaru">
-                <div class="overflow-x-auto -mx-2">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr class="text-xs uppercase text-base-content/50">
-                                <th>No. Surat</th>
-                                <th>Jenis</th>
-                                <th>Pemohon</th>
-                                <th>Tanggal</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentSurat as $surat)
-                            <tr class="hover text-sm">
-                                <td class="font-mono text-xs text-base-content/70">{{ $surat->nomor_surat ?? '-' }}</td>
-                                <td class="max-w-[150px] truncate">{{ $surat->jenis->nama ?? '-' }}</td>
-                                <td class="font-medium">{{ $surat->pemohon->nama ?? $surat->nama_dalam_surat ?? '-' }}
-                                </td>
-                                <td class="text-base-content/60 whitespace-nowrap">
-                                    {{ $surat->tanggal_surat?->format('d M Y') ?? '-' }}</td>
-                                <td class="text-center">
-                                    @php
-                                    $statusColor = match($surat->status_esign) {
-                                    'signed' => 'success',
-                                    'proses' => 'info',
-                                    'draft' => 'warning',
-                                    'reject' => 'error',
-                                    default => 'ghost',
-                                    };
-                                    $statusLabel = match($surat->status_esign) {
-                                    'signed' => 'Selesai',
-                                    'proses' => 'Proses',
-                                    'draft' => 'Draft',
-                                    'reject' => 'Ditolak',
-                                    default => '-',
-                                    };
-                                    @endphp
-                                    <x-ui.badge type="{{ $statusColor }}" size="sm">{{ $statusLabel }}</x-ui.badge>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-8 text-base-content/40">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 opacity-30"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Belum ada data surat.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <x-slot:actions>
-                    <x-ui.button type="ghost" size="sm" href="#">Lihat Semua →</x-ui.button>
-                </x-slot:actions>
-            </x-ui.card>
-        </div>
-
-        {{-- Sidebar info --}}
-        <div class="space-y-4">
-
-            {{-- Mutasi Penduduk --}}
             <x-ui.card title="Mutasi Penduduk (Bulan Ini)">
                 <div class="space-y-2">
                     @php
@@ -207,7 +137,10 @@
                 </div>
             </x-ui.card>
 
-            {{-- Quick Actions --}}
+        </div>
+
+        {{-- Aksi Cepat --}}
+        <div>
             <x-ui.card title="Aksi Cepat">
                 <div class="space-y-2">
                     <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2"
@@ -238,38 +171,12 @@
                     </x-ui.button>
                 </div>
             </x-ui.card>
-
         </div>
-    </div> -->
 
-    {{-- Bottom row: Surat per jenis & Data Usaha --}}
+    </div>
+
+    {{-- Data Usaha & Wilayah --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
-        {{-- Surat per Jenis --}}
-        <!-- <x-ui.card title="Rekap Surat per Jenis (Bulan Ini)">
-            @php $totalSurat = $suratPerJenis->sum('surats_count') ?: 1; @endphp
-            @forelse($suratPerJenis as $jenis)
-            <div class="mb-3">
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="text-base-content/80 truncate max-w-[70%]">{{ $jenis->nama }}</span>
-                    <span class="font-semibold tabular-nums">{{ $jenis->surats_count }}</span>
-                </div>
-                <div class="w-full bg-base-200 rounded-full h-2">
-                    <div class="bg-primary h-2 rounded-full transition-all"
-                        style="width: {{ round(($jenis->surats_count / $totalSurat) * 100) }}%"></div>
-                </div>
-            </div>
-            @empty
-            <div class="flex flex-col items-center justify-center py-8 text-base-content/40">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-30" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p class="text-sm">Belum ada data surat bulan ini.</p>
-            </div>
-            @endforelse
-        </x-ui.card> -->
 
         {{-- Data Usaha Ringkasan --}}
         <x-ui.card title="Data Usaha / UMKM">
@@ -342,11 +249,11 @@
 
     </div>
 
-    {{-- Admin-specific: System Overview --}}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    {{-- System Overview --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {{-- User Management Overview --}}
-        <!-- <x-ui.card title="Manajemen Pengguna">
+        <x-ui.card title="Manajemen Pengguna">
             <div class="space-y-2 mb-4">
                 <div class="flex items-center justify-between p-2 rounded-lg bg-base-200">
                     <span class="text-sm">Total Pengguna</span>
@@ -378,12 +285,10 @@
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →
                 </x-ui.button>
             </x-slot:actions>
-        </x-ui.card> -->
-
-
+        </x-ui.card>
 
         {{-- Recent Users --}}
-        <!-- <x-ui.card title="Pengguna Terbaru">
+        <x-ui.card title="Pengguna Terbaru">
             <div class="space-y-3">
                 @forelse($recentUsers as $user)
                 <div class="flex items-center gap-3">
@@ -414,7 +319,7 @@
             <x-slot:actions>
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.audit-log') }}">Audit Log →</x-ui.button>
             </x-slot:actions>
-        </x-ui.card> -->
+        </x-ui.card>
 
     </div>
 

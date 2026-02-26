@@ -34,37 +34,10 @@ return new class extends Migration
             $table->index(['kelurahan_id','rw_id','rt_id']);
         });
 
-        Schema::create('penilaian_periodes', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('kelurahan_id')->constrained('kelurahans')->cascadeOnUpdate()->restrictOnDelete();
-            $table->string('nama_periode');
-            $table->date('tgl_mulai')->nullable();
-            $table->date('tgl_selesai')->nullable();
-            $table->unique(['kelurahan_id','nama_periode']);
-            $table->timestamps();
-        });
-
-        Schema::create('penilaian_rt_rw_details', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('periode_id')->constrained('penilaian_periodes')->cascadeOnUpdate()->cascadeOnDelete();
-            $table->foreignId('pengurus_id')->constrained('rt_rw_pengurus')->cascadeOnUpdate()->restrictOnDelete();
-            $table->decimal('nilai', 6, 2)->default(0);
-            $table->decimal('standar_nilai', 6, 2)->default(0);
-            $table->decimal('usulan_nilai_insentif', 12, 2)->default(0);
-            $table->string('lpj_path')->nullable();
-            $table->string('arsip_path')->nullable();
-            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamps();
-
-            $table->unique(['periode_id','pengurus_id']);
-        });
     }
 
     public function down(): void
     {
-
-        Schema::dropIfExists('penilaian_rt_rw_details');
-        Schema::dropIfExists('penilaian_periodes');
         Schema::dropIfExists('rt_rw_pengurus');
         Schema::dropIfExists('jabatan_rt_rw');
     }

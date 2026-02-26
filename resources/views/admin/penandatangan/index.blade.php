@@ -54,9 +54,9 @@
                         </td>
                         <td class="text-sm">{{ $p->no_telp ?? '-' }}</td>
                         <td>
-                            <span class="badge {{ $p->status === 'aktif' ? 'badge-success' : 'badge-error' }} badge-sm">
+                            <x-ui.badge :type="$p->status === 'aktif' ? 'success' : 'error'" size="sm">
                                 {{ ucfirst($p->status ?? 'aktif') }}
-                            </span>
+                            </x-ui.badge>
                         </td>
                         <td>
                             <div class="flex justify-end gap-1">
