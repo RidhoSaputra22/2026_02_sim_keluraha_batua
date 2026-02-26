@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             // ╚════════════════════════════════════════════════╝
             RoleSeeder::class,          // 6 roles
             WilayahSeeder::class,       // Kecamatan → Kelurahan → RW → RT
-            ReferensiSeeder::class,     // Jenis surat, sifat, jabatan RT/RW, layanan publik
+            ReferensiSeeder::class,     // Jabatan RT/RW
 
             // ╔════════════════════════════════════════════════╗
             // ║  DEMO DATA (sample / transactional)           ║
@@ -32,7 +32,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,                  // 9 users (1+ per role)
             PegawaiPenandatanganSeeder::class,  // 10 pegawai, 3 penandatangan
             PendudukKeluargaSeeder::class,      // 15 keluarga, ~50 penduduk, KTP tercetak
-            InstansiPemohonSuratSeeder::class,  // 10 instansi, 10 pemohon, 18 surat
+            InstansiSeeder::class,              // 10 instansi
             RtRwPengurusSeeder::class,          // Pengurus RT/RW + penilaian 2 periode
             DataUmumSeeder::class,              // UMKM, sekolah, faskes, tempat ibadah, dll.
             AgendaSurveySeeder::class,          // 6 agenda + hasil kegiatan

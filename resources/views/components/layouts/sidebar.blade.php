@@ -95,12 +95,6 @@
                                 class="{{ request()->routeIs('master.pegawai.*') ? 'active' : '' }}">Pegawai /
                                 Staff</a>
                         </li>
-                        <!-- <li><a href="{{ route('master.jenis-surat.index') }}"
-                            class="{{ request()->routeIs('master.jenis-surat.*') ? 'active' : '' }}">Jenis Surat</a>
-                    </li> -->
-                        <!-- <li><a href="{{ route('master.template-surat.index') }}"
-                            class="{{ request()->routeIs('master.template-surat.*') ? 'active' : '' }}">Template
-                            Surat</a></li> -->
                         <li><a href="{{ route('master.referensi.index') }}"
                                 class="{{ request()->routeIs('master.referensi.*') ? 'active' : '' }}">Data
                                 Referensi</a>
@@ -206,11 +200,6 @@
                         <li><a href="{{ route('data-umum.tempat-ibadah.index') }}"
                                 class="{{ request()->routeIs('data-umum.tempat-ibadah.*') ? 'active' : '' }}">Tempat
                                 Ibadah</a></li>
-                        <!-- <li><a href="{{ route('data-umum.petugas-kebersihan.index') }}"
-                            class="{{ request()->routeIs('data-umum.petugas-kebersihan.*') ? 'active' : '' }}">Petugas
-                            Kebersihan</a></li>
-                    <li><a href="{{ route('data-umum.kendaraan.index') }}"
-                            class="{{ request()->routeIs('data-umum.kendaraan.*') ? 'active' : '' }}">Kendaraan</a></li> -->
                     </ul>
                 </details>
             </li>
@@ -257,10 +246,6 @@
                                 class="{{ request()->routeIs('laporan.kependudukan') ? 'active' : '' }}">Kependudukan</a>
                         </li>
 
-                        {{-- Laporan Persuratan: belum diimplementasi --}}
-                        <!-- <li><a href="{{ route('laporan.persuratan') }}"
-                            class="{{ request()->routeIs('laporan.persuratan') ? 'active' : '' }}">Persuratan</a></li> -->
-
                         <li><a href="{{ route('laporan.usaha') }}"
                                 class="{{ request()->routeIs('laporan.usaha') ? 'active' : '' }}">Data Usaha</a>
                         </li>
@@ -276,38 +261,6 @@
             <li class="menu-title mt-3">
                 <span class="text-xs uppercase tracking-wider text-base-content/40">Layanan RT/RW</span>
             </li>
-            <!-- <li>
-            <a href="{{ route('rtrw.warga.index') }}" class="{{ request()->routeIs('rtrw.warga.*') ? 'active' : '' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-                Data Warga
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('rtrw.keluarga.index') }}"
-                class="{{ request()->routeIs('rtrw.keluarga.*') ? 'active' : '' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                Data Keluarga
-            </a>
-        </li> -->
-            <!-- <li>
-            <a href="{{ route('rtrw.pengantar.index') }}"
-                class="{{ request()->routeIs('rtrw.pengantar.*') ? 'active' : '' }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Surat Pengantar
-            </a>
-        </li> -->
             <li>
                 <a href="{{ route('rtrw.laporan.index') }}"
                     class="{{ request()->routeIs('rtrw.laporan.*') ? 'active' : '' }}">
@@ -321,35 +274,5 @@
             </li>
         @endif
 
-        {{-- ============================================================ --}}
-        {{-- Administrasi Sistem — Admin only --}}
-        {{-- ============================================================ --}}
-        <!-- @if ($user && $user->hasRole('admin'))
-<li class="menu-title mt-3">
-            <span class="text-xs uppercase tracking-wider text-base-content/40">Administrasi</span>
-        </li>
-        <li>
-            <details {{ request()->routeIs('admin.*') ? 'open' : '' }}>
-                <summary>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Pengaturan
-                </summary>
-                <ul>
-                    <li><a href="{{ route('admin.users.index') }}"
-                            class="{{ request()->routeIs('admin.users.*') ? 'active' : '' }}">Pengguna</a></li>
-                    <li><a href="{{ route('admin.roles.index') }}"
-                            class="{{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">Role & Hak Akses</a></li>
-                    <li><a href="{{ route('admin.audit-log') }}"
-                            class="{{ request()->routeIs('admin.audit-log') ? 'active' : '' }}">Audit Log</a></li>
-                </ul>
-            </details>
-        </li>
-@endif -->
     </ul>
 </aside>

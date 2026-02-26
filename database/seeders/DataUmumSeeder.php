@@ -5,9 +5,7 @@ namespace Database\Seeders;
 use App\Models\Faskes;
 use App\Models\Keluarga;
 use App\Models\Kelurahan;
-use App\Models\Kendaraan;
 use App\Models\Penduduk;
-use App\Models\PetugasKebersihan;
 use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Sekolah;
@@ -140,52 +138,6 @@ class DataUmumSeeder extends Seeder
                 'rt_id'         => $rtList[$ib['rt']]->id ?? null,
                 'rw_id'         => $rwList[$ib['rw']]->id ?? null,
                 'pengurus'      => 'Pengurus ' . $ib['nama'],
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // Kendaraan Dinas
-        // ═══════════════════════════════════════════════════════
-        $kendaraanData = [
-            ['jenis' => 'Sepeda Motor',   'pengemudi' => 'Muh. Fadli',      'nopol' => 'DD 1234 AB', 'merek' => 'Honda Beat 2022',      'tahun' => '2022'],
-            ['jenis' => 'Sepeda Motor',   'pengemudi' => 'Ahmad Fauzi',     'nopol' => 'DD 5678 CD', 'merek' => 'Yamaha NMAX 2023',     'tahun' => '2023'],
-            ['jenis' => 'Mobil',          'pengemudi' => 'Muh. Fadli',      'nopol' => 'DD 9012 EF', 'merek' => 'Toyota Avanza 2021',   'tahun' => '2021'],
-            ['jenis' => 'Mobil Pick Up',  'pengemudi' => 'Muh. Fadli',      'nopol' => 'DD 3456 GH', 'merek' => 'Mitsubishi L300 2020', 'tahun' => '2020'],
-        ];
-
-        foreach ($kendaraanData as $k) {
-            Kendaraan::create([
-                'kelurahan_id'    => $kelurahan->id,
-                'jenis_barang'    => $k['jenis'],
-                'nama_pengemudi'  => $k['pengemudi'],
-                'no_polisi'       => $k['nopol'],
-                'no_rangka'       => strtoupper(substr(md5(rand()), 0, 17)),
-                'no_mesin'        => strtoupper(substr(md5(rand()), 0, 12)),
-                'tahun_perolehan' => $k['tahun'],
-                'merek_type'      => $k['merek'],
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // Petugas Kebersihan
-        // ═══════════════════════════════════════════════════════
-        $petugasData = [
-            ['nama' => 'Muh. Fadli',    'nik' => 'PTT-KB-001', 'unit' => 'Kelurahan Batua', 'lokasi' => 'RW 001 - RW 004', 'jk' => 'L'],
-            ['nama' => 'Dg. Rani',      'nik' => 'PTT-KB-002', 'unit' => 'Kelurahan Batua', 'lokasi' => 'RW 005 - RW 008', 'jk' => 'L'],
-            ['nama' => 'Baharuddin',    'nik' => 'PTT-KB-003', 'unit' => 'Kelurahan Batua', 'lokasi' => 'Jl. Batua Raya',  'jk' => 'L'],
-            ['nama' => 'Sumarni',       'nik' => 'PTT-KB-004', 'unit' => 'Kantor Kelurahan', 'lokasi' => 'Kantor Lurah',   'jk' => 'P'],
-        ];
-
-        foreach ($petugasData as $pt) {
-            PetugasKebersihan::create([
-                'kelurahan_id' => $kelurahan->id,
-                'nama'         => $pt['nama'],
-                'nik'          => $pt['nik'],
-                'unit_kerja'   => $pt['unit'],
-                'jenis_kelamin' => $pt['jk'],
-                'pekerjaan'    => 'Petugas Kebersihan',
-                'lokasi'       => $pt['lokasi'],
-                'status'       => 'Aktif',
             ]);
         }
     }

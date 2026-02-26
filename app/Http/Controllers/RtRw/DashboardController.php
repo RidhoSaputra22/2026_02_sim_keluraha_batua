@@ -10,7 +10,6 @@ use App\Models\MutasiPenduduk;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
-use App\Models\Surat;
 use Illuminate\Http\Request;
 
 class DashboardController extends Controller
@@ -49,14 +48,6 @@ class DashboardController extends Controller
         $totalWarga = Penduduk::whereIn('rt_id', $rtIds)->count();
         $totalKK    = Keluarga::whereIn('rt_id', $rtIds)->count();
 
-        // Surat pengantar bulan ini (surat with pemohon linked to penduduk in this area)
-        $totalPengantarBulanIni = Surat::whereHas('pemohon.penduduk', function ($q) use ($rtIds) {
-                $q->whereIn('rt_id', $rtIds);
-            })
-            ->whereMonth('tanggal_surat', now()->month)
-            ->whereYear('tanggal_surat', now()->year)
-            ->count();
-
         // Gender composition
         $lakiLaki  = Penduduk::whereIn('rt_id', $rtIds)->where('jenis_kelamin', 'L')->count();
         $perempuan = Penduduk::whereIn('rt_id', $rtIds)->where('jenis_kelamin', 'P')->count();
@@ -70,9 +61,9 @@ class DashboardController extends Controller
 
         // Recent mutasi
         $recentMutasi = MutasiPenduduk::where(function ($q) use ($rtIds) {
-                $q->whereIn('rt_asal_id', $rtIds)
-                  ->orWhereIn('rt_tujuan_id', $rtIds);
-            })
+            $q->whereIn('rt_asal_id', $rtIds)
+                ->orWhereIn('rt_tujuan_id', $rtIds);
+        })
             ->with('penduduk')
             ->latest('tanggal_mutasi')
             ->take(5)
@@ -86,34 +77,23 @@ class DashboardController extends Controller
 
         // Recent kematian
         $recentKematian = Kematian::whereHas('penduduk', function ($q) use ($rtIds) {
-                $q->whereIn('rt_id', $rtIds);
-            })
+            $q->whereIn('rt_id', $rtIds);
+        })
             ->with('penduduk')
             ->latest('tanggal_meninggal')
             ->take(3)
-            ->get();
-
-        // Recent surat for this area
-        $recentSurat = Surat::whereHas('pemohon.penduduk', function ($q) use ($rtIds) {
-                $q->whereIn('rt_id', $rtIds);
-            })
-            ->with(['jenis', 'pemohon.penduduk'])
-            ->latest('tanggal_surat')
-            ->take(5)
             ->get();
 
         return view('rt-rw.dashboard', compact(
             'user',
             'totalWarga',
             'totalKK',
-            'totalPengantarBulanIni',
             'lakiLaki',
             'perempuan',
             'recentWarga',
             'recentMutasi',
             'recentKelahiran',
             'recentKematian',
-            'recentSurat',
             'rtIds',
         ));
     }

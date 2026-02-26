@@ -92,16 +92,11 @@ class AuditLog extends Model
             PegawaiStaff::class      => 'Pegawai',
             Penandatanganan::class   => 'Penandatangan',
             RtRwPengurus::class      => 'Wilayah RT/RW',
-            SuratJenis::class        => 'Jenis Surat',
-            TemplateSurat::class     => 'Template Surat',
             Faskes::class            => 'Fasilitas Kesehatan',
             Sekolah::class           => 'Sekolah',
             TempatIbadah::class      => 'Tempat Ibadah',
-            PetugasKebersihan::class => 'Petugas Kebersihan',
-            Kendaraan::class         => 'Kendaraan',
             AgendaKegiatan::class    => 'Agenda Kegiatan',
             HasilKegiatan::class     => 'Hasil Kegiatan',
-            Surat::class             => 'Surat',
         ];
 
         return $map[get_class($model)] ?? class_basename($model);

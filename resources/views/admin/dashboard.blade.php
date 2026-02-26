@@ -49,234 +49,119 @@
         </div>
 
         {{-- Surat Bulan Ini --}}
-        <!-- <div class="card bg-base-100 shadow border border-accent/10">
-            <div class="card-body p-5">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm text-base-content/60 font-medium">Surat Bulan Ini</p>
-                        <p class="text-3xl font-bold text-base-content mt-1">{{ $totalSuratBulanIni }}</p>
-                        <p class="text-xs text-base-content/50 mt-1">{{ now()->translatedFormat('F Y') }}</p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-accent" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div> -->
 
         {{-- Menunggu Verifikasi --}}
-        <!-- <div class="card bg-base-100 shadow border border-warning/20">
-            <div class="card-body p-5">
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-sm text-base-content/60 font-medium">Menunggu Verifikasi</p>
-                        <p
-                            class="text-3xl font-bold mt-1 {{ $suratMenunggu > 0 ? 'text-warning' : 'text-base-content' }}">
-                            {{ $suratMenunggu }}</p>
-                        <p class="text-xs mt-1 {{ $suratMenunggu > 0 ? 'text-warning' : 'text-base-content/50' }}">
-                            {{ $suratMenunggu > 0 ? 'Perlu segera ditindak' : 'Tidak ada antrian' }}
-                        </p>
-                    </div>
-                    <div class="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-warning" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div> -->
 
     </div>
 
     {{-- Two-column layout --}}
-    <!-- <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
-        {{-- Layanan Terbaru --}}
-        <div class="lg:col-span-2">
-            <x-ui.card title="Layanan Surat Terbaru">
-                <div class="overflow-x-auto -mx-2">
-                    <table class="table table-sm">
-                        <thead>
-                            <tr class="text-xs uppercase text-base-content/50">
-                                <th>No. Surat</th>
-                                <th>Jenis</th>
-                                <th>Pemohon</th>
-                                <th>Tanggal</th>
-                                <th class="text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recentSurat as $surat)
-                            <tr class="hover text-sm">
-                                <td class="font-mono text-xs text-base-content/70">{{ $surat->nomor_surat ?? '-' }}</td>
-                                <td class="max-w-[150px] truncate">{{ $surat->jenis->nama ?? '-' }}</td>
-                                <td class="font-medium">{{ $surat->pemohon->nama ?? $surat->nama_dalam_surat ?? '-' }}
-                                </td>
-                                <td class="text-base-content/60 whitespace-nowrap">
-                                    {{ $surat->tanggal_surat?->format('d M Y') ?? '-' }}</td>
-                                <td class="text-center">
-                                    @php
-                                    $statusColor = match($surat->status_esign) {
-                                    'signed' => 'success',
-                                    'proses' => 'info',
-                                    'draft' => 'warning',
-                                    'reject' => 'error',
-                                    default => 'ghost',
-                                    };
-                                    $statusLabel = match($surat->status_esign) {
-                                    'signed' => 'Selesai',
-                                    'proses' => 'Proses',
-                                    'draft' => 'Draft',
-                                    'reject' => 'Ditolak',
-                                    default => '-',
-                                    };
-                                    @endphp
-                                    <x-ui.badge type="{{ $statusColor }}" size="sm">{{ $statusLabel }}</x-ui.badge>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center py-8 text-base-content/40">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mx-auto mb-2 opacity-30"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    Belum ada data surat.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-                <x-slot:actions>
-                    <x-ui.button type="ghost" size="sm" href="#">Lihat Semua →</x-ui.button>
-                </x-slot:actions>
-            </x-ui.card>
-        </div>
-
-        {{-- Sidebar info --}}
-        <div class="space-y-4">
-
-            {{-- Mutasi Penduduk --}}
-            <x-ui.card title="Mutasi Penduduk (Bulan Ini)">
-                <div class="space-y-2">
-                    @php
-                    $mutasiItems = [
-                    ['label' => 'Kelahiran', 'value' => $mutasiLahir, 'color' => 'text-success', 'bg' =>
-                    'bg-success/10', 'icon' => '
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />'],
-                    ['label' => 'Kematian', 'value' => $mutasiMeninggal, 'color' => 'text-error', 'bg' => 'bg-error/10',
+    {{-- Bottom row: Data Usaha & Wilayah --}}
+    <div class="space-y-2">
+        @php
+            $mutasiItems = [
+                [
+                    'label' => 'Kelahiran',
+                    'value' => $mutasiLahir,
+                    'color' => 'text-success',
+                    'bg' => 'bg-success/10',
                     'icon' => '
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />'],
-                    ['label' => 'Datang', 'value' => $mutasiDatang, 'color' => 'text-info', 'bg' => 'bg-info/10', 'icon'
-                    => '
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M11 16l-4-4m0 0l4-4m-4 4h14" />'],
-                    ['label' => 'Pindah', 'value' => $mutasiPindah, 'color' => 'text-warning', 'bg' => 'bg-warning/10',
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />',
+                ],
+                [
+                    'label' => 'Kematian',
+                    'value' => $mutasiMeninggal,
+                    'color' => 'text-error',
+                    'bg' => 'bg-error/10',
+                    'icon' => '
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />',
+                ],
+                [
+                    'label' => 'Datang',
+                    'value' => $mutasiDatang,
+                    'color' => 'text-info',
+                    'bg' => 'bg-info/10',
                     'icon' => '
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6" />'],
-                    ];
-                    @endphp
-                    @foreach($mutasiItems as $item)
-                    <div class="flex items-center justify-between rounded-lg px-3 py-2 {{ $item['bg'] }}">
-                        <div class="flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $item['color'] }}" fill="none"
-                                viewBox="0 0 24 24" stroke="currentColor">
-                                {!! $item['icon'] !!}
-                            </svg>
-                            <span class="text-sm font-medium">{{ $item['label'] }}</span>
-                        </div>
-                        <span class="text-lg font-bold {{ $item['color'] }}">{{ $item['value'] }}</span>
-                    </div>
-                    @endforeach
-                    <div class="pt-1 border-t border-base-300">
-                        <div class="flex items-center justify-between text-xs text-base-content/50 px-1">
-                            <span>Total perubahan</span>
-                            <span
-                                class="font-semibold text-base-content">{{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</span>
-                        </div>
-                    </div>
+                        d="M11 16l-4-4m0 0l4-4m-4 4h14" />',
+                ],
+                [
+                    'label' => 'Pindah',
+                    'value' => $mutasiPindah,
+                    'color' => 'text-warning',
+                    'bg' => 'bg-warning/10',
+                    'icon' => '
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" />',
+                ],
+            ];
+        @endphp
+        @foreach ($mutasiItems as $item)
+            <div class="flex items-center justify-between rounded-lg px-3 py-2 {{ $item['bg'] }}">
+                <div class="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $item['color'] }}" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
+                        {!! $item['icon'] !!}
+                    </svg>
+                    <span class="text-sm font-medium">{{ $item['label'] }}</span>
                 </div>
-            </x-ui.card>
-
-            {{-- Quick Actions --}}
-            <x-ui.card title="Aksi Cepat">
-                <div class="space-y-2">
-                    <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2"
-                        href="{{ route('kependudukan.penduduk.create') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        Tambah Penduduk
-                    </x-ui.button>
-                    <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2"
-                        href="{{ route('kependudukan.keluarga.create') }}" :outline="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        Tambah Kartu Keluarga
-                    </x-ui.button>
-                    <x-ui.button type="ghost" size="sm" class="w-full justify-start gap-2"
-                        href="{{ route('admin.users.create') }}" :outline="true">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                        </svg>
-                        Tambah Pengguna
-                    </x-ui.button>
-                </div>
-            </x-ui.card>
-
+                <span class="text-lg font-bold {{ $item['color'] }}">{{ $item['value'] }}</span>
+            </div>
+        @endforeach
+        <div class="pt-1 border-t border-base-300">
+            <div class="flex items-center justify-between text-xs text-base-content/50 px-1">
+                <span>Total perubahan</span>
+                <span
+                    class="font-semibold text-base-content">{{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</span>
+            </div>
         </div>
+    </div>
+    </x-ui.card>
+
+    {{-- Quick Actions --}}
+    <x-ui.card title="Aksi Cepat">
+        <div class="space-y-2">
+            <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2"
+                href="{{ route('kependudukan.penduduk.create') }}">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Tambah Penduduk
+            </x-ui.button>
+            <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2"
+                href="{{ route('kependudukan.keluarga.create') }}" :outline="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                Tambah Kartu Keluarga
+            </x-ui.button>
+            <x-ui.button type="ghost" size="sm" class="w-full justify-start gap-2"
+                href="{{ route('admin.users.create') }}" :outline="true">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Tambah Pengguna
+            </x-ui.button>
+        </div>
+    </x-ui.card>
+
+    </div>
     </div> -->
 
-    {{-- Bottom row: Surat per jenis & Data Usaha --}}
+    {{-- Bottom row: Data Usaha & Wilayah --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-
-        {{-- Surat per Jenis --}}
-        <!-- <x-ui.card title="Rekap Surat per Jenis (Bulan Ini)">
-            @php $totalSurat = $suratPerJenis->sum('surats_count') ?: 1; @endphp
-            @forelse($suratPerJenis as $jenis)
-            <div class="mb-3">
-                <div class="flex justify-between text-sm mb-1">
-                    <span class="text-base-content/80 truncate max-w-[70%]">{{ $jenis->nama }}</span>
-                    <span class="font-semibold tabular-nums">{{ $jenis->surats_count }}</span>
-                </div>
-                <div class="w-full bg-base-200 rounded-full h-2">
-                    <div class="bg-primary h-2 rounded-full transition-all"
-                        style="width: {{ round(($jenis->surats_count / $totalSurat) * 100) }}%"></div>
-                </div>
-            </div>
-            @empty
-            <div class="flex flex-col items-center justify-center py-8 text-base-content/40">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-2 opacity-30" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <p class="text-sm">Belum ada data surat bulan ini.</p>
-            </div>
-            @endforelse
-        </x-ui.card> -->
 
         {{-- Data Usaha Ringkasan --}}
         <x-ui.card title="Data Usaha / UMKM">
             <div class="flex items-center gap-4 mb-5">
                 <div class="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-primary" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-primary" fill="none"
+                        viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -291,22 +176,24 @@
                 <div class="rounded-xl bg-success/10 p-4 text-center">
                     <div class="text-2xl font-bold text-success">{{ $usahaAktif }}</div>
                     <div class="text-xs text-success/70 font-medium mt-1">Aktif</div>
-                    @if($totalUsaha > 0)
-                    <div class="text-xs text-base-content/40 mt-0.5">{{ round(($usahaAktif / $totalUsaha) * 100) }}%
-                    </div>
+                    @if ($totalUsaha > 0)
+                        <div class="text-xs text-base-content/40 mt-0.5">
+                            {{ round(($usahaAktif / $totalUsaha) * 100) }}%
+                        </div>
                     @endif
                 </div>
                 <div class="rounded-xl bg-base-200 p-4 text-center">
                     <div class="text-2xl font-bold text-base-content/60">{{ $usahaTidakAktif }}</div>
                     <div class="text-xs text-base-content/50 font-medium mt-1">Tidak Aktif</div>
-                    @if($totalUsaha > 0)
-                    <div class="text-xs text-base-content/40 mt-0.5">
-                        {{ round(($usahaTidakAktif / $totalUsaha) * 100) }}%</div>
+                    @if ($totalUsaha > 0)
+                        <div class="text-xs text-base-content/40 mt-0.5">
+                            {{ round(($usahaTidakAktif / $totalUsaha) * 100) }}%</div>
                     @endif
                 </div>
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('usaha.index') }}">Lihat Detail →</x-ui.button>
+                <x-ui.button type="ghost" size="sm" href="{{ route('usaha.index') }}">Lihat Detail
+                    →</x-ui.button>
             </x-slot:actions>
         </x-ui.card>
 
@@ -322,20 +209,21 @@
                     <div class="text-xs text-secondary/70 font-semibold mt-1">RT</div>
                 </div>
             </div>
-            @if($totalRT > 0)
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between items-center py-1.5 border-b border-base-200">
-                    <span class="text-base-content/60">Penduduk / RT</span>
-                    <span class="font-semibold">~{{ round($totalPenduduk / $totalRT) }} jiwa</span>
+            @if ($totalRT > 0)
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between items-center py-1.5 border-b border-base-200">
+                        <span class="text-base-content/60">Penduduk / RT</span>
+                        <span class="font-semibold">~{{ round($totalPenduduk / $totalRT) }} jiwa</span>
+                    </div>
+                    <div class="flex justify-between items-center py-1.5">
+                        <span class="text-base-content/60">KK / RT</span>
+                        <span class="font-semibold">~{{ round($totalKK / $totalRT) }} KK</span>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center py-1.5">
-                    <span class="text-base-content/60">KK / RT</span>
-                    <span class="font-semibold">~{{ round($totalKK / $totalRT) }} KK</span>
-                </div>
-            </div>
             @endif
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('master.wilayah.index') }}">Kelola Wilayah →
+                <x-ui.button type="ghost" size="sm" href="{{ route('master.wilayah.index') }}">Kelola Wilayah
+                    →
                 </x-ui.button>
             </x-slot:actions>
         </x-ui.card>
@@ -359,8 +247,8 @@
             </div>
             <div class="divider text-xs text-base-content/40 my-2">Per Peran</div>
             <div class="space-y-1.5">
-                @foreach($usersPerRole as $role)
-                <div class="flex items-center justify-between text-sm px-1">
+                @foreach ($usersPerRole as $role)
+<div class="flex items-center justify-between text-sm px-1">
                     <span
                         class="text-base-content/70">{{ \App\Models\Role::roleLabels()[$role->name] ?? ucfirst($role->name) }}</span>
                     <div class="flex items-center gap-2">
@@ -372,12 +260,12 @@
                         <span class="font-semibold w-4 text-right">{{ $role->users_count }}</span>
                     </div>
                 </div>
-                @endforeach
+@endforeach
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →
-                </x-ui.button>
-            </x-slot:actions>
+        <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →
+        </x-ui.button>
+        </x-slot:actions>
         </x-ui.card> -->
 
 
@@ -386,7 +274,7 @@
         <!-- <x-ui.card title="Pengguna Terbaru">
             <div class="space-y-3">
                 @forelse($recentUsers as $user)
-                <div class="flex items-center gap-3">
+<div class="flex items-center gap-3">
                     <div class="avatar placeholder shrink-0">
                         <div class="w-8 rounded-full bg-neutral text-neutral-content text-xs">
                             <span>{{ strtoupper(substr($user->name, 0, 2)) }}</span>
@@ -407,13 +295,13 @@
                         </span>
                     </div>
                 </div>
-                @empty
+            @empty
                 <p class="text-sm text-base-content/60 text-center py-4">Belum ada pengguna.</p>
-                @endforelse
+@endforelse
             </div>
             <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('admin.audit-log') }}">Audit Log →</x-ui.button>
-            </x-slot:actions>
+        <x-ui.button type="ghost" size="sm" href="{{ route('admin.audit-log') }}">Audit Log →</x-ui.button>
+        </x-slot:actions>
         </x-ui.card> -->
 
     </div>

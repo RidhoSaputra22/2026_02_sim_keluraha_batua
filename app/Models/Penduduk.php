@@ -6,7 +6,8 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Penduduk extends Model {
+class Penduduk extends Model
+{
     use HasFactory, Auditable;
 
     protected $table = 'penduduks';
@@ -41,10 +42,4 @@ class Penduduk extends Model {
     {
         return $this->belongsTo(Rt::class);
     }
-
-    public function pemohon()
-    {
-        return $this->hasOne(Pemohon::class);
-    }
 }
-
