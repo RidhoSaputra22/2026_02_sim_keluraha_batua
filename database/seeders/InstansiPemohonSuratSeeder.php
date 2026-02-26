@@ -17,7 +17,7 @@ class InstansiPemohonSuratSeeder extends Seeder
 {
     public function run(): void
     {
-        $petugasId = User::whereHas('role', fn ($q) => $q->where('name', 'operator'))->first()?->id;
+        $petugasId = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->first()?->id;
         $kelurahanId = Kelurahan::where('nama', 'Batua')->first()?->id;
         $now = now();
 

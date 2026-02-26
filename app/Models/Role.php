@@ -10,12 +10,8 @@ class Role extends Model
     use HasFactory;
 
     // ─── Role Constants ───────────────────────────────────────
-    public const ADMIN         = 'admin';
-    public const OPERATOR      = 'operator';
-    public const VERIFIKATOR   = 'verifikator';
-    public const PENANDATANGAN = 'penandatangan';
-    public const RT_RW         = 'rt_rw';
-    public const WARGA         = 'warga';
+    public const ADMIN = 'admin';
+    public const RT_RW = 'rt_rw';
 
     protected $fillable = [
         'name',
@@ -45,12 +41,8 @@ class Role extends Model
     public static function roleLabels(): array
     {
         return [
-            self::ADMIN         => 'Administrator',
-            self::OPERATOR      => 'Operator',
-            self::VERIFIKATOR   => 'Verifikator',
-            self::PENANDATANGAN => 'Penandatangan',
-            self::RT_RW         => 'RT/RW',
-            self::WARGA         => 'Warga',
+            self::ADMIN => 'Administrator',
+            self::RT_RW => 'RT/RW',
         ];
     }
 }

@@ -15,13 +15,9 @@ class DashboardController extends Controller
         $user = $request->user();
 
         return match ($user->getRoleName()) {
-            Role::ADMIN         => redirect()->route('admin.dashboard'),
-            Role::OPERATOR      => redirect()->route('operator.dashboard'),
-            Role::VERIFIKATOR   => redirect()->route('verifikator.dashboard'),
-            Role::PENANDATANGAN => redirect()->route('penandatangan.dashboard'),
-            Role::RT_RW         => redirect()->route('rtrw.dashboard'),
-            Role::WARGA         => redirect()->route('warga.dashboard'),
-            default             => abort(403, 'Role tidak dikenali.'),
+            Role::ADMIN => redirect()->route('admin.dashboard'),
+            Role::RT_RW => redirect()->route('rtrw.dashboard'),
+            default     => abort(403, 'Role tidak dikenali.'),
         };
     }
 }

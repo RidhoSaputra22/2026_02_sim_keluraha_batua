@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgendaKegiatan;
-use App\Models\Ekspedisi;
 use App\Models\Faskes;
 use App\Models\Keluarga;
 use App\Models\Kendaraan;
@@ -14,7 +13,6 @@ use App\Models\PetugasKebersihan;
 use App\Models\Role;
 use App\Models\Sekolah;
 use App\Models\Surat;
-use App\Models\SurveyKepuasan;
 use App\Models\TempatIbadah;
 use App\Models\Umkm;
 use App\Models\User;
@@ -46,49 +44,20 @@ class GlobalSearchController extends Controller
                 $this->searchPegawai($query, $limit),
                 $this->searchPenandatangan($query, $limit),
                 $this->searchUsaha($query, $limit),
-                $this->searchEkspedisi($query, $limit),
                 $this->searchFaskes($query, $limit),
                 $this->searchSekolah($query, $limit),
                 $this->searchTempatIbadah($query, $limit),
                 $this->searchKendaraan($query, $limit),
                 $this->searchPetugasKebersihan($query, $limit),
                 $this->searchAgenda($query, $limit),
-                $this->searchSurvey($query, $limit),
             );
         } else {
-            // Build results based on specific role access
+            // RT/RW role gets scoped results
             $results = match ($role) {
-                Role::OPERATOR => array_merge(
-                    $this->searchPenduduk($query, $limit),
-                    $this->searchKeluarga($query, $limit),
-                    $this->searchSurat($query, $limit),
-                    $this->searchUsaha($query, $limit),
-                    $this->searchEkspedisi($query, $limit),
-                    $this->searchFaskes($query, $limit),
-                    $this->searchSekolah($query, $limit),
-                    $this->searchTempatIbadah($query, $limit),
-                    $this->searchKendaraan($query, $limit),
-                    $this->searchPetugasKebersihan($query, $limit),
-                    $this->searchAgenda($query, $limit),
-                    $this->searchSurvey($query, $limit),
-                ),
-                Role::VERIFIKATOR => array_merge(
-                    $this->searchSurat($query, $limit, 'verifikasi'),
-                    $this->searchSurvey($query, $limit),
-                ),
-                Role::PENANDATANGAN => array_merge(
-                    $this->searchSurat($query, $limit, 'tanda-tangan'),
-                    $this->searchSurvey($query, $limit),
-                ),
                 Role::RT_RW => array_merge(
                     $this->searchPenduduk($query, $limit),
                     $this->searchKeluarga($query, $limit),
                     $this->searchSurat($query, $limit, 'pengantar'),
-                    $this->searchSurvey($query, $limit),
-                ),
-                Role::WARGA => array_merge(
-                    $this->searchSurat($query, $limit, 'permohonan-warga'),
-                    $this->searchSurvey($query, $limit),
                 ),
                 default => [],
             };
@@ -109,7 +78,7 @@ class GlobalSearchController extends Controller
             ->orWhere('alamat', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Penduduk',
                 'icon' => 'users',
                 'title' => $item->nama,
@@ -122,10 +91,10 @@ class GlobalSearchController extends Controller
     private function searchKeluarga(string $query, int $limit): array
     {
         return Keluarga::where('no_kk', 'like', "%{$query}%")
-            ->orWhereHas('kepalaKeluarga', fn ($q) => $q->where('nama', 'like', "%{$query}%"))
+            ->orWhereHas('kepalaKeluarga', fn($q) => $q->where('nama', 'like', "%{$query}%"))
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Keluarga',
                 'icon' => 'home',
                 'title' => "KK: {$item->no_kk}",
@@ -145,14 +114,11 @@ class GlobalSearchController extends Controller
             ->get();
 
         $routeName = match ($context) {
-            'verifikasi' => 'persuratan.verifikasi.index',
-            'tanda-tangan' => 'persuratan.tanda-tangan.index',
             'pengantar' => 'rtrw.pengantar.index',
-            'permohonan-warga' => 'warga.permohonan.index',
-            default => 'persuratan.permohonan.index',
+            default => 'rtrw.pengantar.index', // TODO: update when persuratan routes are implemented
         };
 
-        return $surats->map(fn ($item) => [
+        return $surats->map(fn($item) => [
             'category' => 'Surat',
             'icon' => 'document-text',
             'title' => $item->perihal ?? 'Surat',
@@ -168,7 +134,7 @@ class GlobalSearchController extends Controller
             ->orWhere('nip', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Pengguna',
                 'icon' => 'user-circle',
                 'title' => $item->name,
@@ -185,7 +151,7 @@ class GlobalSearchController extends Controller
             ->orWhere('jabatan', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Pegawai',
                 'icon' => 'briefcase',
                 'title' => $item->nama,
@@ -197,15 +163,17 @@ class GlobalSearchController extends Controller
 
     private function searchPenandatangan(string $query, int $limit): array
     {
-        return Penandatanganan::whereHas('pegawai', fn ($q) => $q
-            ->where('nama', 'like', "%{$query}%")
-            ->orWhere('nip', 'like', "%{$query}%")
-            ->orWhere('jabatan', 'like', "%{$query}%")
+        return Penandatanganan::whereHas(
+            'pegawai',
+            fn($q) => $q
+                ->where('nama', 'like', "%{$query}%")
+                ->orWhere('nip', 'like', "%{$query}%")
+                ->orWhere('jabatan', 'like', "%{$query}%")
         )
             ->with('pegawai')
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Penandatangan',
                 'icon' => 'pencil',
                 'title' => $item->pegawai?->nama ?? 'Penandatangan',
@@ -224,30 +192,12 @@ class GlobalSearchController extends Controller
             ->orWhere('sektor_umkm', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Usaha',
                 'icon' => 'building-storefront',
                 'title' => $item->nama_ukm ?? 'Usaha',
                 'subtitle' => $item->nama_pemilik ?? '-',
                 'url' => route('usaha.index'),
-            ])
-            ->toArray();
-    }
-
-    private function searchEkspedisi(string $query, int $limit): array
-    {
-        return Ekspedisi::where('ekspedisi', 'like', "%{$query}%")
-            ->orWhere('pemilik_usaha', 'like', "%{$query}%")
-            ->orWhere('alamat', 'like', "%{$query}%")
-            ->orWhere('kegiatan_ekspedisi', 'like', "%{$query}%")
-            ->limit($limit)
-            ->get()
-            ->map(fn ($item) => [
-                'category' => 'Ekspedisi',
-                'icon' => 'paper-airplane',
-                'title' => $item->ekspedisi ?? 'Ekspedisi',
-                'subtitle' => $item->pemilik_usaha ?? '-',
-                'url' => route('ekspedisi.index'),
             ])
             ->toArray();
     }
@@ -259,7 +209,7 @@ class GlobalSearchController extends Controller
             ->orWhere('jenis', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Faskes',
                 'icon' => 'heart',
                 'title' => $item->nama_rs,
@@ -276,7 +226,7 @@ class GlobalSearchController extends Controller
             ->orWhere('npsn', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Sekolah',
                 'icon' => 'academic-cap',
                 'title' => $item->nama_sekolah,
@@ -292,7 +242,7 @@ class GlobalSearchController extends Controller
             ->orWhere('alamat', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Tempat Ibadah',
                 'icon' => 'star',
                 'title' => $item->nama,
@@ -310,7 +260,7 @@ class GlobalSearchController extends Controller
             ->orWhere('nama_pengemudi', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Kendaraan',
                 'icon' => 'truck',
                 'title' => $item->merek_type ?? $item->jenis_barang ?? 'Kendaraan',
@@ -328,7 +278,7 @@ class GlobalSearchController extends Controller
             ->orWhere('unit_kerja', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Petugas Kebersihan',
                 'icon' => 'sparkles',
                 'title' => $item->nama,
@@ -346,28 +296,12 @@ class GlobalSearchController extends Controller
             ->orWhere('keterangan', 'like', "%{$query}%")
             ->limit($limit)
             ->get()
-            ->map(fn ($item) => [
+            ->map(fn($item) => [
                 'category' => 'Agenda',
                 'icon' => 'calendar',
                 'title' => $item->perihal ?? 'Agenda',
                 'subtitle' => $item->lokasi ?? '-',
                 'url' => route('agenda.index'),
-            ])
-            ->toArray();
-    }
-
-    private function searchSurvey(string $query, int $limit): array
-    {
-        return SurveyKepuasan::where('pekerjaan', 'like', "%{$query}%")
-            ->orWhere('pendidikan', 'like', "%{$query}%")
-            ->limit($limit)
-            ->get()
-            ->map(fn ($item) => [
-                'category' => 'Survey',
-                'icon' => 'chart-bar',
-                'title' => 'Survey #'.$item->id,
-                'subtitle' => $item->pekerjaan ?? '-',
-                'url' => route('survey.index'),
             ])
             ->toArray();
     }

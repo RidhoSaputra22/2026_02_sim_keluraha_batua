@@ -6,7 +6,6 @@ use App\Models\JabatanRtRw;
 use App\Models\LayananPublik;
 use App\Models\SuratJenis;
 use App\Models\SuratSifat;
-use App\Models\SurveyLayanan;
 use Illuminate\Database\Seeder;
 
 class ReferensiSeeder extends Seeder
@@ -82,20 +81,6 @@ class ReferensiSeeder extends Seeder
 
         foreach ($layanan as $nama) {
             LayananPublik::create(['nama' => $nama]);
-        }
-
-        // ─── Jenis Survey Layanan ────────────────────────────
-        $surveyLayanan = [
-            'Pelayanan Administrasi',
-            'Pelayanan Kependudukan',
-            'Pelayanan Persuratan',
-            'Pelayanan Perizinan',
-            'Pelayanan Sosial',
-            'Pelayanan Umum',
-        ];
-
-        foreach ($surveyLayanan as $nama) {
-            SurveyLayanan::create(['nama' => $nama]);
         }
     }
 }

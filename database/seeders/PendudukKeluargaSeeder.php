@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Keluarga;
-use App\Models\KtpTercetak;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\User;
@@ -13,7 +12,7 @@ class PendudukKeluargaSeeder extends Seeder
 {
     public function run(): void
     {
-        $petugasId = User::whereHas('role', fn ($q) => $q->where('name', 'admin'))->first()?->id;
+        $petugasId = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->first()?->id;
         $now = now();
 
         // Ambil semua RT yang ada (Kel. Batua)
@@ -222,20 +221,6 @@ class PendudukKeluargaSeeder extends Seeder
             if ($kepalaId) {
                 $keluarga->update(['kepala_keluarga_id' => $kepalaId]);
             }
-        }
-
-        // ─── KTP Tercetak (sample) ────────────────────────────
-        $pendudukDewasa = Penduduk::where('status_kawin', '!=', 'Belum Kawin')
-            ->orWhere('pendidikan', 'S1')
-            ->take(15)
-            ->get();
-
-        foreach ($pendudukDewasa as $p) {
-            KtpTercetak::create([
-                'penduduk_id'      => $p->id,
-                'tgl_buat'         => now()->subDays(rand(30, 365)),
-                'petugas_input_id' => $petugasId,
-            ]);
         }
     }
 }

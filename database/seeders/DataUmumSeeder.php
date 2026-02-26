@@ -2,24 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\DesaWismaPkkEntry;
-use App\Models\Ekspedisi;
 use App\Models\Faskes;
-use App\Models\Imb;
 use App\Models\Keluarga;
 use App\Models\Kelurahan;
 use App\Models\Kendaraan;
 use App\Models\Penduduk;
-use App\Models\PendudukAsing;
 use App\Models\PetugasKebersihan;
-use App\Models\Pk5;
 use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Sekolah;
 use App\Models\TempatIbadah;
 use App\Models\Umkm;
 use App\Models\User;
-use App\Models\WargaMiskin;
 use Illuminate\Database\Seeder;
 
 class DataUmumSeeder extends Seeder
@@ -27,7 +21,7 @@ class DataUmumSeeder extends Seeder
     public function run(): void
     {
         $kelurahan = Kelurahan::where('nama', 'Batua')->first();
-        $petugasId = User::whereHas('role', fn ($q) => $q->where('name', 'operator'))->first()?->id;
+        $petugasId = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->first()?->id;
         $now = now();
 
         $rwList = Rw::where('kelurahan_id', $kelurahan->id)->orderBy('nomor')->get();
@@ -150,50 +144,6 @@ class DataUmumSeeder extends Seeder
         }
 
         // ═══════════════════════════════════════════════════════
-        // Ekspedisi
-        // ═══════════════════════════════════════════════════════
-        $ekspedisiData = [
-            ['ekspedisi' => 'JNE Batua',       'pemilik' => 'Agus Salim',     'pj' => 'Agus Salim',     'kegiatan' => 'Jasa pengiriman barang'],
-            ['ekspedisi' => 'J&T Express Batua', 'pemilik' => 'Supriadi',     'pj' => 'Supriadi',       'kegiatan' => 'Jasa pengiriman barang'],
-            ['ekspedisi' => 'SiCepat Batua',   'pemilik' => 'Saiful Said',    'pj' => 'Saiful Said',    'kegiatan' => 'Jasa pengiriman barang & logistik'],
-        ];
-
-        foreach ($ekspedisiData as $e) {
-            Ekspedisi::create([
-                'kelurahan_id'       => $kelurahan->id,
-                'pemilik_usaha'      => $e['pemilik'],
-                'ekspedisi'          => $e['ekspedisi'],
-                'alamat'             => 'Kel. Batua, Kec. Manggala',
-                'penanggung_jawab'   => $e['pj'],
-                'telp_hp'            => '0811' . rand(1000000, 9999999),
-                'kegiatan_ekspedisi' => $e['kegiatan'],
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // IMB
-        // ═══════════════════════════════════════════════════════
-        $imbData = [
-            ['pemohon' => 'Andi Mappangara', 'alamat_b' => 'Jl. Batua Raya No. 45',  'fungsi' => 'Rumah Tinggal',   'luas' => '120 m²'],
-            ['pemohon' => 'Kamaruddin',      'alamat_b' => 'Jl. Batua Dalam No. 12',  'fungsi' => 'Rumah Tinggal',   'luas' => '150 m²'],
-            ['pemohon' => 'Agus Salim',      'alamat_b' => 'Jl. Batua Raya No. 78',   'fungsi' => 'Ruko',            'luas' => '200 m²'],
-            ['pemohon' => 'H. Muh. Said',    'alamat_b' => 'Jl. Antang Raya No. 33',  'fungsi' => 'Rumah Tinggal',   'luas' => '250 m²'],
-            ['pemohon' => 'Supriadi',        'alamat_b' => 'Jl. Batua Raya No. 99',   'fungsi' => 'Gedung Usaha',    'luas' => '180 m²'],
-        ];
-
-        foreach ($imbData as $imb) {
-            Imb::create([
-                'kelurahan_id'              => $kelurahan->id,
-                'nama_pemohon'              => $imb['pemohon'],
-                'alamat_pemohon'            => 'Kel. Batua, Kec. Manggala',
-                'alamat_bangunan'           => $imb['alamat_b'],
-                'status_luas_tanah'         => 'SHM - ' . $imb['luas'],
-                'nama_pada_surat'           => $imb['pemohon'],
-                'penggunaan_fungsi_gedung'  => $imb['fungsi'],
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
         // Kendaraan Dinas
         // ═══════════════════════════════════════════════════════
         $kendaraanData = [
@@ -236,87 +186,6 @@ class DataUmumSeeder extends Seeder
                 'pekerjaan'    => 'Petugas Kebersihan',
                 'lokasi'       => $pt['lokasi'],
                 'status'       => 'Aktif',
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // PK5 (Pedagang Kaki Lima)
-        // ═══════════════════════════════════════════════════════
-        $pk5Data = [
-            ['nama' => 'Dg. Tata',     'jabatan' => 'Koordinator PKL Batua',  'status' => 'Aktif'],
-            ['nama' => 'Sahrul',        'jabatan' => 'Anggota PKL',            'status' => 'Aktif'],
-            ['nama' => 'Muh. Yusuf',   'jabatan' => 'Anggota PKL',            'status' => 'Aktif'],
-            ['nama' => 'Rosmini',       'jabatan' => 'Anggota PKL',            'status' => 'Aktif'],
-            ['nama' => 'Dg. Sikki',    'jabatan' => 'Anggota PKL',            'status' => 'Tidak Aktif'],
-        ];
-
-        foreach ($pk5Data as $pk) {
-            Pk5::create([
-                'nama'             => $pk['nama'],
-                'jabatan'          => $pk['jabatan'],
-                'status'           => $pk['status'],
-                'no_telp'          => '0811' . rand(1000000, 9999999),
-                'tgl_input'        => $now,
-                'petugas_input_id' => $petugasId,
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // Warga Miskin
-        // ═══════════════════════════════════════════════════════
-        $wargaMiskinPenduduk = Penduduk::whereIn('pendidikan', ['SD/Sederajat', 'Tidak Sekolah', 'SMP/Sederajat'])
-            ->where('status_kawin', 'Kawin')
-            ->take(8)
-            ->get();
-
-        $noPeserta = 1;
-        foreach ($wargaMiskinPenduduk as $wm) {
-            WargaMiskin::create([
-                'kelurahan_id' => $kelurahan->id,
-                'penduduk_id'  => $wm->id,
-                'rt_id'        => $wm->rt_id,
-                'rw_id'        => $wm->rt?->rw_id,
-                'no_peserta'   => 'DTKS-BTU-2026-' . str_pad($noPeserta++, 4, '0', STR_PAD_LEFT),
-                'keterangan'   => 'Penerima bantuan sosial',
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // Desa Wisma PKK Entry
-        // ═══════════════════════════════════════════════════════
-        $pendudukPerempuan = Penduduk::where('jenis_kelamin', 'P')
-            ->where('status_kawin', 'Kawin')
-            ->take(10)
-            ->get();
-
-        foreach ($pendudukPerempuan as $pp) {
-            DesaWismaPkkEntry::create([
-                'penduduk_id'  => $pp->id,
-                'keluarga_id'  => $pp->keluarga_id,
-                'rt_id'        => $pp->rt_id,
-                'kelurahan_id' => $kelurahan->id,
-                'keterangan'   => 'Anggota PKK aktif',
-            ]);
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // Penduduk Asing
-        // ═══════════════════════════════════════════════════════
-        $pendudukAsingData = [
-            ['paspor' => 'MY-A1234567', 'nama' => 'Ahmad bin Abdullah',    'jk' => 'L', 'alamat' => 'Jl. Batua Raya No. 50'],
-            ['paspor' => 'CN-B8901234', 'nama' => 'Li Wei Chen',           'jk' => 'L', 'alamat' => 'Jl. Batua Raya No. 88'],
-            ['paspor' => 'JP-C5678901', 'nama' => 'Tanaka Yuki',           'jk' => 'P', 'alamat' => 'Jl. Antang Raya No. 15'],
-        ];
-
-        foreach ($pendudukAsingData as $pa) {
-            PendudukAsing::create([
-                'no_paspor'        => $pa['paspor'],
-                'nama'             => $pa['nama'],
-                'alamat'           => $pa['alamat'],
-                'rt_id'            => $rtList->random()->id,
-                'jenis_kelamin'    => $pa['jk'],
-                'tgl_input'        => $now,
-                'petugas_input_id' => $petugasId,
             ]);
         }
     }

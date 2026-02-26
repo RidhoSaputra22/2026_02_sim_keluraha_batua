@@ -6,8 +6,6 @@ use App\Models\AgendaKegiatan;
 use App\Models\HasilKegiatan;
 use App\Models\Instansi;
 use App\Models\Kelurahan;
-use App\Models\SurveyKepuasan;
-use App\Models\SurveyLayanan;
 use Illuminate\Database\Seeder;
 
 class AgendaSurveySeeder extends Seeder
@@ -112,33 +110,6 @@ class AgendaSurveySeeder extends Seeder
                     'keterangan'   => $a['hasil']['keterangan'],
                 ]);
             }
-        }
-
-        // ═══════════════════════════════════════════════════════
-        // Survey Kepuasan Masyarakat
-        // ═══════════════════════════════════════════════════════
-        $surveyLayananIds = SurveyLayanan::pluck('id')->toArray();
-
-        $pendidikanOptions = ['SD/Sederajat', 'SMP/Sederajat', 'SMA/Sederajat', 'D3', 'S1', 'S2'];
-        $pekerjaanOptions  = ['PNS', 'Swasta', 'Wiraswasta', 'Petani', 'Nelayan', 'Mahasiswa', 'Ibu Rumah Tangga', 'Lainnya'];
-
-        // Generate 20 survey responses
-        for ($i = 0; $i < 20; $i++) {
-            $jk = rand(0, 1) ? 'L' : 'P';
-            $umur = rand(20, 65);
-            $jumlahNilai = rand(15, 30); // total score dari beberapa indikator
-            $nilaiRata = round($jumlahNilai / rand(4, 6), 2); // rata-rata
-
-            SurveyKepuasan::create([
-                'kelurahan_id'     => $kelurahan->id,
-                'jenis_kelamin'    => $jk,
-                'umur'             => $umur,
-                'pendidikan'       => $pendidikanOptions[array_rand($pendidikanOptions)],
-                'pekerjaan'        => $pekerjaanOptions[array_rand($pekerjaanOptions)],
-                'jenis_layanan_id' => $surveyLayananIds[array_rand($surveyLayananIds)],
-                'jumlah_nilai'     => $jumlahNilai,
-                'nilai_rata_rata'  => $nilaiRata,
-            ]);
         }
     }
 }

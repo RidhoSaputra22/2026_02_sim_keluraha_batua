@@ -35,12 +35,12 @@ class ProfileController extends Controller
         ];
 
         // Role-specific validation
-        if (in_array($role, [Role::ADMIN, Role::OPERATOR, Role::VERIFIKATOR, Role::PENANDATANGAN])) {
+        if ($role === Role::ADMIN) {
             $rules['nip'] = ['nullable', 'string', 'max:30'];
             $rules['jabatan'] = ['nullable', 'string', 'max:100'];
         }
 
-        if (in_array($role, [Role::RT_RW, Role::WARGA])) {
+        if ($role === Role::RT_RW) {
             $rules['nik'] = ['nullable', 'string', 'max:16'];
         }
 
@@ -49,11 +49,11 @@ class ProfileController extends Controller
         // Only update allowed fields based on role
         $fillable = ['name', 'email', 'phone'];
 
-        if (in_array($role, [Role::ADMIN, Role::OPERATOR, Role::VERIFIKATOR, Role::PENANDATANGAN])) {
+        if ($role === Role::ADMIN) {
             $fillable = array_merge($fillable, ['nip', 'jabatan']);
         }
 
-        if (in_array($role, [Role::RT_RW, Role::WARGA])) {
+        if ($role === Role::RT_RW) {
             $fillable = array_merge($fillable, ['nik']);
         }
 

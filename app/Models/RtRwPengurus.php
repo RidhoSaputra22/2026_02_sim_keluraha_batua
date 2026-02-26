@@ -6,7 +6,8 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class RtRwPengurus extends Model {
+class RtRwPengurus extends Model
+{
     use HasFactory, Auditable;
 
     protected $table = 'rt_rw_pengurus';
@@ -54,10 +55,4 @@ class RtRwPengurus extends Model {
     {
         return $this->belongsTo(Rt::class);
     }
-
-    public function penilaianDetails()
-    {
-        return $this->hasMany(PenilaianRtRwDetail::class, 'pengurus_id');
-    }
 }
-

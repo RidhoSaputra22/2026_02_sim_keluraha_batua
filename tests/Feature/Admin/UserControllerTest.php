@@ -13,7 +13,7 @@ class UserControllerTest extends TestCase
 
     private User $admin;
     private Role $adminRole;
-    private Role $operatorRole;
+    private Role $rtRwRole;
 
     protected function setUp(): void
     {
@@ -27,10 +27,10 @@ class UserControllerTest extends TestCase
             'is_active'   => true,
         ]);
 
-        $this->operatorRole = Role::create([
-            'name'        => Role::OPERATOR,
-            'label'       => 'Operator',
-            'description' => 'Operator access',
+        $this->rtRwRole = Role::create([
+            'name'        => Role::RT_RW,
+            'label'       => 'RT/RW',
+            'description' => 'RT/RW access',
             'permissions' => ['penduduk.view'],
             'is_active'   => true,
         ]);
@@ -45,7 +45,7 @@ class UserControllerTest extends TestCase
 
     public function test_admin_can_view_users_index(): void
     {
-        User::factory()->count(3)->create(['role_id' => $this->operatorRole->id, 'is_active' => true]);
+        User::factory()->count(3)->create(['role_id' => $this->rtRwRole->id, 'is_active' => true]);
 
         $response = $this->actingAs($this->admin)->get(route('admin.users.index'));
 
@@ -59,7 +59,7 @@ class UserControllerTest extends TestCase
         User::factory()->create([
             'name'    => 'Budi Santoso',
             'email'   => 'budi@example.com',
-            'role_id' => $this->operatorRole->id,
+            'role_id' => $this->rtRwRole->id,
             'is_active' => true,
         ]);
 
@@ -71,9 +71,9 @@ class UserControllerTest extends TestCase
 
     public function test_users_index_filter_by_role(): void
     {
-        User::factory()->create(['role_id' => $this->operatorRole->id, 'is_active' => true, 'name' => 'Operator User']);
+        User::factory()->create(['role_id' => $this->rtRwRole->id, 'is_active' => true, 'name' => 'Operator User']);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.users.index', ['role_id' => $this->operatorRole->id]));
+        $response = $this->actingAs($this->admin)->get(route('admin.users.index', ['role_id' => $this->rtRwRole->id]));
 
         $response->assertStatus(200);
     }
@@ -96,7 +96,7 @@ class UserControllerTest extends TestCase
             'name'      => 'User Baru',
             'email'     => 'userbaru@example.com',
             'password'  => 'password123',
-            'role_id'   => $this->operatorRole->id,
+            'role_id'   => $this->rtRwRole->id,
             'is_active' => true,
         ];
 
@@ -119,13 +119,13 @@ class UserControllerTest extends TestCase
 
     public function test_store_user_validates_unique_email(): void
     {
-        User::factory()->create(['email' => 'duplicate@example.com', 'role_id' => $this->operatorRole->id]);
+        User::factory()->create(['email' => 'duplicate@example.com', 'role_id' => $this->rtRwRole->id]);
 
         $response = $this->actingAs($this->admin)->post(route('admin.users.store'), [
             'name'     => 'Duplicate',
             'email'    => 'duplicate@example.com',
             'password' => 'password123',
-            'role_id'  => $this->operatorRole->id,
+            'role_id'  => $this->rtRwRole->id,
         ]);
 
         $response->assertSessionHasErrors('email');
@@ -137,7 +137,7 @@ class UserControllerTest extends TestCase
             'name'     => 'User',
             'email'    => 'user@example.com',
             'password' => '123',
-            'role_id'  => $this->operatorRole->id,
+            'role_id'  => $this->rtRwRole->id,
         ]);
 
         $response->assertSessionHasErrors('password');
@@ -147,7 +147,7 @@ class UserControllerTest extends TestCase
 
     public function test_admin_can_view_edit_user_form(): void
     {
-        $user = User::factory()->create(['role_id' => $this->operatorRole->id, 'is_active' => true]);
+        $user = User::factory()->create(['role_id' => $this->rtRwRole->id, 'is_active' => true]);
 
         $response = $this->actingAs($this->admin)->get(route('admin.users.edit', $user));
 
@@ -160,12 +160,12 @@ class UserControllerTest extends TestCase
 
     public function test_admin_can_update_user(): void
     {
-        $user = User::factory()->create(['role_id' => $this->operatorRole->id, 'is_active' => true]);
+        $user = User::factory()->create(['role_id' => $this->rtRwRole->id, 'is_active' => true]);
 
         $response = $this->actingAs($this->admin)->put(route('admin.users.update', $user), [
             'name'    => 'Updated Name',
             'email'   => $user->email,
-            'role_id' => $this->operatorRole->id,
+            'role_id' => $this->rtRwRole->id,
         ]);
 
         $response->assertRedirect(route('admin.users.index'));
@@ -179,7 +179,7 @@ class UserControllerTest extends TestCase
     public function test_update_user_without_password_keeps_old_password(): void
     {
         $user = User::factory()->create([
-            'role_id'  => $this->operatorRole->id,
+            'role_id'  => $this->rtRwRole->id,
             'is_active' => true,
         ]);
         $oldPasswordHash = $user->password;
@@ -187,7 +187,7 @@ class UserControllerTest extends TestCase
         $this->actingAs($this->admin)->put(route('admin.users.update', $user), [
             'name'    => 'Updated',
             'email'   => $user->email,
-            'role_id' => $this->operatorRole->id,
+            'role_id' => $this->rtRwRole->id,
         ]);
 
         $user->refresh();
@@ -198,7 +198,7 @@ class UserControllerTest extends TestCase
 
     public function test_admin_can_delete_user(): void
     {
-        $user = User::factory()->create(['role_id' => $this->operatorRole->id, 'is_active' => true]);
+        $user = User::factory()->create(['role_id' => $this->rtRwRole->id, 'is_active' => true]);
 
         $response = $this->actingAs($this->admin)->delete(route('admin.users.destroy', $user));
 
@@ -221,7 +221,7 @@ class UserControllerTest extends TestCase
     public function test_admin_can_toggle_user_active_status(): void
     {
         $user = User::factory()->create([
-            'role_id'   => $this->operatorRole->id,
+            'role_id'   => $this->rtRwRole->id,
             'is_active' => true,
         ]);
 

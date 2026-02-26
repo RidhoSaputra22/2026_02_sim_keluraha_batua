@@ -26,9 +26,9 @@ class RoleControllerTest extends TestCase
         ]);
 
         Role::create([
-            'name'        => Role::OPERATOR,
-            'label'       => 'Operator',
-            'description' => 'Operator access',
+            'name'        => Role::RT_RW,
+            'label'       => 'RT/RW',
+            'description' => 'RT/RW access',
             'permissions' => [],
             'is_active'   => true,
         ]);

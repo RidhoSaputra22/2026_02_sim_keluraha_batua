@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
             // ╚════════════════════════════════════════════════╝
             RoleSeeder::class,          // 6 roles
             WilayahSeeder::class,       // Kecamatan → Kelurahan → RW → RT
-            ReferensiSeeder::class,     // Jenis surat, sifat, jabatan RT/RW, layanan, survey
+            ReferensiSeeder::class,     // Jenis surat, sifat, jabatan RT/RW, layanan publik
 
             // ╔════════════════════════════════════════════════╗
             // ║  DEMO DATA (sample / transactional)           ║
@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
             InstansiPemohonSuratSeeder::class,  // 10 instansi, 10 pemohon, 18 surat
             RtRwPengurusSeeder::class,          // Pengurus RT/RW + penilaian 2 periode
             DataUmumSeeder::class,              // UMKM, sekolah, faskes, tempat ibadah, dll.
-            AgendaSurveySeeder::class,          // 6 agenda, hasil kegiatan, 20 survey
+            AgendaSurveySeeder::class,          // 6 agenda + hasil kegiatan
         ]);
     }
 }

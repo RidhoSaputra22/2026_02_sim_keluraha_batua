@@ -12,8 +12,7 @@ class AdminMiddlewareTest extends TestCase
     use RefreshDatabase;
 
     private Role $adminRole;
-    private Role $operatorRole;
-    private Role $wargaRole;
+    private Role $rtRwRole;
 
     protected function setUp(): void
     {
@@ -27,75 +26,46 @@ class AdminMiddlewareTest extends TestCase
             'is_active'   => true,
         ]);
 
-        $this->operatorRole = Role::create([
-            'name'        => Role::OPERATOR,
-            'label'       => 'Operator',
-            'description' => 'Operator access',
+        $this->rtRwRole = Role::create([
+            'name'        => Role::RT_RW,
+            'label'       => 'RT/RW',
+            'description' => 'RT/RW access',
             'permissions' => ['penduduk.view'],
-            'is_active'   => true,
-        ]);
-
-        $this->wargaRole = Role::create([
-            'name'        => Role::WARGA,
-            'label'       => 'Warga',
-            'description' => 'Citizen portal',
-            'permissions' => [],
             'is_active'   => true,
         ]);
     }
 
     // ─── NON-ADMIN ROLE DENIAL ────────────────────────────────────
 
-    public function test_operator_cannot_access_admin_dashboard(): void
+    public function test_rtrw_cannot_access_admin_dashboard(): void
     {
-        $operator = User::factory()->create([
-            'role_id'   => $this->operatorRole->id,
+        /** @var User $rtRw */
+        $rtRw = User::factory()->create([
+            'role_id'   => $this->rtRwRole->id,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($operator)->get(route('admin.dashboard'));
+        $response = $this->actingAs($rtRw)->get(route('admin.dashboard'));
 
         $response->assertStatus(403);
     }
 
-    public function test_warga_cannot_access_admin_dashboard(): void
+    public function test_rtrw_cannot_access_admin_users(): void
     {
-        $warga = User::factory()->create([
-            'role_id'   => $this->wargaRole->id,
+        /** @var User $rtRw */
+        $rtRw = User::factory()->create([
+            'role_id'   => $this->rtRwRole->id,
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($warga)->get(route('admin.dashboard'));
-
-        $response->assertStatus(403);
-    }
-
-    public function test_operator_cannot_access_admin_users(): void
-    {
-        $operator = User::factory()->create([
-            'role_id'   => $this->operatorRole->id,
-            'is_active' => true,
-        ]);
-
-        $response = $this->actingAs($operator)->get(route('admin.users.index'));
-
-        $response->assertStatus(403);
-    }
-
-    public function test_operator_cannot_access_admin_penduduk(): void
-    {
-        $operator = User::factory()->create([
-            'role_id'   => $this->operatorRole->id,
-            'is_active' => true,
-        ]);
-
-        $response = $this->actingAs($operator)->get(route('kependudukan.penduduk.index'));
+        $response = $this->actingAs($rtRw)->get(route('admin.users.index'));
 
         $response->assertStatus(403);
     }
 
     public function test_admin_can_access_admin_routes(): void
     {
+        /** @var User $admin */
         $admin = User::factory()->create([
             'role_id'   => $this->adminRole->id,
             'is_active' => true,
@@ -110,6 +80,7 @@ class AdminMiddlewareTest extends TestCase
 
     public function test_inactive_admin_gets_logged_out(): void
     {
+        /** @var User $inactiveAdmin */
         $inactiveAdmin = User::factory()->create([
             'role_id'   => $this->adminRole->id,
             'is_active' => false,
@@ -122,8 +93,9 @@ class AdminMiddlewareTest extends TestCase
 
     public function test_inactive_user_session_is_invalidated(): void
     {
+        /** @var User $inactiveUser */
         $inactiveUser = User::factory()->create([
-            'role_id'   => $this->operatorRole->id,
+            'role_id'   => $this->rtRwRole->id,
             'is_active' => false,
         ]);
 

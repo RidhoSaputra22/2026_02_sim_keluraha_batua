@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
-use App\Models\PenilaianPeriode;
-use App\Models\PenilaianRtRwDetail;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\RtRwPengurus;
@@ -18,7 +16,7 @@ class RtRwPengurusSeeder extends Seeder
     public function run(): void
     {
         $kelurahan = Kelurahan::where('nama', 'Batua')->first();
-        $adminId   = User::whereHas('role', fn ($q) => $q->where('name', 'admin'))->first()?->id;
+        $adminId   = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->first()?->id;
 
         $jabatanKetuaRw  = JabatanRtRw::where('nama', 'Ketua RW')->first();
         $jabatanKetuaRt  = JabatanRtRw::where('nama', 'Ketua RT')->first();
@@ -75,38 +73,6 @@ class RtRwPengurusSeeder extends Seeder
 
             $pengurusIds[] = $pengurus->id;
             $idx++;
-        }
-
-        // ─── Penilaian Periode ────────────────────────────────
-        $periodes = [
-            [
-                'kelurahan_id' => $kelurahan->id,
-                'nama_periode' => 'Semester I - 2025',
-                'tgl_mulai'    => '2025-01-01',
-                'tgl_selesai'  => '2025-06-30',
-            ],
-            [
-                'kelurahan_id' => $kelurahan->id,
-                'nama_periode' => 'Semester II - 2025',
-                'tgl_mulai'    => '2025-07-01',
-                'tgl_selesai'  => '2025-12-31',
-            ],
-        ];
-
-        foreach ($periodes as $pData) {
-            $periode = PenilaianPeriode::create($pData);
-
-            // Buat penilaian untuk setiap pengurus
-            foreach ($pengurusIds as $pgId) {
-                PenilaianRtRwDetail::create([
-                    'periode_id'              => $periode->id,
-                    'pengurus_id'             => $pgId,
-                    'nilai'                   => rand(60, 95) + (rand(0, 99) / 100),
-                    'standar_nilai'           => 75.00,
-                    'usulan_nilai_insentif'   => rand(500, 1500) * 1000,
-                    'created_by'              => $adminId,
-                ]);
-            }
         }
     }
 }

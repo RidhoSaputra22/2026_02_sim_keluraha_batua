@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class AuditLog extends Model
 {
@@ -49,7 +50,8 @@ class AuditLog extends Model
         ?array $newValues = null,
         ?string $description = null,
     ): self {
-        $user = auth()->user();
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();
         $request = request();
 
         // Build friendly description if not provided
@@ -92,7 +94,6 @@ class AuditLog extends Model
             RtRwPengurus::class      => 'Wilayah RT/RW',
             SuratJenis::class        => 'Jenis Surat',
             TemplateSurat::class     => 'Template Surat',
-            Ekspedisi::class         => 'Ekspedisi',
             Faskes::class            => 'Fasilitas Kesehatan',
             Sekolah::class           => 'Sekolah',
             TempatIbadah::class      => 'Tempat Ibadah',
@@ -100,7 +101,6 @@ class AuditLog extends Model
             Kendaraan::class         => 'Kendaraan',
             AgendaKegiatan::class    => 'Agenda Kegiatan',
             HasilKegiatan::class     => 'Hasil Kegiatan',
-            SurveyKepuasan::class    => 'Survey Kepuasan',
             Surat::class             => 'Surat',
         ];
 

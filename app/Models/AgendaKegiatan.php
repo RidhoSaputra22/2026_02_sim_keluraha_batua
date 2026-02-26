@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use App\Traits\Auditable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AgendaKegiatan extends Model
 {
-    use HasFactory, Auditable;
+    use Auditable;
 
     protected $table = 'agenda_kegiatans';
 
