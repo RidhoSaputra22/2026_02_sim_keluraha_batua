@@ -6,7 +6,7 @@
     </x-slot:header>
 
     {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
 
         {{-- Total Penduduk --}}
         <div class="card bg-base-100 shadow border border-primary/10">
@@ -69,7 +69,7 @@
         </div> -->
 
         {{-- Menunggu Verifikasi --}}
-        <div class="card bg-base-100 shadow border border-warning/20">
+        <!-- <div class="card bg-base-100 shadow border border-warning/20">
             <div class="card-body p-5">
                 <div class="flex items-start justify-between">
                     <div>
@@ -90,7 +90,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
     </div>
 
@@ -310,13 +310,43 @@
             </x-slot:actions>
         </x-ui.card>
 
+        {{-- Wilayah Overview --}}
+        <x-ui.card title="Data Wilayah">
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="rounded-xl bg-primary/10 p-4 text-center">
+                    <div class="text-3xl font-bold text-primary">{{ $totalRW }}</div>
+                    <div class="text-xs text-primary/70 font-semibold mt-1">RW</div>
+                </div>
+                <div class="rounded-xl bg-secondary/10 p-4 text-center">
+                    <div class="text-3xl font-bold text-secondary">{{ $totalRT }}</div>
+                    <div class="text-xs text-secondary/70 font-semibold mt-1">RT</div>
+                </div>
+            </div>
+            @if($totalRT > 0)
+            <div class="space-y-2 text-sm">
+                <div class="flex justify-between items-center py-1.5 border-b border-base-200">
+                    <span class="text-base-content/60">Penduduk / RT</span>
+                    <span class="font-semibold">~{{ round($totalPenduduk / $totalRT) }} jiwa</span>
+                </div>
+                <div class="flex justify-between items-center py-1.5">
+                    <span class="text-base-content/60">KK / RT</span>
+                    <span class="font-semibold">~{{ round($totalKK / $totalRT) }} KK</span>
+                </div>
+            </div>
+            @endif
+            <x-slot:actions>
+                <x-ui.button type="ghost" size="sm" href="{{ route('master.wilayah.index') }}">Kelola Wilayah →
+                </x-ui.button>
+            </x-slot:actions>
+        </x-ui.card>
+
     </div>
 
     {{-- Admin-specific: System Overview --}}
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {{-- User Management Overview --}}
-        <x-ui.card title="Manajemen Pengguna">
+        <!-- <x-ui.card title="Manajemen Pengguna">
             <div class="space-y-2 mb-4">
                 <div class="flex items-center justify-between p-2 rounded-lg bg-base-200">
                     <span class="text-sm">Total Pengguna</span>
@@ -348,40 +378,12 @@
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.users.index') }}">Kelola Pengguna →
                 </x-ui.button>
             </x-slot:actions>
-        </x-ui.card>
+        </x-ui.card> -->
 
-        {{-- Wilayah Overview --}}
-        <x-ui.card title="Data Wilayah">
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="rounded-xl bg-primary/10 p-4 text-center">
-                    <div class="text-3xl font-bold text-primary">{{ $totalRW }}</div>
-                    <div class="text-xs text-primary/70 font-semibold mt-1">RW</div>
-                </div>
-                <div class="rounded-xl bg-secondary/10 p-4 text-center">
-                    <div class="text-3xl font-bold text-secondary">{{ $totalRT }}</div>
-                    <div class="text-xs text-secondary/70 font-semibold mt-1">RT</div>
-                </div>
-            </div>
-            @if($totalRT > 0)
-            <div class="space-y-2 text-sm">
-                <div class="flex justify-between items-center py-1.5 border-b border-base-200">
-                    <span class="text-base-content/60">Penduduk / RT</span>
-                    <span class="font-semibold">~{{ round($totalPenduduk / $totalRT) }} jiwa</span>
-                </div>
-                <div class="flex justify-between items-center py-1.5">
-                    <span class="text-base-content/60">KK / RT</span>
-                    <span class="font-semibold">~{{ round($totalKK / $totalRT) }} KK</span>
-                </div>
-            </div>
-            @endif
-            <x-slot:actions>
-                <x-ui.button type="ghost" size="sm" href="{{ route('master.wilayah.index') }}">Kelola Wilayah →
-                </x-ui.button>
-            </x-slot:actions>
-        </x-ui.card>
+
 
         {{-- Recent Users --}}
-        <x-ui.card title="Pengguna Terbaru">
+        <!-- <x-ui.card title="Pengguna Terbaru">
             <div class="space-y-3">
                 @forelse($recentUsers as $user)
                 <div class="flex items-center gap-3">
@@ -412,7 +414,7 @@
             <x-slot:actions>
                 <x-ui.button type="ghost" size="sm" href="{{ route('admin.audit-log') }}">Audit Log →</x-ui.button>
             </x-slot:actions>
-        </x-ui.card>
+        </x-ui.card> -->
 
     </div>
 

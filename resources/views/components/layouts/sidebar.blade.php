@@ -276,11 +276,11 @@ $user = auth()->user();
                     <li><a href="{{ route('data-umum.tempat-ibadah.index') }}"
                             class="{{ request()->routeIs('data-umum.tempat-ibadah.*') ? 'active' : '' }}">Tempat
                             Ibadah</a></li>
-                    <li><a href="{{ route('data-umum.petugas-kebersihan.index') }}"
+                    <!-- <li><a href="{{ route('data-umum.petugas-kebersihan.index') }}"
                             class="{{ request()->routeIs('data-umum.petugas-kebersihan.*') ? 'active' : '' }}">Petugas
                             Kebersihan</a></li>
                     <li><a href="{{ route('data-umum.kendaraan.index') }}"
-                            class="{{ request()->routeIs('data-umum.kendaraan.*') ? 'active' : '' }}">Kendaraan</a></li>
+                            class="{{ request()->routeIs('data-umum.kendaraan.*') ? 'active' : '' }}">Kendaraan</a></li> -->
                 </ul>
             </details>
         </li>
@@ -430,7 +430,7 @@ $user = auth()->user();
         {{-- ============================================================ --}}
         {{-- Survey Kepuasan — All roles (optional) --}}
         {{-- ============================================================ --}}
-        @if($user)
+        <!-- @if($user)
         <div class="divider my-1 px-2"></div>
         <li>
             <a href="{{ route('survey.index') }}" class="{{ request()->routeIs('survey.*') ? 'active' : '' }}">
@@ -442,7 +442,7 @@ $user = auth()->user();
                 Survey Kepuasan
             </a>
         </li>
-        @endif
+        @endif -->
 
         {{-- ============================================================ --}}
         {{-- Administrasi Sistem — Admin only --}}
