@@ -54,104 +54,104 @@
 
     </div>
 
-    {{-- Two-column layout --}}
+    {{-- Mutasi & Quick Actions --}}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
 
-    {{-- Bottom row: Data Usaha & Wilayah --}}
-    <div class="space-y-2">
-        @php
-            $mutasiItems = [
-                [
-                    'label' => 'Kelahiran',
-                    'value' => $mutasiLahir,
-                    'color' => 'text-success',
-                    'bg' => 'bg-success/10',
-                    'icon' => '
+        <x-ui.card title="Mutasi Penduduk (Bulan Ini)">
+            <div class="space-y-2">
+                @php
+                    $mutasiItems = [
+                        [
+                            'label' => 'Kelahiran',
+                            'value' => $mutasiLahir,
+                            'color' => 'text-success',
+                            'bg' => 'bg-success/10',
+                            'icon' => '
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />',
-                ],
-                [
-                    'label' => 'Kematian',
-                    'value' => $mutasiMeninggal,
-                    'color' => 'text-error',
-                    'bg' => 'bg-error/10',
-                    'icon' => '
+                        ],
+                        [
+                            'label' => 'Kematian',
+                            'value' => $mutasiMeninggal,
+                            'color' => 'text-error',
+                            'bg' => 'bg-error/10',
+                            'icon' => '
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />',
-                ],
-                [
-                    'label' => 'Datang',
-                    'value' => $mutasiDatang,
-                    'color' => 'text-info',
-                    'bg' => 'bg-info/10',
-                    'icon' => '
+                        ],
+                        [
+                            'label' => 'Datang',
+                            'value' => $mutasiDatang,
+                            'color' => 'text-info',
+                            'bg' => 'bg-info/10',
+                            'icon' => '
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M11 16l-4-4m0 0l4-4m-4 4h14" />',
-                ],
-                [
-                    'label' => 'Pindah',
-                    'value' => $mutasiPindah,
-                    'color' => 'text-warning',
-                    'bg' => 'bg-warning/10',
-                    'icon' => '
+                        ],
+                        [
+                            'label' => 'Pindah',
+                            'value' => $mutasiPindah,
+                            'color' => 'text-warning',
+                            'bg' => 'bg-warning/10',
+                            'icon' => '
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M13 7l5 5m0 0l-5 5m5-5H6" />',
-                ],
-            ];
-        @endphp
-        @foreach ($mutasiItems as $item)
-            <div class="flex items-center justify-between rounded-lg px-3 py-2 {{ $item['bg'] }}">
-                <div class="flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $item['color'] }}" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor">
-                        {!! $item['icon'] !!}
-                    </svg>
-                    <span class="text-sm font-medium">{{ $item['label'] }}</span>
+                        ],
+                    ];
+                @endphp
+                @foreach ($mutasiItems as $item)
+                    <div class="flex items-center justify-between rounded-lg px-3 py-2 {{ $item['bg'] }}">
+                        <div class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ $item['color'] }}" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor">
+                                {!! $item['icon'] !!}
+                            </svg>
+                            <span class="text-sm font-medium">{{ $item['label'] }}</span>
+                        </div>
+                        <span class="text-lg font-bold {{ $item['color'] }}">{{ $item['value'] }}</span>
+                    </div>
+                @endforeach
+                <div class="pt-1 border-t border-base-300">
+                    <div class="flex items-center justify-between text-xs text-base-content/50 px-1">
+                        <span>Total perubahan</span>
+                        <span
+                            class="font-semibold text-base-content">{{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</span>
+                    </div>
                 </div>
-                <span class="text-lg font-bold {{ $item['color'] }}">{{ $item['value'] }}</span>
             </div>
-        @endforeach
-        <div class="pt-1 border-t border-base-300">
-            <div class="flex items-center justify-between text-xs text-base-content/50 px-1">
-                <span>Total perubahan</span>
-                <span
-                    class="font-semibold text-base-content">{{ $mutasiLahir + $mutasiMeninggal + $mutasiDatang + $mutasiPindah }}</span>
-            </div>
-        </div>
-    </div>
-    </x-ui.card>
+        </x-ui.card>
 
-    {{-- Quick Actions --}}
-    <x-ui.card title="Aksi Cepat">
-        <div class="space-y-2">
-            <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2"
-                href="{{ route('kependudukan.penduduk.create') }}">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                Tambah Penduduk
-            </x-ui.button>
-            <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2"
-                href="{{ route('kependudukan.keluarga.create') }}" :outline="true">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah Kartu Keluarga
-            </x-ui.button>
-            <x-ui.button type="ghost" size="sm" class="w-full justify-start gap-2"
-                href="{{ route('admin.users.create') }}" :outline="true">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                Tambah Pengguna
-            </x-ui.button>
-        </div>
-    </x-ui.card>
+        {{-- Quick Actions --}}
+        <x-ui.card title="Aksi Cepat">
+            <div class="space-y-2">
+                <x-ui.button type="primary" size="sm" class="w-full justify-start gap-2"
+                    href="{{ route('kependudukan.penduduk.create') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Tambah Penduduk
+                </x-ui.button>
+                <x-ui.button type="secondary" size="sm" class="w-full justify-start gap-2"
+                    href="{{ route('kependudukan.keluarga.create') }}" :outline="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah Kartu Keluarga
+                </x-ui.button>
+                <x-ui.button type="ghost" size="sm" class="w-full justify-start gap-2"
+                    href="{{ route('admin.users.create') }}" :outline="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                    Tambah Pengguna
+                </x-ui.button>
+            </div>
+        </x-ui.card>
 
     </div>
-    </div> -->
 
     {{-- Bottom row: Data Usaha & Wilayah --}}
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
@@ -295,7 +295,7 @@
                         </span>
                     </div>
                 </div>
-            @empty
+    @empty
                 <p class="text-sm text-base-content/60 text-center py-4">Belum ada pengguna.</p>
 @endforelse
             </div>
