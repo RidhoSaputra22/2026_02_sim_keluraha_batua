@@ -79,6 +79,7 @@ export default class CustomLayerManager {
             if (layerData.geojson.features.length === 0) return;
 
             const layerOpts = {
+                pane: "customLayerPane",
                 style: {
                     color: layerData.warna,
                     weight: layerData.stroke_width,

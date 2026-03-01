@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 class PetaLayerController extends Controller
 {
     /**
-     * Daftar semua layer peta.
+     * Daftar semua layer peta — tampilan QGIS-style (map + sidebar).
      */
     public function index()
     {
@@ -22,7 +22,39 @@ class PetaLayerController extends Controller
             ->withCount('polygons')
             ->get();
 
-        return view('peta.layers.index', compact('layers'));
+        $patternTypes = PetaLayer::patternTypes();
+
+        // Build per-layer GeoJSON collections for the map
+        $layersGeojson = [];
+        foreach ($layers as $layer) {
+            $polygons = DB::select(
+                'SELECT id, nama, deskripsi, ST_AsGeoJSON(polygon) as geojson
+                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
+                [$layer->id]
+            );
+
+            $features = [];
+            foreach ($polygons as $p) {
+                if ($p->geojson) {
+                    $features[] = [
+                        'type' => 'Feature',
+                        'properties' => [
+                            'id' => $p->id,
+                            'nama' => $p->nama,
+                            'deskripsi' => $p->deskripsi,
+                        ],
+                        'geometry' => json_decode($p->geojson, true),
+                    ];
+                }
+            }
+
+            $layersGeojson[$layer->id] = [
+                'type' => 'FeatureCollection',
+                'features' => $features,
+            ];
+        }
+
+        return view('peta.layers.index', compact('layers', 'patternTypes', 'layersGeojson'));
     }
 
     /**
@@ -139,7 +171,98 @@ class PetaLayerController extends Controller
     {
         $petaLayer->update(['is_active' => !$petaLayer->is_active]);
 
+        if (request()->wantsJson()) {
+            return response()->json(['success' => true, 'is_active' => $petaLayer->is_active]);
+        }
+
         return back()->with('success', 'Status layer berhasil diubah.');
+    }
+
+    /**
+     * API: Reorder layers.
+     */
+    public function reorder(Request $request): JsonResponse
+    {
+        $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['integer', 'exists:peta_layers,id'],
+        ]);
+
+        foreach ($request->input('order') as $index => $id) {
+            PetaLayer::where('id', $id)->update(['sort_order' => $index]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Urutan layer berhasil diperbarui.']);
+    }
+
+    /**
+     * API: Update layer settings (JSON response for inline editing).
+     */
+    public function updateJson(Request $request, PetaLayer $petaLayer): JsonResponse
+    {
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:100'],
+            'deskripsi' => ['nullable', 'string'],
+            'warna' => ['required', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'fill_opacity' => ['required', 'numeric', 'min:0', 'max:1'],
+            'stroke_width' => ['required', 'numeric', 'min:0.5', 'max:10'],
+            'pattern_type' => ['required', Rule::in(array_keys(PetaLayer::patternTypes()))],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $validated['slug'] = Str::slug($validated['nama']);
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        $petaLayer->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'layer' => $petaLayer->fresh(),
+            'message' => 'Layer berhasil diperbarui.',
+        ]);
+    }
+
+    /**
+     * API: Store layer (JSON response).
+     */
+    public function storeJson(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'nama' => ['required', 'string', 'max:100'],
+            'deskripsi' => ['nullable', 'string'],
+            'warna' => ['required', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'fill_opacity' => ['required', 'numeric', 'min:0', 'max:1'],
+            'stroke_width' => ['required', 'numeric', 'min:0.5', 'max:10'],
+            'pattern_type' => ['required', Rule::in(array_keys(PetaLayer::patternTypes()))],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
+        ]);
+
+        $validated['slug'] = Str::slug($validated['nama']);
+        $validated['is_active'] = $request->boolean('is_active', true);
+
+        $layer = PetaLayer::create($validated);
+
+        return response()->json([
+            'success' => true,
+            'layer' => $layer,
+            'message' => 'Layer berhasil dibuat.',
+        ]);
+    }
+
+    /**
+     * API: Delete layer (JSON response).
+     */
+    public function destroyJson(PetaLayer $petaLayer): JsonResponse
+    {
+        $nama = $petaLayer->nama;
+        $petaLayer->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Layer '{$nama}' berhasil dihapus.",
+        ]);
     }
 
     // ═══════════════════════════════════════════════════════════

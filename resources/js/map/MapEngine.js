@@ -90,6 +90,14 @@ export default class MapEngine {
             ...(this.svgRenderer ? { renderer: this.svgRenderer } : {}),
         });
 
+        // Custom panes for z-ordering:
+        // basePane (z 350) → kelurahan boundary & RW polygons (always below)
+        // customLayerPane (z 400) → custom overlay layers (always above base)
+        this.map.createPane("basePane");
+        this.map.getPane("basePane").style.zIndex = 350;
+        this.map.createPane("customLayerPane");
+        this.map.getPane("customLayerPane").style.zIndex = 400;
+
         // Zoom control at the desired position
         if (!this.options.zoomControl) {
             L.control

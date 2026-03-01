@@ -47,6 +47,7 @@ export default class KelurahanLayer {
      */
     render(geojson) {
         const opts = {
+            pane: "basePane",
             style: {
                 color: "#1e293b",
                 weight: 3,

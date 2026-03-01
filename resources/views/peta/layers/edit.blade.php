@@ -131,9 +131,7 @@
     'polygonBase' => url('admin/peta-layer/' . $petaLayer->id . '/polygon'),
     ];
     @endphp
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    {{-- Leaflet & Leaflet.Draw already loaded by <x-ui.leaflet-draw> component --}}
     @vite('resources/js/map/index.js')
 
     <script>
@@ -156,7 +154,15 @@
             messageType: 'success',
 
             init() {
-                this.$nextTick(() => this._bootstrap());
+                this._waitForDeps();
+            },
+
+            _waitForDeps() {
+                if (window.SimPeta && window.L && window.L.Draw) {
+                    this._bootstrap();
+                } else {
+                    requestAnimationFrame(() => this._waitForDeps());
+                }
             },
 
             _bootstrap() {

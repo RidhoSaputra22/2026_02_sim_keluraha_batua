@@ -45,25 +45,6 @@
         @include('peta.partials.rw-list')
     </div>
 
-    {{-- Custom Layers Toggle --}}
-    <template x-if="customLayers.length > 0">
-        <div class="px-4 py-3 border-t border-base-200 flex-shrink-0">
-            <p class="text-xs font-semibold text-base-content/40 uppercase tracking-wider mb-2">Layer Kustom</p>
-            <div class="space-y-1.5">
-                <template x-for="cl in customLayers" :key="cl.id">
-                    <label class="flex items-center gap-2 cursor-pointer hover:bg-base-200 rounded-lg px-2 py-1.5 transition-colors">
-                        <input type="checkbox" class="checkbox checkbox-xs" :checked="cl.visible"
-                            @change="toggleCustomLayer(cl.id)">
-                        <span class="w-3 h-3 rounded-sm flex-shrink-0 border border-base-300"
-                            :style="'background-color:' + cl.warna"></span>
-                        <span class="text-xs flex-1 truncate" x-text="cl.nama"></span>
-                        <span class="badge badge-ghost badge-xs" x-text="cl.polygonCount"></span>
-                    </label>
-                </template>
-            </div>
-        </div>
-    </template>
-
     {{-- Footer legend --}}
     <div class="p-3 border-t border-base-200 flex-shrink-0">
         <div class="flex items-center justify-between">

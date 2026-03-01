@@ -38,6 +38,7 @@ function petaApp() {
         selectedStats: {},
         showKelurahan: true,
         showLabels: true,
+        showRwLayer: true,
         rwDataList: [],
         rwColors: {},
         customLayers: [],
@@ -176,6 +177,15 @@ function petaApp() {
         toggleLabels() {
             this.showLabels = !this.showLabels;
             if (this._rwLayer) this._rwLayer.toggleLabels(this.showLabels);
+        },
+
+        toggleRwLayer() {
+            this.showRwLayer = !this.showRwLayer;
+            if (this._rwLayer) this._rwLayer.toggle(this.showRwLayer);
+            // When hiding RW layer, also hide labels; when showing, restore label state
+            if (!this.showRwLayer) {
+                this.showLabels = false;
+            }
         },
 
         toggleCustomLayer(layerId) {

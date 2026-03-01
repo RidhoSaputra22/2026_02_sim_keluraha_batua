@@ -63,14 +63,41 @@ export default class PolygonEditor {
      * @returns {PolygonEditor} this
      */
     init() {
+        if (typeof L === "undefined") {
+            console.warn("[PolygonEditor] Leaflet (L) not loaded yet.");
+            return this;
+        }
+
         const container = document.getElementById(this.containerId);
-        if (!container || container._leaflet_id) return this;
+        if (!container) {
+            console.warn(
+                `[PolygonEditor] Container #${this.containerId} not found.`,
+            );
+            return this;
+        }
+        if (container._leaflet_id) {
+            console.warn(
+                `[PolygonEditor] Container #${this.containerId} already initialised.`,
+            );
+            return this;
+        }
 
         this.map = L.map(this.containerId, {
             center: [-5.155, 119.466],
             zoom: 15,
             zoomControl: true,
         });
+
+        // Custom panes for z-ordering:
+        // basePane (z 350) → RW overlay always at bottom
+        // customLayerPane (z 400) → custom display layers in middle
+        // editPane (z 450) → actively edited drawn items on top
+        this.map.createPane("basePane");
+        this.map.getPane("basePane").style.zIndex = 350;
+        this.map.createPane("customLayerPane");
+        this.map.getPane("customLayerPane").style.zIndex = 400;
+        this.map.createPane("editPane");
+        this.map.getPane("editPane").style.zIndex = 450;
 
         // Base layers
         const osm = L.tileLayer(
@@ -91,8 +118,10 @@ export default class PolygonEditor {
             })
             .addTo(this.map);
 
-        // Drawn items
-        this.drawnItems = new L.FeatureGroup().addTo(this.map);
+        // Drawn items (use editPane so they render above base + custom layers)
+        this.drawnItems = new L.FeatureGroup([], {
+            pane: "editPane",
+        }).addTo(this.map);
 
         // Draw control
         this.drawControl = new L.Control.Draw({
@@ -150,19 +179,30 @@ export default class PolygonEditor {
     addKelurahan(geojson) {
         if (!geojson || !this.map) return;
 
-        this.kelurahanLayer = L.geoJSON(geojson, {
-            style: {
-                color: "#1e293b",
-                weight: 3,
-                fillOpacity: 0.02,
-                fillColor: "#64748b",
-                dashArray: "10, 6",
-            },
-        }).addTo(this.map);
+        const sanitised = this._sanitiseGeojson(geojson);
+        if (!sanitised) return;
 
-        this.map.fitBounds(this.kelurahanLayer.getBounds(), {
-            padding: [20, 20],
-        });
+        try {
+            this.kelurahanLayer = L.geoJSON(sanitised, {
+                pane: "basePane",
+                style: {
+                    color: "#1e293b",
+                    weight: 3,
+                    fillOpacity: 0.02,
+                    fillColor: "#64748b",
+                    dashArray: "10, 6",
+                },
+            }).addTo(this.map);
+
+            this.map.fitBounds(this.kelurahanLayer.getBounds(), {
+                padding: [20, 20],
+            });
+        } catch (e) {
+            console.warn(
+                "[PolygonEditor] Failed to add kelurahan boundary:",
+                e,
+            );
+        }
     }
 
     // ── RW reference overlay ────────────────────────────────
@@ -178,31 +218,42 @@ export default class PolygonEditor {
         this.referenceLayer = L.layerGroup().addTo(this.map);
 
         polygons.forEach((rw) => {
-            const color = rw.warna || "#6b7280";
-            const layer = L.geoJSON(rw.geojson, {
-                style: {
-                    color,
-                    weight: 1.5,
-                    fillOpacity: 0.1,
-                    fillColor: color,
-                    dashArray: "4, 4",
-                },
-                interactive: false,
-            });
-            this.referenceLayer.addLayer(layer);
+            const sanitised = this._sanitiseGeojson(rw.geojson);
+            if (!sanitised) return;
 
-            const center = layer.getBounds().getCenter();
-            this.referenceLayer.addLayer(
-                L.marker(center, {
-                    icon: L.divIcon({
-                        className: "rw-label",
-                        html: `<span style="opacity:0.5">${rw.label}</span>`,
-                        iconSize: [50, 18],
-                        iconAnchor: [25, 9],
-                    }),
+            try {
+                const color = rw.warna || "#6b7280";
+                const layer = L.geoJSON(sanitised, {
+                    pane: "basePane",
+                    style: {
+                        color,
+                        weight: 1.5,
+                        fillOpacity: 0.1,
+                        fillColor: color,
+                        dashArray: "4, 4",
+                    },
                     interactive: false,
-                }),
-            );
+                });
+                this.referenceLayer.addLayer(layer);
+
+                const center = layer.getBounds().getCenter();
+                this.referenceLayer.addLayer(
+                    L.marker(center, {
+                        icon: L.divIcon({
+                            className: "rw-label",
+                            html: `<span style="opacity:0.5">${rw.label}</span>`,
+                            iconSize: [50, 18],
+                            iconAnchor: [25, 9],
+                        }),
+                        interactive: false,
+                    }),
+                );
+            } catch (e) {
+                console.warn(
+                    `[PolygonEditor] Failed to add RW reference: ${rw.label}`,
+                    e,
+                );
+            }
         });
     }
 
@@ -228,6 +279,7 @@ export default class PolygonEditor {
                     fillColor: feature.properties.warna || "#6b7280",
                     dashArray: "4, 4",
                 }),
+                pane: "basePane",
                 filter: (f) => f.properties && f.properties.RW,
                 onEachFeature: (feature, layer) => {
                     if (!feature.properties.RW) return;
@@ -241,6 +293,7 @@ export default class PolygonEditor {
                                 iconAnchor: [25, 9],
                             }),
                             interactive: false,
+                            pane: "basePane",
                         }),
                     );
                 },
@@ -280,14 +333,162 @@ export default class PolygonEditor {
      * @param {string} [color] - Override color
      */
     loadExisting(geojson, color) {
-        if (!geojson || !this.drawnItems) return;
+        if (!geojson || !this.drawnItems || !this.map) return;
+
+        // Sanitise GeoJSON: remove null / incomplete coordinate pairs
+        // that MySQL ST_AsGeoJSON occasionally emits for degenerate rings.
+        const sanitised = this._sanitiseGeojson(geojson);
+        if (!sanitised) return;
 
         const c = color || this.options.color;
-        const existing = L.geoJSON(geojson, {
+        const existing = L.geoJSON(sanitised, {
             style: { color: c, weight: 3, fillOpacity: 0.35, fillColor: c },
         });
-        existing.eachLayer((l) => this.drawnItems.addLayer(l));
-        this.map.fitBounds(this.drawnItems.getBounds(), { padding: [30, 30] });
+        existing.eachLayer((l) => {
+            // Only add layers that actually have valid coordinates
+            try {
+                if (l.getLatLngs) {
+                    // Fix over-nested _latlngs that Leaflet creates from
+                    // MultiPolygon (3 levels instead of 2). Leaflet.Draw's
+                    // edit handler crashes on the extra nesting.
+                    this._flattenLatLngs(l);
+
+                    const lls = l.getLatLngs();
+                    if (lls && this._hasValidLatLngs(lls)) {
+                        this.drawnItems.addLayer(l);
+                    }
+                }
+            } catch (_) {
+                // skip invalid layer
+            }
+        });
+        if (this.drawnItems.getLayers().length > 0) {
+            this.map.fitBounds(this.drawnItems.getBounds(), {
+                padding: [30, 30],
+            });
+        }
+    }
+
+    /**
+     * Deep-sanitise a GeoJSON geometry, removing null / invalid coordinates.
+     *
+     * @param {object} geojson
+     * @returns {object|null}
+     */
+    _sanitiseGeojson(geojson) {
+        if (!geojson || !geojson.type) return null;
+
+        try {
+            const clone = JSON.parse(JSON.stringify(geojson));
+
+            // Flatten MultiPolygon → Polygon when there's only one polygon.
+            // Leaflet.Draw 1.0.4 cannot edit MultiPolygon geometries because
+            // _latlngs gets an extra nesting level that _getMiddleLatLng
+            // doesn't expect, causing "can't access property lat of null".
+            if (
+                clone.type === "MultiPolygon" &&
+                clone.coordinates.length === 1
+            ) {
+                clone.type = "Polygon";
+                clone.coordinates = clone.coordinates[0];
+            }
+
+            if (clone.type === "Polygon") {
+                clone.coordinates = this._sanitiseRings(clone.coordinates);
+                if (!clone.coordinates.length) return null;
+            } else if (clone.type === "MultiPolygon") {
+                // Multiple polygons — sanitise each, keep as MultiPolygon
+                clone.coordinates = clone.coordinates
+                    .map((poly) => this._sanitiseRings(poly))
+                    .filter((poly) => poly.length > 0);
+                if (!clone.coordinates.length) return null;
+            }
+            return clone;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    /**
+     * Remove null/invalid coords from a polygon's ring array.
+     *
+     * @param {Array} rings - [[lng, lat], ...][]
+     * @returns {Array}
+     */
+    _sanitiseRings(rings) {
+        if (!Array.isArray(rings)) return [];
+        return rings
+            .map((ring) =>
+                Array.isArray(ring)
+                    ? ring.filter(
+                          (coord) =>
+                              Array.isArray(coord) &&
+                              coord.length >= 2 &&
+                              coord[0] != null &&
+                              coord[1] != null &&
+                              isFinite(coord[0]) &&
+                              isFinite(coord[1]),
+                      )
+                    : [],
+            )
+            .filter((ring) => ring.length >= 3);
+    }
+
+    /**
+     * Recursively check that a LatLngs structure has no null values.
+     *
+     * @param {*} lls
+     * @returns {boolean}
+     */
+    _hasValidLatLngs(lls) {
+        if (!lls) return false;
+        if (Array.isArray(lls)) {
+            if (lls.length === 0) return false;
+            // nested array of rings
+            if (Array.isArray(lls[0])) {
+                return lls.every((inner) => this._hasValidLatLngs(inner));
+            }
+            // array of LatLng objects
+            return lls.every((ll) => ll && ll.lat != null && ll.lng != null);
+        }
+        return lls.lat != null && lls.lng != null;
+    }
+
+    /**
+     * Fix over-nested _latlngs on a Leaflet layer.
+     *
+     * Leaflet creates _latlngs = [[[LatLng, ...]]] (3 levels) for
+     * MultiPolygon, but Leaflet.Draw 1.0.4's edit handler only works
+     * with [[LatLng, ...]] (2 levels). This method detects and flattens
+     * the extra nesting so editing doesn't crash.
+     *
+     * @param {L.Layer} layer
+     */
+    _flattenLatLngs(layer) {
+        if (!layer._latlngs || !Array.isArray(layer._latlngs)) return;
+
+        const lls = layer._latlngs;
+        // Detect 3-level nesting: [[[LatLng, ...]]] where lls[0][0]
+        // is an array of LatLng objects (has .lat).
+        if (
+            lls.length >= 1 &&
+            Array.isArray(lls[0]) &&
+            lls[0].length >= 1 &&
+            Array.isArray(lls[0][0]) &&
+            lls[0][0].length >= 1 &&
+            lls[0][0][0] &&
+            typeof lls[0][0][0].lat === "number"
+        ) {
+            // Flatten [[[ring1], [ring2]]] → [[ring1], [ring2]]
+            layer._latlngs = lls[0];
+            // Re-set bounds
+            if (layer._bounds && layer._convertLatLngs) {
+                layer._bounds = new L.LatLngBounds();
+                layer._latlngs.forEach((ring) =>
+                    ring.forEach((ll) => layer._bounds.extend(ll)),
+                );
+            }
+        }
     }
 
     /**
@@ -303,6 +504,7 @@ export default class PolygonEditor {
         if (!geojsonCollection?.features?.length) return list;
 
         L.geoJSON(geojsonCollection, {
+            pane: "editPane",
             style: {
                 color: this.options.color,
                 weight: this.options.strokeWidth,
@@ -338,6 +540,12 @@ export default class PolygonEditor {
      * @param {(hasChanges: boolean) => void} onChange
      */
     onSinglePolygonChange(onChange) {
+        if (!this.map) {
+            console.warn(
+                "[PolygonEditor] map is null — skipping event binding.",
+            );
+            return;
+        }
         this.map.on(L.Draw.Event.CREATED, (e) => {
             this.drawnItems.clearLayers();
             this.drawnItems.addLayer(e.layer);
@@ -366,6 +574,12 @@ export default class PolygonEditor {
      * @param {(layer: L.Layer) => void} handlers.onDeleted
      */
     onMultiPolygonChange(handlers) {
+        if (!this.map) {
+            console.warn(
+                "[PolygonEditor] map is null — skipping event binding.",
+            );
+            return;
+        }
         this.map.on(L.Draw.Event.CREATED, (e) => {
             this.drawnItems.addLayer(e.layer);
             if (handlers.onCreated) handlers.onCreated(e.layer);
@@ -429,7 +643,7 @@ export default class PolygonEditor {
      * @param {L.Layer} layer
      */
     zoomToLayer(layer) {
-        if (layer && layer.getBounds) {
+        if (this.map && layer && layer.getBounds) {
             this.map.fitBounds(layer.getBounds(), { padding: [50, 50] });
         }
     }

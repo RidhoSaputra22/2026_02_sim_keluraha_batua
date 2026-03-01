@@ -49,6 +49,9 @@ export default class RwLayer {
 
         /** @type {boolean} */
         this.labelsVisible = true;
+
+        /** @type {boolean} */
+        this.visible = true;
     }
 
     // ── Data loading ────────────────────────────────────────
@@ -90,6 +93,7 @@ export default class RwLayer {
         }
 
         const layerOpts = {
+            pane: "basePane",
             style: (feature) => {
                 const rw = feature.properties.RW;
                 const color =
@@ -177,6 +181,32 @@ export default class RwLayer {
         }
     }
 
+    // ── Layer toggling ──────────────────────────────────
+
+    /**
+     * Toggle the entire RW polygon layer (and labels) on/off.
+     *
+     * @param {boolean} [show]
+     */
+    toggle(show) {
+        if (show === undefined) show = !this.visible;
+        this.visible = show;
+
+        if (!this.layer) return;
+
+        if (show) {
+            this.engine.map.addLayer(this.layer);
+            if (this.labelsVisible && this.labelLayer) {
+                this.engine.map.addLayer(this.labelLayer);
+            }
+        } else {
+            this.engine.map.removeLayer(this.layer);
+            if (this.labelLayer) {
+                this.engine.map.removeLayer(this.labelLayer);
+            }
+        }
+    }
+
     // ── Label toggling ──────────────────────────────────────
 
     /**
@@ -227,6 +257,7 @@ export default class RwLayer {
         // Permanent label
         const center = layer.getBounds().getCenter();
         const label = L.marker(center, {
+            pane: "basePane",
             icon: L.divIcon({
                 className: "rw-label",
                 html: `<span>${props.RW}</span>`,

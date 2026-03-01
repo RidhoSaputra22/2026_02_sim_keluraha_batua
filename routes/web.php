@@ -183,6 +183,10 @@ Route::middleware('auth')->group(function () {
         Route::put('/{petaLayer}', [PetaLayerController::class, 'update'])->name('update');
         Route::delete('/{petaLayer}', [PetaLayerController::class, 'destroy'])->name('destroy');
         Route::patch('/{petaLayer}/toggle-active', [PetaLayerController::class, 'toggleActive'])->name('toggle-active');
+        Route::post('/reorder', [PetaLayerController::class, 'reorder'])->name('reorder');
+        Route::post('/store-json', [PetaLayerController::class, 'storeJson'])->name('store-json');
+        Route::put('/{petaLayer}/update-json', [PetaLayerController::class, 'updateJson'])->name('update-json');
+        Route::delete('/{petaLayer}/destroy-json', [PetaLayerController::class, 'destroyJson'])->name('destroy-json');
 
         // Polygon API (JSON)
         Route::post('/{petaLayer}/polygon', [PetaLayerController::class, 'storePolygon'])->name('polygon.store');
