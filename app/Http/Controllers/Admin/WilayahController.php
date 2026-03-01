@@ -50,7 +50,7 @@ class WilayahController extends Controller
         $totalAktif = RtRwPengurus::where('status', 'aktif')->count();
         $totalNonaktif = RtRwPengurus::where('status', 'nonaktif')->count();
 
-        return view('admin.wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
+        return view('wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
     }
 
     public function create()
@@ -61,7 +61,7 @@ class WilayahController extends Controller
         $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
         $kelurahanList = Kelurahan::orderBy('nama')->get();
 
-        return view('admin.wilayah.create', compact('pendudukList', 'jabatanList', 'rwList', 'rtList', 'kelurahanList'));
+        return view('wilayah.create', compact('pendudukList', 'jabatanList', 'rwList', 'rtList', 'kelurahanList'));
     }
 
     public function store(Request $request)
@@ -95,7 +95,7 @@ class WilayahController extends Controller
         $rtList = Rt::with('rw')->orderBy('rw_id')->orderBy('nomor')->get();
         $kelurahanList = Kelurahan::orderBy('nama')->get();
 
-        return view('admin.wilayah.edit', compact('wilayah', 'pendudukList', 'jabatanList', 'rwList', 'rtList', 'kelurahanList'));
+        return view('wilayah.edit', compact('wilayah', 'pendudukList', 'jabatanList', 'rwList', 'rtList', 'kelurahanList'));
     }
 
     public function update(Request $request, RtRwPengurus $wilayah)

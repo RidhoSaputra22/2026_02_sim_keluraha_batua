@@ -43,7 +43,7 @@ class KeluargaController extends Controller
         $rtList = $this->wilayahRtList();
         $rwList = $this->wilayahRwList();
 
-        return view('admin.keluarga.index', compact('keluarga', 'rtList', 'rwList'));
+        return view('kependudukan.keluarga.index', compact('keluarga', 'rtList', 'rwList'));
     }
 
     public function create()
@@ -51,13 +51,14 @@ class KeluargaController extends Controller
         $pendudukList = Penduduk::orderBy('nama')->get();
         $rtList       = $this->wilayahRtList();
 
-        return view('admin.keluarga.create', compact('pendudukList', 'rtList'));
+        return view('kependudukan.keluarga.create', compact('pendudukList', 'rtList'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'no_kk'                   => ['required', 'string', 'max:20', 'unique:keluargas,no_kk'],
+
             'kepala_keluarga_id'      => ['nullable', 'exists:penduduks,id'],
             'jumlah_anggota_keluarga' => ['nullable', 'integer', 'min:0'],
             'rt_id'                   => $this->rtIdRules(),
@@ -79,7 +80,7 @@ class KeluargaController extends Controller
 
         $keluarga->load(['anggota', 'kepalaKeluarga', 'rt.rw']);
 
-        return view('admin.keluarga.show', compact('keluarga'));
+        return view('kependudukan.keluarga.show', compact('keluarga'));
     }
 
     public function edit(Keluarga $keluarga)
@@ -89,7 +90,7 @@ class KeluargaController extends Controller
         $pendudukList = Penduduk::orderBy('nama')->get();
         $rtList       = $this->wilayahRtList();
 
-        return view('admin.keluarga.edit', compact('keluarga', 'pendudukList', 'rtList'));
+        return view('kependudukan.keluarga.edit', compact('keluarga', 'pendudukList', 'rtList'));
     }
 
     public function update(Request $request, Keluarga $keluarga)

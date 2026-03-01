@@ -48,7 +48,7 @@ class PendudukController extends Controller
         $rtList = $this->wilayahRtList();
         $rwList = $this->wilayahRwList();
 
-        return view('admin.penduduk.index', compact('penduduk', 'rtList', 'rwList'));
+        return view('kependudukan.penduduk.index', compact('penduduk', 'rtList', 'rwList'));
     }
 
     public function create()
@@ -56,7 +56,7 @@ class PendudukController extends Controller
         $keluargaList = Keluarga::orderBy('no_kk')->get();
         $rtList       = $this->wilayahRtList();
 
-        return view('admin.penduduk.create', compact('keluargaList', 'rtList'));
+        return view('kependudukan.penduduk.create', compact('keluargaList', 'rtList'));
     }
 
     public function store(Request $request)
@@ -90,7 +90,7 @@ class PendudukController extends Controller
 
         $penduduk->load(['keluarga.kepalaKeluarga', 'rt.rw']);
 
-        return view('admin.penduduk.show', compact('penduduk'));
+        return view('kependudukan.penduduk.show', compact('penduduk'));
     }
 
     public function edit(Penduduk $penduduk)
@@ -100,7 +100,7 @@ class PendudukController extends Controller
         $keluargaList = Keluarga::orderBy('no_kk')->get();
         $rtList       = $this->wilayahRtList();
 
-        return view('admin.penduduk.edit', compact('penduduk', 'keluargaList', 'rtList'));
+        return view('kependudukan.penduduk.edit', compact('penduduk', 'keluargaList', 'rtList'));
     }
 
     public function update(Request $request, Penduduk $penduduk)

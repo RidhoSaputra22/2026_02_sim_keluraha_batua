@@ -88,15 +88,7 @@ $user = auth()->user();
                     <li><a href="{{ route('master.wilayah.index') }}"
                             class="{{ request()->routeIs('master.wilayah.*', 'master.wilayah.*') ? 'active' : '' }}">Wilayah
                             (RW/RT)</a></li>
-                    <li><a href="{{ route('master.pegawai.index') }}"
-                            class="{{ request()->routeIs('master.pegawai.*') ? 'active' : '' }}">Pegawai /
-                            Staff</a>
-                    </li>
 
-                    <li><a href="{{ route('master.referensi.index') }}"
-                            class="{{ request()->routeIs('master.referensi.*') ? 'active' : '' }}">Data
-                            Referensi</a>
-                    </li>
                 </ul>
             </details>
         </li>
@@ -216,8 +208,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Peta</span>
         </li>
         <li>
-            <a href="{{ route('peta.index') }}"
-                class="{{ request()->routeIs('peta.*') ? 'active' : '' }}">
+            <a href="{{ route('peta.index') }}" class="{{ request()->routeIs('peta.*') ? 'active' : '' }}">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
