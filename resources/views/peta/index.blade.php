@@ -9,7 +9,7 @@
         @include('peta.partials.styles')
     @endpush
 
-    <div x-data="petaApp()" x-init="init()">
+    <div x-data="petaApp()">
 
         {{-- Main layout: Map left + Sidebar right --}}
         <div class="card bg-base-100 shadow-xl overflow-hidden">

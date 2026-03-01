@@ -4,10 +4,10 @@
         <div class="rw-list-item rounded-lg px-3 py-2.5 mb-1" :class="{ 'active': selectedRw === rw.name }"
             @click="selectRw(rw.name)">
             <div class="flex items-center gap-3">
-                <div class="rw-swatch" :style="`background-color: ${rwColors[rw.name] || '#6b7280'}`"></div>
+                <div class="rw-swatch" :style="`background-color: ${rw.warna || rwColors[rw.name] || '#6b7280'}`"></div>
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center justify-between">
-                        <span class="font-semibold text-sm" x-text="rw.name"></span>
+                        <span class="font-semibold text-xs" x-text="rw.name"></span>
                         <span class="text-xs text-base-content/50"
                             x-text="formatNumber(rw.total_penduduk) + ' jiwa'"></span>
                     </div>

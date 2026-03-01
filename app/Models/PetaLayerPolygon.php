@@ -6,29 +6,38 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
-class Rw extends Model {
+class PetaLayerPolygon extends Model
+{
     use HasFactory;
 
-    protected $table = 'rws';
+    protected $table = 'peta_layer_polygons';
 
     protected $fillable = [
-        'kelurahan_id',
-        'nomor',
-        'warna',
-        'polygon',
+        'peta_layer_id',
+        'nama',
+        'deskripsi',
+        'properties',
     ];
+
+    protected $casts = [
+        'properties' => 'array',
+    ];
+
+    // ── Relationships ───────────────────────────────────────
+    public function layer()
+    {
+        return $this->belongsTo(PetaLayer::class, 'peta_layer_id');
+    }
+
+    // ── PostGIS Methods ─────────────────────────────────────
 
     /**
      * Get polygon as GeoJSON string.
      */
     public function getPolygonGeojsonAttribute(): ?string
     {
-        if (! $this->polygon) {
-            return null;
-        }
-
         return DB::selectOne(
-            'SELECT ST_AsGeoJSON(polygon) as geojson FROM rws WHERE id = ?',
+            'SELECT ST_AsGeoJSON(polygon) as geojson FROM peta_layer_polygons WHERE id = ?',
             [$this->id]
         )->geojson ?? null;
     }
@@ -41,7 +50,7 @@ class Rw extends Model {
         $json = is_array($geojson) ? json_encode($geojson) : $geojson;
 
         DB::statement(
-            'UPDATE rws SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
+            'UPDATE peta_layer_polygons SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
             [$json, $this->id]
         );
     }
@@ -53,15 +62,4 @@ class Rw extends Model {
     {
         return $query->addSelect(DB::raw('ST_AsGeoJSON(polygon) as polygon_geojson'));
     }
-
-    public function kelurahan()
-    {
-        return $this->belongsTo(Kelurahan::class);
-    }
-
-    public function rts()
-    {
-        return $this->hasMany(Rt::class);
-    }
 }
-

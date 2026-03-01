@@ -1,17 +1,11 @@
 <?php
 
-use App\Http\Controllers\Admin\AuditLogController as AdminAuditLogController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
-use App\Http\Controllers\Kependudukan\KeluargaController as AdminKeluargaController;
+use App\Http\Controllers\Admin\PetaLayerController;
 // ─── Role-specific Dashboard Controllers ───────────────────────
-use App\Http\Controllers\Admin\PegawaiController as AdminPegawaiController;
-use App\Http\Controllers\Kependudukan\PendudukController as AdminPendudukController;
-use App\Http\Controllers\Admin\ReferensiController as AdminReferensiController;
-use App\Http\Controllers\Admin\RoleController as AdminRoleController;
-// ─── Admin Module Controllers ──────────────────────────────────
-use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Admin\WilayahController as AdminWilayahController;
 use App\Http\Controllers\Auth\LoginController;
+// ─── Admin Module Controllers ──────────────────────────────────
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DataUmum\FaskesController;
 use App\Http\Controllers\DataUmum\KendaraanController;
@@ -20,11 +14,13 @@ use App\Http\Controllers\DataUmum\SekolahController;
 use App\Http\Controllers\DataUmum\TempatIbadahController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\Kependudukan\KelahiranController;
-use App\Http\Controllers\PetaController;
+use App\Http\Controllers\Kependudukan\KeluargaController as AdminKeluargaController;
 use App\Http\Controllers\Kependudukan\KematianController;
 use App\Http\Controllers\Kependudukan\MutasiController;
+use App\Http\Controllers\Kependudukan\PendudukController as AdminPendudukController;
 use App\Http\Controllers\Laporan\LaporanKependudukanController;
 use App\Http\Controllers\Laporan\LaporanUsahaController as LaporanUsahaGlobalController;
+use App\Http\Controllers\PetaController;
 use App\Http\Controllers\ProfileController;
 // ─── Data Umum, Agenda Controllers ──────────
 use App\Http\Controllers\RtRw\DashboardController as RtRwDashboard;
@@ -71,16 +67,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
 
         // Pengguna (CRUD)
-        Route::resource('users', AdminUserController::class);
-        Route::patch('/users/{user}/toggle-active', [AdminUserController::class, 'toggleActive'])->name('users.toggle-active');
-
-        // Role (read-only)
-        Route::get('/roles', [AdminRoleController::class, 'index'])->name('roles.index');
-
-        // Audit Log
-        Route::get('/audit-log', [AdminAuditLogController::class, 'index'])->name('audit-log');
-        Route::get('/audit-log/{auditLog}', [AdminAuditLogController::class, 'show'])->name('audit-log.show');
-        Route::delete('/audit-log/cleanup', [AdminAuditLogController::class, 'destroy'])->name('audit-log.destroy');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -93,10 +79,8 @@ Route::middleware('auth')->group(function () {
 
         // Data Master (admin-scoped)
         Route::resource('wilayah', AdminWilayahController::class);
-        Route::resource('pegawai', AdminPegawaiController::class);
 
         // Referensi
-        Route::get('/referensi', [AdminReferensiController::class, 'index'])->name('referensi.index');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -177,6 +161,33 @@ Route::middleware('auth')->group(function () {
         Route::get('/geojson/kelurahan', [PetaController::class, 'geojsonKelurahan'])->name('geojson.kelurahan');
         Route::get('/geojson/rw', [PetaController::class, 'geojsonRw'])->name('geojson.rw');
         Route::get('/stats', [PetaController::class, 'stats'])->name('stats');
+        Route::get('/geojson/layers', [PetaLayerController::class, 'geojsonLayers'])->name('geojson.layers');
+
+        // RW Polygon Management (admin only)
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/rw/{rw}/polygon', [PetaController::class, 'editRwPolygon'])->name('rw-polygon.edit');
+            Route::put('/rw/{rw}/polygon', [PetaController::class, 'updateRwPolygon'])->name('rw-polygon.update');
+            Route::delete('/rw/{rw}/polygon', [PetaController::class, 'deleteRwPolygon'])->name('rw-polygon.delete');
+            Route::put('/rw/{rw}/color', [PetaController::class, 'updateRwColor'])->name('rw-color.update');
+        });
+    });
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  ADMIN: PETA LAYER MANAGEMENT                                ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin')->prefix('admin/peta-layer')->name('admin.peta-layer.')->group(function () {
+        Route::get('/', [PetaLayerController::class, 'index'])->name('index');
+        Route::get('/create', [PetaLayerController::class, 'create'])->name('create');
+        Route::post('/', [PetaLayerController::class, 'store'])->name('store');
+        Route::get('/{petaLayer}/edit', [PetaLayerController::class, 'edit'])->name('edit');
+        Route::put('/{petaLayer}', [PetaLayerController::class, 'update'])->name('update');
+        Route::delete('/{petaLayer}', [PetaLayerController::class, 'destroy'])->name('destroy');
+        Route::patch('/{petaLayer}/toggle-active', [PetaLayerController::class, 'toggleActive'])->name('toggle-active');
+
+        // Polygon API (JSON)
+        Route::post('/{petaLayer}/polygon', [PetaLayerController::class, 'storePolygon'])->name('polygon.store');
+        Route::put('/{petaLayer}/polygon/{polygon}', [PetaLayerController::class, 'updatePolygon'])->name('polygon.update');
+        Route::delete('/{petaLayer}/polygon/{polygon}', [PetaLayerController::class, 'destroyPolygon'])->name('polygon.destroy');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗

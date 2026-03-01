@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Keluarga;
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Umkm;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PetaController extends Controller
@@ -59,7 +61,7 @@ class PetaController extends Controller
     public function geojsonRw(): JsonResponse
     {
         $rwRows = DB::select(
-            'SELECT id, nomor, ST_AsGeoJSON(polygon) as geojson FROM rws WHERE polygon IS NOT NULL ORDER BY nomor'
+            'SELECT id, nomor, warna, ST_AsGeoJSON(polygon) as geojson FROM rws WHERE polygon IS NOT NULL ORDER BY nomor'
         );
 
         if (empty($rwRows)) {
@@ -79,6 +81,7 @@ class PetaController extends Controller
                 [
                     'id' => $index + 1,
                     'RW' => $rwLabel,
+                    'warna' => $rw->warna ?? '#6b7280',
                 ],
                 $stats
             );
@@ -89,13 +92,6 @@ class PetaController extends Controller
                 'geometry' => json_decode($rw->geojson, true),
             ];
         }
-
-        // Add empty trailing feature to match original format
-        $features[] = [
-            'type' => 'Feature',
-            'properties' => ['id' => null, 'RW' => null],
-            'geometry' => ['type' => 'MultiPolygon', 'coordinates' => []],
-        ];
 
         $geojson = [
             'type' => 'FeatureCollection',
@@ -157,5 +153,107 @@ class PetaController extends Controller
         }
 
         return $stats;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  RW Polygon Management API
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * Halaman kelola polygon RW.
+     */
+    public function editRwPolygon(Rw $rw)
+    {
+        $rwList = Rw::orderBy('nomor')->get();
+
+        // Get current polygon as GeoJSON
+        $polygonGeojson = null;
+        $row = DB::selectOne(
+            'SELECT ST_AsGeoJSON(polygon) as geojson FROM rws WHERE id = ? AND polygon IS NOT NULL',
+            [$rw->id]
+        );
+        if ($row && $row->geojson) {
+            $polygonGeojson = $row->geojson;
+        }
+
+        // Get all RW polygons for reference overlay
+        $allRwPolygons = DB::select(
+            'SELECT id, nomor, warna, ST_AsGeoJSON(polygon) as geojson FROM rws WHERE polygon IS NOT NULL ORDER BY nomor'
+        );
+
+        // Get kelurahan boundary
+        $kelurahanGeojson = null;
+        $kel = DB::selectOne(
+            'SELECT ST_AsGeoJSON(polygon) as geojson FROM kelurahans WHERE polygon IS NOT NULL LIMIT 1'
+        );
+        if ($kel && $kel->geojson) {
+            $kelurahanGeojson = $kel->geojson;
+        }
+
+        return view('peta.rw-polygon', compact('rw', 'rwList', 'polygonGeojson', 'allRwPolygons', 'kelurahanGeojson'));
+    }
+
+    /**
+     * API: Simpan/update polygon RW.
+     */
+    public function updateRwPolygon(Request $request, Rw $rw): JsonResponse
+    {
+        $request->validate([
+            'geojson' => ['required', 'array'],
+            'geojson.type' => ['required', 'string'],
+            'geojson.coordinates' => ['required', 'array'],
+            'warna' => ['sometimes', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ]);
+
+        $geojson = $request->input('geojson');
+
+        // Convert Polygon → MultiPolygon if needed
+        if ($geojson['type'] === 'Polygon') {
+            $geojson = [
+                'type' => 'MultiPolygon',
+                'coordinates' => [$geojson['coordinates']],
+            ];
+        }
+
+        $rw->setPolygonFromGeojson($geojson);
+
+        if ($request->has('warna')) {
+            $rw->update(['warna' => $request->input('warna')]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Polygon RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) . ' berhasil disimpan.',
+        ]);
+    }
+
+    /**
+     * API: Hapus polygon RW.
+     */
+    public function deleteRwPolygon(Rw $rw): JsonResponse
+    {
+        DB::statement('UPDATE rws SET polygon = NULL WHERE id = ?', [$rw->id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Polygon RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) . ' berhasil dihapus.',
+        ]);
+    }
+
+    /**
+     * API: Update warna RW saja (tanpa polygon).
+     */
+    public function updateRwColor(Request $request, Rw $rw): JsonResponse
+    {
+        $request->validate([
+            'warna' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ]);
+
+        $rw->update(['warna' => $request->input('warna')]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Warna RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) . ' berhasil diperbarui.',
+        ]);
     }
 }
