@@ -73,19 +73,7 @@
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
-    /* ── Stat Mini Cards ── */
-    .stat-mini {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding: 4px 8px;
-        border-radius: 6px;
-        font-size: 12px;
-    }
 
-    .stat-mini .stat-icon { font-size: 14px; flex-shrink: 0; }
-    .stat-mini .stat-num { font-weight: 700; font-size: 13px; }
-    .stat-mini .stat-lbl { color: oklch(var(--bc) / 0.5); font-size: 11px; }
 
     /* ── Color Swatch ── */
     .rw-swatch {
@@ -108,17 +96,5 @@
         );
     }
 
-    /* ── Gender Bar ── */
-    .gender-bar {
-        height: 6px;
-        border-radius: 3px;
-        overflow: hidden;
-        background: #e2e8f0;
-    }
 
-    .gender-bar-fill {
-        height: 100%;
-        border-radius: 3px;
-        transition: width 0.5s ease;
-    }
 </style>

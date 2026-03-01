@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Keluarga;
+use App\Models\Kelurahan;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Umkm;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class PetaController extends Controller
 {
@@ -21,50 +22,90 @@ class PetaController extends Controller
     }
 
     /**
-     * API: Ambil data GeoJSON batas kelurahan.
+     * API: Ambil data GeoJSON batas kelurahan dari database (PostGIS).
      */
     public function geojsonKelurahan(): JsonResponse
     {
-        $disk = Storage::disk('public');
-        $path = 'geojson/lurah.geojson';
+        $kelurahan = DB::selectOne(
+            'SELECT id, nama, ST_AsGeoJSON(polygon) as geojson FROM kelurahans WHERE polygon IS NOT NULL LIMIT 1'
+        );
 
-        if (! $disk->exists($path)) {
-            return response()->json(['error' => 'File GeoJSON kelurahan tidak ditemukan'], 404);
+        if (! $kelurahan || ! $kelurahan->geojson) {
+            return response()->json(['error' => 'Data polygon kelurahan belum tersedia'], 404);
         }
 
-        $geojson = json_decode($disk->get($path), true);
+        $geojson = [
+            'type' => 'FeatureCollection',
+            'name' => 'lurah',
+            'crs' => [
+                'type' => 'name',
+                'properties' => ['name' => 'urn:ogc:def:crs:OGC:1.3:CRS84'],
+            ],
+            'features' => [
+                [
+                    'type' => 'Feature',
+                    'properties' => ['id' => $kelurahan->id],
+                    'geometry' => json_decode($kelurahan->geojson, true),
+                ],
+            ],
+        ];
 
         return response()->json($geojson);
     }
 
     /**
-     * API: Ambil data GeoJSON wilayah RW beserta statistik.
+     * API: Ambil data GeoJSON wilayah RW beserta statistik dari database (PostGIS).
      */
     public function geojsonRw(): JsonResponse
     {
-        $disk = Storage::disk('public');
-        $path = 'geojson/batua1.geojson';
+        $rwRows = DB::select(
+            'SELECT id, nomor, ST_AsGeoJSON(polygon) as geojson FROM rws WHERE polygon IS NOT NULL ORDER BY nomor'
+        );
 
-        if (! $disk->exists($path)) {
-            return response()->json(['error' => 'File GeoJSON RW tidak ditemukan'], 404);
+        if (empty($rwRows)) {
+            return response()->json(['error' => 'Data polygon RW belum tersedia'], 404);
         }
 
-        $geojson = json_decode($disk->get($path), true);
-
-        // Ambil data statistik per RW
+        // Get stats per RW
         $rwStats = $this->getRwStats();
 
-        // Inject statistik ke properties GeoJSON
-        foreach ($geojson['features'] as &$feature) {
-            $rwName = $feature['properties']['RW'] ?? null;
+        $features = [];
 
-            if ($rwName && isset($rwStats[$rwName])) {
-                $feature['properties'] = array_merge(
-                    $feature['properties'],
-                    $rwStats[$rwName]
-                );
-            }
+        foreach ($rwRows as $index => $rw) {
+            $rwLabel = 'RW '.str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+            $stats = $rwStats[$rwLabel] ?? [];
+
+            $properties = array_merge(
+                [
+                    'id' => $index + 1,
+                    'RW' => $rwLabel,
+                ],
+                $stats
+            );
+
+            $features[] = [
+                'type' => 'Feature',
+                'properties' => $properties,
+                'geometry' => json_decode($rw->geojson, true),
+            ];
         }
+
+        // Add empty trailing feature to match original format
+        $features[] = [
+            'type' => 'Feature',
+            'properties' => ['id' => null, 'RW' => null],
+            'geometry' => ['type' => 'MultiPolygon', 'coordinates' => []],
+        ];
+
+        $geojson = [
+            'type' => 'FeatureCollection',
+            'name' => 'batua1',
+            'crs' => [
+                'type' => 'name',
+                'properties' => ['name' => 'urn:ogc:def:crs:OGC:1.3:CRS84'],
+            ],
+            'features' => $features,
+        ];
 
         return response()->json($geojson);
     }
