@@ -7,8 +7,12 @@ use App\Http\Controllers\Admin\WilayahController as AdminWilayahController;
 use App\Http\Controllers\Auth\LoginController;
 // ─── Admin Module Controllers ──────────────────────────────────
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataUmum\AsramaController;
 use App\Http\Controllers\DataUmum\FaskesController;
 use App\Http\Controllers\DataUmum\KendaraanController;
+use App\Http\Controllers\DataUmum\KontrakanController;
+use App\Http\Controllers\DataUmum\PbbController;
+use App\Http\Controllers\DataUmum\RetribusiSampahController;
 use App\Http\Controllers\DataUmum\PetugasKebersihanController;
 use App\Http\Controllers\DataUmum\SekolahController;
 use App\Http\Controllers\DataUmum\TempatIbadahController;
@@ -151,6 +155,14 @@ Route::middleware('auth')->group(function () {
         Route::resource('petugas-kebersihan', PetugasKebersihanController::class)->except(['show'])->parameters(['petugas-kebersihan' => 'petugasKebersihan']);
         // Kendaraan
         Route::resource('kendaraan', KendaraanController::class)->except(['show']);
+        // Kontrakan & Rumah Kost
+        Route::resource('kontrakan', KontrakanController::class)->except(['show']);
+        // Asrama
+        Route::resource('asrama', AsramaController::class)->except(['show']);
+        // PBB (Pajak Bumi dan Bangunan)
+        Route::resource('pbb', PbbController::class)->except(['show']);
+        // Retribusi Sampah
+        Route::resource('retribusi-sampah', RetribusiSampahController::class)->except(['show']);
     });
 
     // ╔══════════════════════════════════════════════════════════════╗

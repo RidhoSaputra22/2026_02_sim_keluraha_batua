@@ -23,24 +23,8 @@
                 </svg>
                 Batas
             </button>
-            <button class="btn btn-xs shadow-md" :class="showLabels ? 'btn-primary' : 'btn-ghost bg-base-100'"
-                @click="toggleLabels()" title="Label RW">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                Label
-            </button>
-            <button class="btn btn-xs shadow-md" :class="showRwLayer ? 'btn-primary' : 'btn-ghost bg-base-100'"
-                @click="toggleRwLayer()" title="Tampilkan/Sembunyikan Layer RW">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                </svg>
-                RW
-            </button>
+
+
 
             <button class="btn btn-xs btn-ghost bg-base-100 shadow-md" @click="resetZoom()"
                 title="Kembali ke tampilan awal">
@@ -64,10 +48,19 @@
             </a>
             @endif
         </div>
-        <div class=" flex">
+        <div class=" flex gap-1.5 flex-col ">
+             <button class="btn btn-xs shadow-md text-xs w-min" :class="showRwLayer ? 'btn-primary' : 'btn-ghost bg-base-100'"
+                @click="toggleRwLayer()" title="Tampilkan/Sembunyikan Layer RW">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                RW
+            </button>
             {{-- Custom Layer dropdown --}}
             <template x-for="cl in customLayers" :key="cl.id">
-                <label class="flex items-center gap-2 cursor-pointer  rounded-sm px-2 py-1.5 transition-colors "
+                <label class="flex items-center gap-2 cursor-pointer  rounded-sm px-2 py-1.5 transition-colors text-xs w-min  "
                     :class="cl.visible ? 'bg-primary text-white' : 'bg-white'">
                     <input type="checkbox" class="checkbox checkbox-xs hidden" :checked="cl.visible"
                         @change="toggleCustomLayer(cl.id)">

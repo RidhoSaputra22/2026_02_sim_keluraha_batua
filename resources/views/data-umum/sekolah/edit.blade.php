@@ -20,7 +20,7 @@
                 <x-ui.select label="Kelurahan" name="kelurahan_id" placeholder="Pilih Kelurahan" :options="$kelurahanOptions" selected="{{ old('kelurahan_id', $sekolah->kelurahan_id) }}" required />
                 <x-ui.input label="Nama Sekolah" name="nama_sekolah" placeholder="Nama sekolah" value="{{ old('nama_sekolah', $sekolah->nama_sekolah) }}" required />
                 <x-ui.input label="NPSN" name="npsn" placeholder="Nomor Pokok Sekolah Nasional" value="{{ old('npsn', $sekolah->npsn) }}" />
-                <x-ui.select label="Jenjang" name="jenjang" placeholder="Pilih Jenjang" :options="['TK' => 'TK', 'SD' => 'SD', 'SMP' => 'SMP', 'SMA' => 'SMA', 'SMK' => 'SMK']" selected="{{ old('jenjang', $sekolah->jenjang) }}" />
+                <x-ui.select label="Jenjang" name="jenjang" placeholder="Pilih Jenjang" :options="['PAUD' => 'PAUD', 'TK' => 'TK', 'SD' => 'SD', 'SMP' => 'SMP', 'MTs' => 'MTs', 'SMA' => 'SMA', 'SLTA' => 'SLTA', 'SMK' => 'SMK', 'Perguruan Tinggi' => 'Perguruan Tinggi']" selected="{{ old('jenjang', $sekolah->jenjang) }}" />
                 <x-ui.select label="Status" name="status" placeholder="Pilih Status" :options="['Negeri' => 'Negeri', 'Swasta' => 'Swasta']" selected="{{ old('status', $sekolah->status) }}" />
                 <x-ui.input label="Tahun Ajar" name="tahun_ajar" placeholder="Contoh: 2025/2026" value="{{ old('tahun_ajar', $sekolah->tahun_ajar) }}" />
                 <div class="md:col-span-2">

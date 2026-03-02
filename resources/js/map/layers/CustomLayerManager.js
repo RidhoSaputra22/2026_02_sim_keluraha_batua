@@ -94,7 +94,11 @@ export default class CustomLayerManager {
     bringToFront() {
         if (!this.engine?.map) return;
 
-        Object.values(this._mapLayers).forEach((mapLayer) => {
+        // Iterate in reverse so the first layer (top of sidebar) is brought to front last → on top
+        for (let i = this.layers.length - 1; i >= 0; i--) {
+            const mapLayer = this._mapLayers[this.layers[i].id];
+            if (!mapLayer) continue;
+
             try {
                 mapLayer.bringToFront && mapLayer.bringToFront();
             } catch (e) { }
@@ -106,7 +110,7 @@ export default class CustomLayerManager {
                     } catch (e) { }
                 });
             } catch (e) { }
-        });
+        }
     }
 
     // ── Private ─────────────────────────────────────────────
@@ -131,8 +135,10 @@ export default class CustomLayerManager {
             polygonCount: l.geojson.features.length,
         }));
 
-        layersData.forEach((layerData) => {
-            if (layerData.geojson.features.length === 0) return;
+        // Render in reverse order so the first layer (top of sidebar) is added last → on top
+        for (let i = layersData.length - 1; i >= 0; i--) {
+            const layerData = layersData[i];
+            if (layerData.geojson.features.length === 0) continue;
 
             const layerOpts = {
                 pane: "customLayerPane",
@@ -158,6 +164,49 @@ export default class CustomLayerManager {
                     if (desc) {
                         layer.bindPopup(`<strong>${nama}</strong><br>${desc}`);
                     }
+
+                    // Hover highlight
+                    layer.on("mouseover", () => {
+                        layer.setStyle({
+                            color: layerData.warna,
+                            weight: Number(layerData.stroke_width || 2) + 1,
+                            fillColor: layerData.warna,
+                            fillOpacity: Math.min(
+                                Number(layerData.fill_opacity || 0.3) + 0.18,
+                                0.75,
+                            ),
+                            opacity: 1,
+                        });
+
+                        if (layer._path) {
+                            layer._path.style.fill = layerData.warna;
+                        }
+
+                        try {
+                            layer.bringToFront && layer.bringToFront();
+                        } catch (e) { }
+                    });
+
+                    layer.on("mouseout", () => {
+                        layer.setStyle({
+                            color: layerData.warna,
+                            weight: layerData.stroke_width,
+                            fillColor: layerData.warna,
+                            fillOpacity: layerData.fill_opacity,
+                            opacity: 0.9,
+                        });
+
+                        if (
+                            layerData.pattern_type !== "solid" &&
+                            this.engine.patterns
+                        ) {
+                            this.engine.patterns.applyToLayer(
+                                layer,
+                                "custom-" + layerData.slug,
+                            );
+                        }
+                    });
+
                 },
             };
 
@@ -186,7 +235,7 @@ export default class CustomLayerManager {
 
             mapLayer.addTo(this.engine.map);
             this._mapLayers[layerData.id] = mapLayer;
-        });
+        }
 
         this.bringToFront();
     }
@@ -201,4 +250,6 @@ export default class CustomLayerManager {
             layer.unbindPopup && layer.unbindPopup();
         } catch (e) { }
     }
+
+
 }

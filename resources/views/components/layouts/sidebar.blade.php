@@ -106,7 +106,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Master</span>
         </li>
         <li>
-            <details open>
+            <details {{ request()->routeIs('master.wilayah.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -133,7 +133,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Kependudukan</span>
         </li>
         <li>
-            <details open>
+            <details {{ request()->routeIs('kependudukan.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -171,7 +171,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Usaha</span>
         </li>
         <li>
-            <details open>
+            <details {{ request()->routeIs('usaha.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -201,7 +201,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Data Umum</span>
         </li>
         <li>
-            <details open>
+            <details {{ request()->routeIs('data-umum.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -226,6 +226,16 @@ $user = auth()->user();
                     <li><a href="{{ route('data-umum.kendaraan.index') }}"
                             class="{{ request()->routeIs('data-umum.kendaraan.*') ? 'active' : '' }}">Kendaraan</a>
                     </li>
+                    <li><a href="{{ route('data-umum.kontrakan.index') }}"
+                            class="{{ request()->routeIs('data-umum.kontrakan.*') ? 'active' : '' }}">Kontrakan &
+                            Kost</a></li>
+                    <li><a href="{{ route('data-umum.asrama.index') }}"
+                            class="{{ request()->routeIs('data-umum.asrama.*') ? 'active' : '' }}">Asrama</a></li>
+                    <li><a href="{{ route('data-umum.pbb.index') }}"
+                            class="{{ request()->routeIs('data-umum.pbb.*') ? 'active' : '' }}">PBB</a></li>
+                    <li><a href="{{ route('data-umum.retribusi-sampah.index') }}"
+                            class="{{ request()->routeIs('data-umum.retribusi-sampah.*') ? 'active' : '' }}">Retribusi
+                            Sampah</a></li>
                 </ul>
             </details>
         </li>
@@ -241,7 +251,7 @@ $user = auth()->user();
             <span class="text-xs uppercase tracking-wider text-base-content/40">Laporan</span>
         </li>
         <li>
-            <details open>
+            <details {{ request()->routeIs('laporan.*') ? 'open' : '' }}>
                 <summary>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">

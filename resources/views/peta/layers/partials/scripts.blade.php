@@ -132,9 +132,10 @@ function layerManager() {
 
         // ─── Render display layers (read-only) ─────────
         _renderAllDisplayLayers() {
-            this.layers.forEach(layer => {
-                this._renderDisplayLayer(layer);
-            });
+            // Render in reverse so the first layer (top of sidebar) is added last → renders on top
+            for (let i = this.layers.length - 1; i >= 0; i--) {
+                this._renderDisplayLayer(this.layers[i]);
+            }
         },
 
         _renderDisplayLayer(layer) {
@@ -551,12 +552,12 @@ function layerManager() {
                     order
                 });
 
-                // Reorder map layers (z-index)
-                this.layers.forEach((layer, idx) => {
-                    layer.sort_order = idx;
-                    const ml = this._displayLayers[layer.id];
+                // Reorder map layers — call bringToFront in reverse so top-of-list (index 0) ends up on top
+                for (let i = this.layers.length - 1; i >= 0; i--) {
+                    this.layers[i].sort_order = i;
+                    const ml = this._displayLayers[this.layers[i].id];
                     if (ml) ml.bringToFront();
-                });
+                }
 
                 this._flash('Urutan layer diperbarui.', 'success');
             } catch (e) {

@@ -6,6 +6,8 @@ use App\Models\Faskes;
 use App\Models\Keluarga;
 use App\Models\Kelurahan;
 use App\Models\Kendaraan;
+use App\Models\Kontrakan;
+use App\Models\Asrama;
 use App\Models\Penduduk;
 use App\Models\PetugasKebersihan;
 use App\Models\Rt;
@@ -63,12 +65,21 @@ class DataUmumSeeder extends Seeder
         // Sekolah
         // ═══════════════════════════════════════════════════════
         $sekolahData = [
+            // PAUD
+            ['npsn' => '40312007', 'nama' => 'PAUD Ceria Batua',             'jenjang' => 'PAUD', 'status' => 'Swasta', 'siswa' => 35,  'guru' => 4,  'pegawai' => 1, 'rombel' => 2, 'kelas' => 2],
+            // TK
+            ['npsn' => '40312005', 'nama' => 'TK Aisyiyah Batua',            'jenjang' => 'TK',  'status' => 'Swasta', 'siswa' => 60,  'guru' => 6,  'pegawai' => 2, 'rombel' => 3, 'kelas' => 3],
+            // SD
             ['npsn' => '40312001', 'nama' => 'SD Inpres Batua',              'jenjang' => 'SD',  'status' => 'Negeri', 'siswa' => 285, 'guru' => 18, 'pegawai' => 5, 'rombel' => 12, 'kelas' => 12],
             ['npsn' => '40312002', 'nama' => 'SD Negeri Batua II',           'jenjang' => 'SD',  'status' => 'Negeri', 'siswa' => 320, 'guru' => 20, 'pegawai' => 6, 'rombel' => 12, 'kelas' => 12],
+            // SMP
             ['npsn' => '40312003', 'nama' => 'SMP Negeri 33 Makassar',       'jenjang' => 'SMP', 'status' => 'Negeri', 'siswa' => 480, 'guru' => 32, 'pegawai' => 10, 'rombel' => 18, 'kelas' => 18],
-            ['npsn' => '40312004', 'nama' => 'SMA Islam Batua',              'jenjang' => 'SMA', 'status' => 'Swasta', 'siswa' => 210, 'guru' => 22, 'pegawai' => 7, 'rombel' => 9, 'kelas' => 9],
-            ['npsn' => '40312005', 'nama' => 'TK Aisyiyah Batua',            'jenjang' => 'TK',  'status' => 'Swasta', 'siswa' => 60,  'guru' => 6,  'pegawai' => 2, 'rombel' => 3, 'kelas' => 3],
+            // MTs (setara SMP)
             ['npsn' => '40312006', 'nama' => 'MTs Muhammadiyah Batua',       'jenjang' => 'MTs', 'status' => 'Swasta', 'siswa' => 180, 'guru' => 15, 'pegawai' => 4, 'rombel' => 6, 'kelas' => 6],
+            // SLTA / SMA
+            ['npsn' => '40312004', 'nama' => 'SMA Islam Batua',              'jenjang' => 'SLTA', 'status' => 'Swasta', 'siswa' => 210, 'guru' => 22, 'pegawai' => 7, 'rombel' => 9, 'kelas' => 9],
+            // Perguruan Tinggi
+            ['npsn' => '40312008', 'nama' => 'STIE Batua Makassar',          'jenjang' => 'Perguruan Tinggi', 'status' => 'Swasta', 'siswa' => 450, 'guru' => 28, 'pegawai' => 12, 'rombel' => 15, 'kelas' => 10],
         ];
 
         foreach ($sekolahData as $s) {
@@ -121,14 +132,16 @@ class DataUmumSeeder extends Seeder
         // Tempat Ibadah
         // ═══════════════════════════════════════════════════════
         $ibadahData = [
-            ['jenis' => 'Masjid',    'nama' => 'Masjid Al-Ikhlas',                 'rw' => 0, 'rt' => 0],
-            ['jenis' => 'Masjid',    'nama' => 'Masjid Nurul Iman',                'rw' => 1, 'rt' => 5],
-            ['jenis' => 'Masjid',    'nama' => 'Masjid Al-Muhajirin',              'rw' => 2, 'rt' => 9],
-            ['jenis' => 'Masjid',    'nama' => 'Masjid Babul Jannah',              'rw' => 3, 'rt' => 14],
-            ['jenis' => 'Masjid',    'nama' => 'Masjid Raodhatul Jannah',          'rw' => 5, 'rt' => 21],
-            ['jenis' => 'Musholla',  'nama' => 'Musholla At-Taqwa',                'rw' => 4, 'rt' => 18],
-            ['jenis' => 'Musholla',  'nama' => 'Musholla Al-Falah',                'rw' => 6, 'rt' => 25],
-            ['jenis' => 'Gereja',    'nama' => 'Gereja GPIB Batua',                'rw' => 7, 'rt' => 29],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid KHAIRUL FALAH',             'alamat' => 'Jl. Batua Raya X',          'rw' => 0, 'rt' => 0],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid ARRAHIM',                   'alamat' => 'Jl. Batua Raya XII Lr 1',   'rw' => 0, 'rt' => 0],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid Al-Ikhlas',                 'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 1, 'rt' => 5],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid Nurul Iman',                'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 2, 'rt' => 9],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid Al-Muhajirin',              'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 3, 'rt' => 14],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid Babul Jannah',              'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 4, 'rt' => 18],
+            ['jenis' => 'Masjid',    'nama' => 'Masjid Raodhatul Jannah',          'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 5, 'rt' => 21],
+            ['jenis' => 'Musholla',  'nama' => 'Musholla At-Taqwa',                'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 6, 'rt' => 25],
+            ['jenis' => 'Musholla',  'nama' => 'Musholla Al-Falah',                'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 7, 'rt' => 29],
+            ['jenis' => 'Gereja',    'nama' => 'Gereja GPIB Batua',                'alamat' => 'Kel. Batua, Kec. Manggala', 'rw' => 8, 'rt' => 0],
         ];
 
         foreach ($ibadahData as $ib) {
@@ -136,7 +149,7 @@ class DataUmumSeeder extends Seeder
                 'kelurahan_id'  => $kelurahan->id,
                 'tempat_ibadah' => $ib['jenis'],
                 'nama'          => $ib['nama'],
-                'alamat'        => 'Kel. Batua, Kec. Manggala',
+                'alamat'        => $ib['alamat'],
                 'rt_id'         => $rtList[$ib['rt']]->id ?? null,
                 'rw_id'         => $rwList[$ib['rw']]->id ?? null,
                 'pengurus'      => 'Pengurus ' . $ib['nama'],
@@ -186,6 +199,31 @@ class DataUmumSeeder extends Seeder
                 'pekerjaan'    => 'Petugas Kebersihan',
                 'lokasi'       => $pt['lokasi'],
                 'status'       => 'Aktif',
+            ]);
+        }
+
+        // ═══════════════════════════════════════════════════════
+        // Kontrakan & Rumah Kost  (dari form data kelurahan)
+        // ═══════════════════════════════════════════════════════
+        // Data di form masih kosong, siapkan struktur siap diisi
+        // Tidak ada data aktual dari form, jadi tidak seed apa-apa
+
+        // ═══════════════════════════════════════════════════════
+        // Asrama  (dari form data kelurahan)
+        // ═══════════════════════════════════════════════════════
+        $asramaData = [
+            ['jenis' => 'Mahasiswa', 'jumlah' => 1, 'nama' => 'Asrama Mahasiswa Batua', 'alamat' => 'Kel. Batua, Kec. Manggala'],
+        ];
+
+        foreach ($asramaData as $a) {
+            Asrama::create([
+                'kelurahan_id' => $kelurahan->id,
+                'rt_id'        => $rtList[0]->id ?? null,
+                'rw_id'        => $rwList[0]->id ?? null,
+                'nama'         => $a['nama'],
+                'alamat'       => $a['alamat'],
+                'jenis'        => $a['jenis'],
+                'jumlah'       => $a['jumlah'],
             ]);
         }
     }

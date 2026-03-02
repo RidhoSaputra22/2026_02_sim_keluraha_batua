@@ -142,9 +142,9 @@ export default class RwLayer {
         }
 
         // Restore previous
-        // if (this._highlightedLayer) {
-        //     this._restoreStyle(this._highlightedLayer);
-        // }
+        if (this._highlightedLayer) {
+            this._restoreStyle(this._highlightedLayer);
+        }
 
         const layer = this.layerMap[rwName];
         if (!layer) return;
@@ -244,9 +244,28 @@ export default class RwLayer {
     /** @private */
     _onEachFeature(feature, layer) {
         const props = feature.properties;
+        const nama = feature.properties.RW || layer.nama || "RW tak dikenal";
+        const desc = feature.properties.deskripsi || "";
         if (!props.RW) return;
 
         this.layerMap[props.RW] = layer;
+
+        // console.log(props);
+
+
+
+        layer.bindTooltip(
+            `<strong>${nama}</strong>${desc ? `<br>${desc}` : ""}`,
+            {
+                sticky: true,
+                direction: "top",
+                opacity: 0.95,
+            },
+        );
+
+        if (desc) {
+            layer.bindPopup(`<strong>${nama}</strong><br>${desc}`);
+        }
 
         this.dataList.push({
             name: props.RW,
@@ -319,5 +338,7 @@ export default class RwLayer {
             const patternId = "hatch-" + rw.replace(/\s/g, "-");
             this.engine.patterns.applyToLayer(layer, patternId);
         }
+
+        layer.bringToBack();
     }
 }
