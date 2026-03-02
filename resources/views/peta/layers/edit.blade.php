@@ -289,6 +289,20 @@
         white-space: nowrap;
         pointer-events: none !important;
     }
+
+    /* Keep Leaflet.Draw tooltip away from top-left toolbar
+    #layer-polygon-map {
+        position: relative;
+    }
+
+    #layer-polygon-map .leaflet-draw-tooltip {
+        margin-left: 12px;
+        margin-top: 0;
+    }
+
+    #layer-polygon-map .leaflet-draw-tooltip:before {
+        left: -7px;
+    } */
     </style>
     @endpush
 

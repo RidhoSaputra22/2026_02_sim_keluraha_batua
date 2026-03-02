@@ -99,6 +99,7 @@ function petaApp() {
                     this.selectedRw = name;
                     this.selectedStats = data;
                     if (this._kelLayer) this._kelLayer.bringToFront();
+                    if (this._clm) this._clm.bringToFront();
                     this.$nextTick(() => {
                         const el = this.$el.querySelector('.rw-list-item.active');
                         if (el) el.scrollIntoView({
@@ -111,7 +112,7 @@ function petaApp() {
                     this.selectedRw = null;
                     this.selectedStats = {};
                     if (this._kelLayer && this._kelLayer.bounds) {
-                        this._engine.flyToBounds(this._kelLayer.bounds);
+                        this._engine.fitBounds(this._kelLayer.bounds);
                     }
                 },
                 onDataLoad: (list) => {
@@ -167,7 +168,7 @@ function petaApp() {
 
         resetZoom() {
             if (this._kelLayer && this._kelLayer.bounds) {
-                this._engine.flyToBounds(this._kelLayer.bounds);
+                this._engine.fitBounds(this._kelLayer.bounds);
             }
         },
 
@@ -184,6 +185,7 @@ function petaApp() {
         toggleRwLayer() {
             this.showRwLayer = !this.showRwLayer;
             if (this._rwLayer) this._rwLayer.toggle(this.showRwLayer);
+            if (this.showRwLayer && this._clm) this._clm.bringToFront();
             // When hiding RW layer, also hide labels; when showing, restore label state
             if (!this.showRwLayer) {
                 this.showLabels = false;

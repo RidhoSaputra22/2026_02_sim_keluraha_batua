@@ -18,6 +18,7 @@ import PatternRenderer from "./renderers/PatternRenderer";
  * @property {boolean}         [useSvgRenderer=true]    - Use shared SVG renderer for patterns
  * @property {boolean}         [baseLayers=true]        - Add OSM + Satellite switcher
  * @property {boolean}         [autoResize=true]        - Observe container resize
+ * @property {boolean}         [zoomAnimation=false]    - Disable zoom transition animation
  */
 
 export default class MapEngine {
@@ -38,6 +39,7 @@ export default class MapEngine {
             useSvgRenderer: true,
             baseLayers: true,
             autoResize: true,
+            zoomAnimation: false,
             ...options,
         };
 
@@ -63,6 +65,8 @@ export default class MapEngine {
      * @returns {MapEngine} this (for chaining)
      */
     init() {
+        this._patchLeafletTooltipAnimateZoom();
+
         const container = document.getElementById(this.containerId);
         if (!container || container._leaflet_id) {
             console.warn(
@@ -87,6 +91,9 @@ export default class MapEngine {
             boxZoom: true,
             keyboard: true,
             dragging: true,
+            zoomAnimation: this.options.zoomAnimation,
+            markerZoomAnimation: this.options.zoomAnimation,
+            fadeAnimation: false,
             ...(this.svgRenderer ? { renderer: this.svgRenderer } : {}),
         });
 
@@ -228,5 +235,34 @@ export default class MapEngine {
             });
         });
         this._resizeObserver.observe(container);
+    }
+
+    /** @private */
+    _patchLeafletTooltipAnimateZoom() {
+        if (typeof L === "undefined" || !L.Tooltip || !L.Tooltip.prototype) {
+            return;
+        }
+
+        const proto = L.Tooltip.prototype;
+        if (proto.__simKelurahanPatchedAnimateZoom) return;
+
+        const originalAnimateZoom = proto._animateZoom;
+        const originalUpdatePosition = proto._updatePosition;
+
+        if (typeof originalAnimateZoom === "function") {
+            proto._animateZoom = function (e) {
+                if (!this._map) return;
+                return originalAnimateZoom.call(this, e);
+            };
+        }
+
+        if (typeof originalUpdatePosition === "function") {
+            proto._updatePosition = function () {
+                if (!this._map) return;
+                return originalUpdatePosition.call(this);
+            };
+        }
+
+        proto.__simKelurahanPatchedAnimateZoom = true;
     }
 }

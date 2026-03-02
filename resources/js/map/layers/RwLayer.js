@@ -142,22 +142,35 @@ export default class RwLayer {
         }
 
         // Restore previous
-        if (this._highlightedLayer) {
-            this._restoreStyle(this._highlightedLayer);
-        }
+        // if (this._highlightedLayer) {
+        //     this._restoreStyle(this._highlightedLayer);
+        // }
 
         const layer = this.layerMap[rwName];
         if (!layer) return;
 
         this._highlightedLayer = layer;
         this.selectedRw = rwName;
+        try {
+            this.engine?.map?.closeTooltip && this.engine.map.closeTooltip();
+        } catch (e) { }
+        try {
+            layer.closeTooltip && layer.closeTooltip();
+        } catch (e) { }
         this._highlight(layer);
 
-        // Fly to bounds
-        this.engine.flyToBounds(layer.getBounds(), {
-            padding: [60, 60],
-            maxZoom: (this.engine.map.getZoom() || 15) + 2,
-        });
+        // Focus bounds without animation to avoid tooltip/source race
+        if (this.engine?.map) {
+            const boundsOpts = {
+                padding: [60, 60],
+                maxZoom: (this.engine.map.getZoom() || 15) + 2,
+            };
+            if (typeof this.engine.fitBounds === "function") {
+                this.engine.fitBounds(layer.getBounds(), boundsOpts);
+            } else if (typeof this.engine.map.fitBounds === "function") {
+                this.engine.map.fitBounds(layer.getBounds(), boundsOpts);
+            }
+        }
 
         // Notify
         const rwData = this.dataList.find((r) => r.name === rwName);
@@ -244,14 +257,6 @@ export default class RwLayer {
             total_umkm: props.total_umkm || 0,
             laki_laki: props.laki_laki || 0,
             perempuan: props.perempuan || 0,
-        });
-
-        // Tooltip
-        layer.bindTooltip(props.RW, {
-            permanent: false,
-            direction: "center",
-            className: "rw-label",
-            sticky: true,
         });
 
         // Permanent label

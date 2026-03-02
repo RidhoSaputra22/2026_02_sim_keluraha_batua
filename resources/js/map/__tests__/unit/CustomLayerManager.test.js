@@ -115,6 +115,48 @@ describe("CustomLayerManager", () => {
             expect(L.geoJSON).toHaveBeenCalledTimes(2);
         });
 
+        it("binds tooltip for each custom layer feature", async () => {
+            globalThis.fetch.mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(sampleLayersData),
+            });
+
+            const tooltipSpy = vi.fn();
+            L.geoJSON.mockImplementationOnce((data, opts) => {
+                const layer = globalThis.__mockLayer();
+                if (data?.features && opts?.onEachFeature) {
+                    data.features.forEach((feature) => {
+                        const childLayer = globalThis.__mockLayer({ feature });
+                        childLayer.feature = feature;
+                        childLayer.bindTooltip = tooltipSpy;
+                        opts.onEachFeature(feature, childLayer);
+                    });
+                }
+                layer.eachLayer = vi.fn((cb) => {
+                    if (data?.features) {
+                        data.features.forEach((feature) => {
+                            const childLayer = globalThis.__mockLayer({ feature });
+                            childLayer.feature = feature;
+                            cb(childLayer);
+                        });
+                    }
+                });
+                return layer;
+            });
+
+            const mgr = new CustomLayerManager(engine);
+            await mgr.load("/peta/custom-layers");
+
+            expect(tooltipSpy).toHaveBeenCalled();
+            expect(tooltipSpy).toHaveBeenCalledWith(
+                expect.stringContaining("Masjid Al-Ikhlas"),
+                expect.objectContaining({
+                    sticky: true,
+                    direction: "top",
+                }),
+            );
+        });
+
         it("applies non-solid patterns", async () => {
             globalThis.fetch.mockResolvedValue({
                 ok: true,
@@ -197,6 +239,46 @@ describe("CustomLayerManager", () => {
         it("does nothing for unknown layer id", () => {
             const mgr = new CustomLayerManager(engine);
             expect(() => mgr.toggle(999)).not.toThrow();
+        });
+    });
+
+    // ── z-order ─────────────────────────────────────────────
+    describe("bringToFront", () => {
+        it("brings visible custom layers to front", async () => {
+            globalThis.fetch.mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(sampleLayersData),
+            });
+
+            const parentBringToFront = vi.fn();
+            const childBringToFront = vi.fn();
+
+            L.geoJSON.mockImplementationOnce((data, opts) => {
+                const layer = globalThis.__mockLayer();
+                layer.bringToFront = parentBringToFront;
+                layer.eachLayer = vi.fn((cb) => {
+                    const child = globalThis.__mockLayer();
+                    child.bringToFront = childBringToFront;
+                    cb(child);
+                });
+
+                if (data?.features && opts?.onEachFeature) {
+                    data.features.forEach((feature) => {
+                        const childLayer = globalThis.__mockLayer({ feature });
+                        childLayer.feature = feature;
+                        opts.onEachFeature(feature, childLayer);
+                    });
+                }
+
+                return layer;
+            });
+
+            const mgr = new CustomLayerManager(engine);
+            await mgr.load("/peta/custom-layers");
+            mgr.bringToFront();
+
+            expect(parentBringToFront).toHaveBeenCalled();
+            expect(childBringToFront).toHaveBeenCalled();
         });
     });
 });

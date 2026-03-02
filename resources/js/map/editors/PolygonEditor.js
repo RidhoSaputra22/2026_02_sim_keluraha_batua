@@ -501,9 +501,29 @@ export default class PolygonEditor {
      */
     loadExistingCollection(geojsonCollection) {
         const list = [];
-        if (!geojsonCollection?.features?.length) return list;
+        if (!geojsonCollection?.features?.length || !this.drawnItems || !this.map)
+            return list;
 
-        L.geoJSON(geojsonCollection, {
+        const sanitisedCollection = {
+            ...geojsonCollection,
+            features: geojsonCollection.features
+                .map((feature) => {
+                    const sanitisedGeometry = this._sanitiseGeojson(
+                        feature?.geometry,
+                    );
+                    if (!sanitisedGeometry) return null;
+
+                    return {
+                        ...feature,
+                        geometry: sanitisedGeometry,
+                    };
+                })
+                .filter(Boolean),
+        };
+
+        if (!sanitisedCollection.features.length) return list;
+
+        L.geoJSON(sanitisedCollection, {
             pane: "editPane",
             style: {
                 color: this.options.color,
@@ -512,12 +532,23 @@ export default class PolygonEditor {
                 fillColor: this.options.color,
             },
             onEachFeature: (feature, layer) => {
-                this.drawnItems.addLayer(layer);
-                list.push({
-                    id: feature.properties.id,
-                    nama: feature.properties.nama,
-                    layer,
-                });
+                try {
+                    if (!layer.getLatLngs) return;
+
+                    this._flattenLatLngs(layer);
+
+                    const lls = layer.getLatLngs();
+                    if (!lls || !this._hasValidLatLngs(lls)) return;
+
+                    this.drawnItems.addLayer(layer);
+                    list.push({
+                        id: feature?.properties?.id,
+                        nama: feature?.properties?.nama,
+                        layer,
+                    });
+                } catch (_) {
+                    // Skip invalid feature silently
+                }
             },
         });
 

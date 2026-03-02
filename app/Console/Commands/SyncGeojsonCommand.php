@@ -41,6 +41,21 @@ class SyncGeojsonCommand extends Command
     {
         $file = $this->option('rw-file');
         $disk = Storage::disk('public');
+        $polygonColor = [
+                '#ff0000', // Merah
+                '#00ff00', // Hijau
+                '#0000ff', // Biru
+                '#ffff00', // Kuning
+                '#ff0000', // Merah
+                '#00ff00', // Hijau
+                '#0000ff', // Biru
+                '#ffff00', // Kuning
+                '#ff0000', // Merah
+                '#00ff00', // Hijau
+                '#0000ff', // Biru
+                '#ffff00', // Kuning
+
+            ];
 
         if (! $disk->exists($file)) {
             $this->error("File RW GeoJSON tidak ditemukan: {$file}");
@@ -58,7 +73,7 @@ class SyncGeojsonCommand extends Command
         $synced = 0;
         $skipped = 0;
 
-        foreach ($geojson['features'] as $feature) {
+        foreach ($geojson['features'] as $index => $feature) {
             $rwName = $feature['properties']['RW'] ?? null;
             $geometry = $feature['geometry'] ?? null;
 
@@ -89,8 +104,8 @@ class SyncGeojsonCommand extends Command
             $geometryJson = json_encode($geometry);
 
             DB::statement(
-                'UPDATE rws SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
-                [$geometryJson, $rw->id]
+                'UPDATE rws SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), warna = ? WHERE id = ?',
+                [$geometryJson, $polygonColor[$index % count($polygonColor)], $rw->id]
             );
 
             $this->line("  ✓ RW {$nomorRw} ({$rwName}) — polygon disimpan");

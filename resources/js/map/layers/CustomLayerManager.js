@@ -49,20 +49,76 @@ export default class CustomLayerManager {
     toggle(layerId) {
         const mapLayer = this._mapLayers[layerId];
         const info = this.layers.find((l) => l.id === layerId);
-        if (!mapLayer || !info) return;
+        if (!mapLayer || !info || !this.engine?.map) return;
 
         info.visible = !info.visible;
+
         if (info.visible) {
             this.engine.map.addLayer(mapLayer);
         } else {
+            // IMPORTANT: close tooltips/popups for all child layers
+            try {
+                mapLayer.eachLayer((l) => {
+                    try {
+                        this._cleanupChildLayer(l);
+                    } catch (e) { }
+                });
+            } catch (e) { }
+
             this.engine.map.removeLayer(mapLayer);
         }
+    }
+
+    destroy() {
+        const map = this.engine?.map || null;
+
+        Object.values(this._mapLayers).forEach((mapLayer) => {
+            try {
+                mapLayer.eachLayer((l) => this._cleanupChildLayer(l));
+            } catch (e) { }
+
+            if (map) {
+                try {
+                    map.removeLayer(mapLayer);
+                } catch (e) { }
+            }
+        });
+
+        this._mapLayers = {};
+        this.layers = [];
+    }
+
+    /**
+     * Ensure all visible custom layers are rendered above base layers.
+     */
+    bringToFront() {
+        if (!this.engine?.map) return;
+
+        Object.values(this._mapLayers).forEach((mapLayer) => {
+            try {
+                mapLayer.bringToFront && mapLayer.bringToFront();
+            } catch (e) { }
+
+            try {
+                mapLayer.eachLayer((child) => {
+                    try {
+                        child.bringToFront && child.bringToFront();
+                    } catch (e) { }
+                });
+            } catch (e) { }
+        });
     }
 
     // ── Private ─────────────────────────────────────────────
 
     /** @private */
     _renderAll(layersData) {
+        if (!this.engine?.map) {
+            this.layers = [];
+            this._mapLayers = {};
+            return;
+        }
+
         this.layers = layersData.map((l) => ({
             id: l.id,
             nama: l.nama,
@@ -89,7 +145,16 @@ export default class CustomLayerManager {
                 onEachFeature: (feature, layer) => {
                     const nama = feature.properties.nama || layerData.nama;
                     const desc = feature.properties.deskripsi || "";
-                    layer.bindTooltip(nama, { sticky: true });
+
+                    layer.bindTooltip(
+                        `<strong>${nama}</strong>${desc ? `<br>${desc}` : ""}`,
+                        {
+                            sticky: true,
+                            direction: "top",
+                            opacity: 0.95,
+                        },
+                    );
+
                     if (desc) {
                         layer.bindPopup(`<strong>${nama}</strong><br>${desc}`);
                     }
@@ -114,8 +179,26 @@ export default class CustomLayerManager {
                 );
             }
 
+            if (!this.engine?.map) {
+                mapLayer.eachLayer((l) => this._cleanupChildLayer(l));
+                return;
+            }
+
             mapLayer.addTo(this.engine.map);
             this._mapLayers[layerData.id] = mapLayer;
         });
+
+        this.bringToFront();
+    }
+
+    /** @private */
+    _cleanupChildLayer(layer) {
+        try {
+            layer.off && layer.off();
+            layer.closeTooltip && layer.closeTooltip();
+            layer.unbindTooltip && layer.unbindTooltip();
+            layer.closePopup && layer.closePopup();
+            layer.unbindPopup && layer.unbindPopup();
+        } catch (e) { }
     }
 }

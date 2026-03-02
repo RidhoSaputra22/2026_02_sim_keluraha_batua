@@ -12,7 +12,7 @@
     </div>
 
     {{-- Map toolbar buttons --}}
-    <div class="absolute top-3 left-3 z-[1000] space-y-3">
+    <div class="absolute top-3 left-3 z-[10] space-y-3">
         <div class="flex gap-1.5 ">
             <button class="btn btn-xs shadow-md" :class="showKelurahan ? 'btn-primary' : 'btn-ghost bg-base-100'"
                 @click="toggleKelurahan()" title="Batas Kelurahan">

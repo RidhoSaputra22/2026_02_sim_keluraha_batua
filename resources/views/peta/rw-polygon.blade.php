@@ -4,6 +4,12 @@
         <x-layouts.page-header title="Kelola Polygon RW {{ str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) }}"
             description="Gambar atau edit batas wilayah RW pada peta">
             <x-slot:actions>
+                <x-ui.button type="primary" size="sm" :outline="true" :isSubmit="false" onclick="document.getElementById('rw-polygon-guide-modal').showModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Panduan
+                </x-ui.button>
                 <x-ui.button type="ghost" size="sm" href="{{ route('peta.index') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">
@@ -16,6 +22,9 @@
         </x-layouts.page-header>
     </x-slot:header>
 
+
+    {{-- Guide Modal --}}
+    @include('peta.guides.rw-polygon-guide')
 
     <div x-data="rwPolygonEditor()" x-init="init()">
 
@@ -53,7 +62,7 @@
                                 title="Pilih warna polygon">
                             <span class="text-xs font-mono bg-base-200 px-2 py-1 rounded" x-text="currentColor"></span>
                             <x-ui.button type="ghost" size="sm" :outline="true" :isSubmit="false" @click="saveColor()"
-                                x-bind:disabled="savingColor">
+                                x-bind:disabled="!editorReady || savingColor">
                                 <span x-show="!savingColor">Simpan Warna</span>
                                 <span x-show="savingColor" class="loading loading-spinner loading-xs"></span>
                             </x-ui.button>
@@ -97,7 +106,7 @@
 
                             {{-- Action Buttons --}}
                             <x-ui.button type="primary" size="sm" :isSubmit="false" @click="savePolygon()"
-                                x-bind:disabled="!hasChanges || saving">
+                                x-bind:disabled="!editorReady || !hasChanges || saving">
                                 <template x-if="!saving">
                                     <span class="flex items-center gap-1">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
@@ -111,7 +120,7 @@
                                 <span x-show="saving" class="loading loading-spinner loading-xs"></span>
                             </x-ui.button>
                             <x-ui.button type="error" size="sm" :outline="true" :isSubmit="false"
-                                @click="deletePolygon()" x-bind:disabled="!hasExisting || saving">
+                                @click="deletePolygon()" x-bind:disabled="!editorReady || !hasExisting || saving">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                                     stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -189,6 +198,7 @@
             _editor: null,
             hasChanges: false,
             hasExisting: RW_EDITOR.hasExisting,
+            editorReady: false,
             saving: false,
             savingColor: false,
             currentColor: RW_EDITOR.currentWarna,
@@ -213,6 +223,29 @@
                     color: this.currentColor,
                 }).init();
 
+                if (!this._editor?.map || !this._editor?.drawnItems) {
+                    // Recovery path: stale Leaflet container (e.g. bfcache / double init)
+                    const container = document.getElementById('rw-polygon-map');
+                    if (container && container._leaflet_id) {
+                        try {
+                            const fresh = container.cloneNode(false);
+                            fresh.id = 'rw-polygon-map';
+                            container.parentNode.replaceChild(fresh, container);
+                        } catch (_) {}
+
+                        this._editor = new SimPeta.PolygonEditor('rw-polygon-map', {
+                            color: this.currentColor,
+                        }).init();
+                    }
+                }
+
+                if (!this._editor?.map || !this._editor?.drawnItems) {
+                    this.editorReady = false;
+                    this._flash('Editor peta belum siap. Muat ulang halaman lalu coba lagi.', 'error');
+                    return;
+                }
+                this.editorReady = true;
+
                 // Kelurahan boundary
                 this._editor.addKelurahan(RW_EDITOR.kelurahanGeojson);
 
@@ -224,15 +257,31 @@
                     this._editor.loadExisting(RW_EDITOR.polygonGeojson, this.currentColor);
                 }
 
+                // Sync real state from map layers (avoid stale state from server flag)
+                this.hasExisting = !!this._editor.getGeometry();
+                this.hasChanges = false;
+
                 // Draw events
                 this._editor.onSinglePolygonChange((changed) => {
                     this.hasChanges = changed;
+                    this.hasExisting = !!this._editor.getGeometry();
                 });
             },
 
             async savePolygon() {
+                if (!this.editorReady || !this._editor) {
+                    this._flash('Editor peta belum siap.', 'error');
+                    return;
+                }
+
                 const geojson = this._editor.getGeometry();
                 if (!geojson) {
+                    // If user removed polygon using draw delete toolbar,
+                    // persist deletion through the same Save action.
+                    if (this.hasExisting && this.hasChanges) {
+                        await this.deletePolygon(false);
+                        return;
+                    }
                     this._flash('Gambar polygon terlebih dahulu.', 'error');
                     return;
                 }
@@ -256,8 +305,8 @@
                 }
             },
 
-            async deletePolygon() {
-                if (!confirm('Hapus polygon RW ini?')) return;
+            async deletePolygon(askConfirm = true) {
+                if (askConfirm && !confirm('Hapus polygon RW ini?')) return;
                 this.saving = true;
                 try {
                     const data = await SimPeta.apiDelete(RW_EDITOR.routes.delete);
@@ -277,6 +326,10 @@
             },
 
             async saveColor() {
+                if (!this.editorReady || !this._editor) {
+                    this._flash('Editor peta belum siap.', 'error');
+                    return;
+                }
                 this.savingColor = true;
                 try {
                     const data = await SimPeta.apiPut(RW_EDITOR.routes.colorUpdate, {
@@ -319,6 +372,20 @@
         text-shadow: 1px 1px 2px white, -1px -1px 2px white;
         white-space: nowrap;
         pointer-events: none !important;
+    }
+
+    /* Keep Leaflet.Draw tooltip away from top-left toolbar */
+    #rw-polygon-map {
+        position: relative;
+    }
+
+    #rw-polygon-map .leaflet-draw-tooltip {
+        margin-left: 12px;
+        margin-top: 0;
+    }
+
+    #rw-polygon-map .leaflet-draw-tooltip:before {
+        left: -7px;
     }
     </style>
     @endpush

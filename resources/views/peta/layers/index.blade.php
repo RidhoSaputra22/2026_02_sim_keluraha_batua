@@ -2,8 +2,14 @@
 
     <x-slot:header>
         <x-layouts.page-header title="Kelola Layer Peta"
-            description="Kelola layer peta kustom seperti QGIS — pilih layer di sidebar, edit polygon di peta">
+            description="Kelola layer peta dan polygon yang ditampilkan di peta.">
             <x-slot:actions>
+                <x-ui.button type="primary" size="sm" :outline="true" :isSubmit="false" onclick="document.getElementById('layer-guide-modal').showModal()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Panduan
+                </x-ui.button>
                 <x-ui.button type="ghost" size="sm" href="{{ route('peta.index') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                     Peta Utama
@@ -15,6 +21,9 @@
     @push('styles')
     @include('peta.layers.partials.styles')
     @endpush
+
+    {{-- Guide Modal --}}
+    @include('peta.guides.layer-guide')
 
     <div x-data="layerManager()">
 

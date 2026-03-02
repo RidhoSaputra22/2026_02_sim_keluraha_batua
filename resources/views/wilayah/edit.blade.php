@@ -11,6 +11,12 @@
     </x-slot:header>
 
     <x-ui.card>
+        @if (session('new_user_credential'))
+            <div class="alert alert-success mb-4 text-sm font-mono">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                <span>{{ session('new_user_credential') }}</span>
+            </div>
+        @endif
         <form method="POST" action="{{ route('master.wilayah.update', $wilayah) }}">
             @csrf @method('PUT')
 
@@ -39,6 +45,57 @@
                 <x-ui.input label="No. NPWP" name="no_npwp" value="{{ old('no_npwp', $wilayah->no_npwp) }}" />
                 <div class="md:col-span-2">
                     <x-ui.textarea label="Alamat" name="alamat" value="{{ old('alamat', $wilayah->alamat) }}" />
+                </div>
+            </div>
+
+            {{-- Assign User RT/RW --}}
+            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Akun Pengguna (Login RT/RW)</h3>
+            @if ($wilayah->user)
+                <div class="alert alert-info mb-4 text-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg>
+                    <span>Akun terhubung: <strong>{{ $wilayah->user->name }}</strong> &mdash; {{ $wilayah->user->email }}
+                        &nbsp;|&nbsp; wilayah_rw: {{ $wilayah->user->wilayah_rw ?? '-' }}
+                        &nbsp;|&nbsp; wilayah_rt: {{ $wilayah->user->wilayah_rt ?? '-' }}
+                    </span>
+                </div>
+            @endif
+            <div x-data="{ mode: '{{ old('assign_user_mode', $wilayah->user_id ? 'existing' : 'none') }}' }" class="space-y-4">
+                <div class="flex flex-wrap gap-4">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="assign_user_mode" value="none" x-model="mode" class="radio radio-sm" />
+                        <span class="text-sm">Tanpa Akun</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="assign_user_mode" value="existing" x-model="mode" class="radio radio-sm radio-primary" />
+                        <span class="text-sm">Pilih Akun RT/RW yang Ada</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="assign_user_mode" value="create_new" x-model="mode" class="radio radio-sm radio-success" />
+                        <span class="text-sm">Buat Akun Baru</span>
+                    </label>
+                </div>
+
+                <div x-show="mode === 'existing'" x-cloak>
+                    @if ($rtRwUserList->isEmpty())
+                        <div class="alert alert-warning text-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/></svg>
+                            <span>Semua user RT/RW sudah di-assign ke pengurus lain. Buat akun baru atau hapus assign yang ada terlebih dahulu.</span>
+                        </div>
+                    @else
+                        <x-ui.select label="Pilih User RT/RW" name="user_id"
+                            :options="$rtRwUserList->mapWithKeys(fn($u) => [$u->id => $u->name . ' (' . $u->email . ')'])->toArray()"
+                            selected="{{ old('user_id', $wilayah->user_id) }}" />
+                        <p class="text-xs text-base-content/60 mt-1">Wilayah RT/RW pada akun yang dipilih akan diperbarui sesuai data jabatan ini.</p>
+                    @endif
+                </div>
+
+                <div x-show="mode === 'create_new'" x-cloak class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <x-ui.input label="Email Akun Baru" name="new_user_email" type="email"
+                        placeholder="email@example.com"
+                        value="{{ old('new_user_email') }}" />
+                    <div class="flex items-end pb-1">
+                        <p class="text-xs text-base-content/60">Nama akun akan diambil dari data penduduk. Password sementara akan ditampilkan setelah disimpan.</p>
+                    </div>
                 </div>
             </div>
 

@@ -104,6 +104,11 @@ function layerManager() {
 
             }).init();
 
+            // Reposition zoom control to avoid overlap with custom top-left toolbar
+            if (this._editor?.map?.zoomControl) {
+                this._editor.map.zoomControl.setPosition('bottomright');
+            }
+
             // Load RW overlay
             this._editor.loadRwOverlay(LAYER_ROUTES.geojsonRw);
             this._rwOverlayGroup = this._editor.rwOverlay;

@@ -15,6 +15,7 @@ class RtRwPengurus extends Model
     protected $fillable = [
         'kelurahan_id',
         'penduduk_id',
+        'user_id',
         'jabatan_id',
         'rw_id',
         'rt_id',
@@ -39,6 +40,11 @@ class RtRwPengurus extends Model
     public function penduduk()
     {
         return $this->belongsTo(Penduduk::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
     }
 
     public function jabatan()
