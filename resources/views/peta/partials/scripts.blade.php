@@ -137,7 +137,6 @@ function petaApp() {
                 ]);
 
                 this.globalStats = results[2];
-                this.customLayers = await this._clm.load(PETA_ROUTES.geojsonLayers);
 
                 // Fit to kelurahan bounds & constrain
                 if (this._kelLayer.bounds) {
@@ -146,6 +145,9 @@ function petaApp() {
                 }
 
                 // Custom layers (after base layers)
+                this.customLayers = await this._clm.load(PETA_ROUTES.geojsonLayers);
+
+
             } catch (err) {
                 console.error('[petaApp] Load error:', err);
             } finally {

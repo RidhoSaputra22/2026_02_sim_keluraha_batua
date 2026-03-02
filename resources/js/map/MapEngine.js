@@ -221,7 +221,11 @@ export default class MapEngine {
     _observeResize(container) {
         if (!window.ResizeObserver) return;
         this._resizeObserver = new ResizeObserver(() => {
-            if (this.map) this.map.invalidateSize();
+            // Defer to next animation frame so Leaflet layers/tooltips
+            // finish attaching before we trigger size → move events.
+            requestAnimationFrame(() => {
+                if (this.map) this.map.invalidateSize();
+            });
         });
         this._resizeObserver.observe(container);
     }

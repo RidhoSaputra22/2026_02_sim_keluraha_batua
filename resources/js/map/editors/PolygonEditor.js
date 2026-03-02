@@ -603,6 +603,7 @@ export default class PolygonEditor {
      * @returns {object|null}
      */
     getGeometry() {
+        if (!this.drawnItems) return null;
         const layers = this.drawnItems.getLayers();
         if (layers.length === 0) return null;
         return layers[0].toGeoJSON().geometry;
