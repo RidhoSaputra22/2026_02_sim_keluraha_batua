@@ -5,6 +5,7 @@
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+@vite('resources/js/map/index.js')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -230,65 +231,91 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    const map = L.map('dashboard-map', {
-        center: [-5.1575, 119.475],
-        zoom: 14,
-        zoomControl: true,
-        attributionControl: false,
-        scrollWheelZoom: true,
+    // ══════════════════════════════════════════════════════
+    // MAP ENGINE: SimPeta
+    // ══════════════════════════════════════════════════════
+    const waitForSimPeta = () => new Promise(resolve => {
+        if (typeof SimPeta !== 'undefined') {
+            resolve();
+            return;
+        }
+        const timer = setInterval(() => {
+            if (typeof SimPeta !== 'undefined') {
+                clearInterval(timer);
+                resolve();
+            }
+        }, 20);
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-    }).addTo(map);
+    const renderCustomLayerToggles = (layers, clm) => {
+        const container = document.getElementById('dashboard-custom-layer-toggles');
+        if (!container) return;
 
-    fetch('{{ route("peta.geojson.rw") }}')
-        .then(res => res.json())
-        .then(data => {
-            if (data && data.features) {
-                L.geoJSON(data, {
-                    style: function(feature) {
-                        const color = feature.properties?.warna || palette[feature.properties?.nomor % palette.length] || colors.primary;
-                        return {
-                            color: color,
-                            weight: 2,
-                            opacity: 0.8,
-                            fillColor: color,
-                            fillOpacity: 0.25,
-                        };
-                    },
-                    onEachFeature: function(feature, layer) {
-                        const props = feature.properties || {};
-                        const rwData = pendudukPerRw.find(r => r.nomor == props.nomor);
-                        const kkData = kkPerRw.find(r => r.nomor == props.nomor);
-                        const umkmData = umkmPerRw.find(r => r.nomor == props.nomor);
+        container.innerHTML = '';
 
-                        const popupHtml = '<div class="text-sm">' +
-                            '<strong class="text-base">RW ' + String(props.nomor || '').padStart(2,'0') + '</strong>' +
-                            '<hr class="my-1 border-base-300">' +
-                            '<div class="space-y-1">' +
-                            '<div>Penduduk: <strong>' + (rwData?.total_penduduk || 0) + '</strong> jiwa</div>' +
-                            '<div>KK: <strong>' + (kkData?.total_kk || 0) + '</strong></div>' +
-                            '<div>UMKM: <strong>' + (umkmData?.total_umkm || 0) + '</strong></div>' +
-                            '</div></div>';
-                        layer.bindPopup(popupHtml);
+        if (!layers || !layers.length) {
+            container.innerHTML = '<span class="text-xs text-base-content/50">Belum ada custom layer aktif.</span>';
+            return;
+        }
 
-                        const center = layer.getBounds().getCenter();
-                        L.marker(center, {
-                            icon: L.divIcon({
-                                className: 'rw-label',
-                                html: '<div style="font-size:11px;font-weight:700;color:' + (props.warna || '#333') + ';text-shadow:0 0 4px #fff,0 0 4px #fff;">RW ' + String(props.nomor || '').padStart(2,'0') + '</div>',
-                                iconSize: [50, 20],
-                                iconAnchor: [25, 10]
-                            })
-                        }).addTo(map);
-                    }
-                }).addTo(map);
+        layers.forEach(layer => {
+            const label = document.createElement('label');
+            label.className = 'label cursor-pointer gap-2 px-2 py-1 rounded-md border border-base-300 bg-base-100';
+
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.className = 'checkbox checkbox-xs';
+            input.checked = !!layer.visible;
+
+            const dot = document.createElement('span');
+            dot.className = 'w-3 h-3 rounded-sm border border-base-300 inline-block';
+            dot.style.backgroundColor = layer.warna;
+
+            const text = document.createElement('span');
+            text.className = 'label-text text-xs';
+            text.textContent = layer.nama;
+
+            input.addEventListener('change', () => {
+                clm.toggle(layer.id);
+            });
+
+            label.appendChild(input);
+            label.appendChild(dot);
+            label.appendChild(text);
+            container.appendChild(label);
+        });
+    };
+
+    (async () => {
+        try {
+            await waitForSimPeta();
+
+            const engine = new SimPeta.MapEngine('dashboard-map', {
+                center: [-5.1532008, 119.4682932],
+                zoom: 16,
+                zoomPosition: 'bottomleft',
+                useSvgRenderer: true,
+            }).init();
+
+            const rwLayer = new SimPeta.RwLayer(engine);
+            await rwLayer.load('{{ route("peta.geojson.rw") }}');
+
+            const customLayerManager = new SimPeta.CustomLayerManager(engine);
+            const customLayers = await customLayerManager.load('{{ route("peta.geojson.layers") }}');
+            renderCustomLayerToggles(customLayers, customLayerManager);
+
+            if (rwLayer.layerMap[userRwName]) {
+                rwLayer.select(userRwName);
+                customLayerManager.bringToFront();
+            } else {
+                console.warn('RW polygon not found for current user:', userRwName);
             }
-        })
-        .catch(err => console.warn('Could not load RW GeoJSON:', err));
 
-    setTimeout(() => map.invalidateSize(), 300);
+            setTimeout(() => engine.invalidateSize(), 300);
+        } catch (err) {
+            console.warn('Could not initialize map engine:', err);
+        }
+    })();
 });
 </script>
 @endpush

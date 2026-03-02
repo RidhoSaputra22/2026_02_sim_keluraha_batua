@@ -2,17 +2,31 @@
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
 
     {{-- Peta Wilayah Kelurahan --}}
-    <div class="lg:col-span-2">
-        <x-ui.card title="Peta Wilayah Kelurahan Batua" compact>
-            <div id="dashboard-map" class="w-full rounded-lg" style="height: 380px; z-index: 0;"></div>
-            <div class="flex items-center gap-4 mt-3 text-xs text-base-content/50">
+   <div class="lg:col-span-2">
+        <x-ui.card title="Peta Wilayah " compact>
+            <div class="relative">
+                <div id="dashboard-map" class="w-full rounded-lg " style="height: 500px; z-index: 0;"></div>
+            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-base-content/50">
                 <span class="flex items-center gap-1">
-                    <span class="w-3 h-3 rounded-full bg-primary inline-block"></span> Polygon RW
+                    <span class="w-3 h-3 rounded-full bg-primary inline-block"></span>
+                    RW Anda di-highlight
+                </span>
+                <span class="flex items-center gap-1">
+                    <span class="w-3 h-3 rounded-full bg-base-300 inline-block"></span>
+                    RW lain tetap ditampilkan
                 </span>
                 <span>Klik area untuk melihat info RW</span>
             </div>
+            <div class="absolute top-0 left-3 right-0  border-t border-base-200 pt-3">
+
+                <div id="dashboard-custom-layer-toggles" class="flex flex-wrap gap-2">
+                    <span class="text-xs text-base-content/50">Memuat layer...</span>
+                </div>
+            </div>
+            </div>
         </x-ui.card>
     </div>
+
 
     {{-- Mutasi Penduduk (Bulan Ini) + Quick Actions --}}
     <div class="space-y-6">

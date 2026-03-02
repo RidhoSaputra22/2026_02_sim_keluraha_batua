@@ -6,6 +6,7 @@
  */
 
 import { apiGet } from "../utils/ApiClient";
+import { formatNumber } from "../utils/helpers";
 
 /**
  * @typedef {Object} RwLayerCallbacks
@@ -254,18 +255,39 @@ export default class RwLayer {
 
 
 
-        layer.bindTooltip(
-            `<strong>${nama}</strong>${desc ? `<br>${desc}` : ""}`,
-            {
-                sticky: true,
-                direction: "top",
-                opacity: 0.95,
-            },
-        );
+        const stats = [
+            props.total_penduduk != null ? `Penduduk: <strong>${formatNumber(props.total_penduduk)}</strong> jiwa` : null,
+            props.total_kk != null ? `KK: <strong>${formatNumber(props.total_kk)}</strong>` : null,
+            props.total_umkm != null ? `UMKM: <strong>${formatNumber(props.total_umkm)}</strong>` : null,
+        ].filter(Boolean);
 
-        if (desc) {
-            layer.bindPopup(`<strong>${nama}</strong><br>${desc}`);
-        }
+        const tooltipContent =
+            `<strong>${nama}</strong>` +
+            (desc ? `<br>${desc}` : "") +
+            (stats.length ? `<hr style="margin:4px 0;border-color:rgba(0,0,0,.15)">` +
+                `<div style="line-height:1.5">${stats.join("<br>")}</div>` : "");
+
+        layer.bindTooltip(tooltipContent, {
+            sticky: true,
+            direction: "top",
+            opacity: 0.95,
+        });
+
+        const popupContent =
+            `<div class="text-sm">` +
+            `<strong class="text-base">${nama}</strong>` +
+            `<hr class="my-1 border-base-300">` +
+            `<div class="space-y-1">` +
+            (props.total_penduduk != null ? `<div>Penduduk: <strong>${formatNumber(props.total_penduduk)}</strong> jiwa</div>` : "") +
+            (props.total_kk != null ? `<div>KK: <strong>${formatNumber(props.total_kk)}</strong></div>` : "") +
+            (props.total_umkm != null ? `<div>UMKM: <strong>${formatNumber(props.total_umkm)}</strong></div>` : "") +
+            (props.laki_laki != null && props.perempuan != null
+                ? `<div>L/P: <strong>${formatNumber(props.laki_laki)}</strong> / <strong>${formatNumber(props.perempuan)}</strong></div>`
+                : "") +
+            (props.total_rt != null ? `<div>Jumlah RT: <strong>${formatNumber(props.total_rt)}</strong></div>` : "") +
+            `</div></div>`;
+
+        layer.bindPopup(popupContent);
 
         this.dataList.push({
             name: props.RW,

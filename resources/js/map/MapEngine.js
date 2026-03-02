@@ -32,7 +32,7 @@ export default class MapEngine {
 
         /** @type {MapEngineOptions} */
         this.options = {
-            center: [-5.155, 119.466],
+            center: [-5.1532008, 119.4682932],
             zoom: 15,
             zoomControl: false,
             zoomPosition: "bottomleft",
