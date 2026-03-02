@@ -59,7 +59,7 @@
 
             <div class="flex justify-end gap-2 mt-6">
                 <x-ui.button type="ghost" href="{{ route('kependudukan.penduduk.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Simpan Data</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Simpan Data</x-ui.button>
             </div>
         </form>
     </x-ui.card>

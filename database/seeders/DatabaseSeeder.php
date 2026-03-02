@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,          // 6 roles
             WilayahSeeder::class,       // Kecamatan → Kelurahan → RW → RT
             ReferensiSeeder::class,     // Jabatan RT/RW
+            PetaLayerFasilitasSeeder::class, // Layer peta per jenis fasilitas
 
             // ╔════════════════════════════════════════════════╗
             // ║  DEMO DATA (sample / transactional)           ║

@@ -168,7 +168,7 @@ Route::middleware('auth')->group(function () {
     // ╔══════════════════════════════════════════════════════════════╗
     // ║  PETA KELURAHAN — Admin, RT/RW                               ║
     // ╚══════════════════════════════════════════════════════════════╝
-    Route::middleware('role:admin,rt_rw')->prefix('peta')->name('peta.')->group(function () {
+    Route::middleware('role:admin,operator,rt_rw')->prefix('peta')->name('peta.')->group(function () {
         Route::get('/', [PetaController::class, 'index'])->name('index');
         Route::get('/geojson/kelurahan', [PetaController::class, 'geojsonKelurahan'])->name('geojson.kelurahan');
         Route::get('/geojson/rw', [PetaController::class, 'geojsonRw'])->name('geojson.rw');

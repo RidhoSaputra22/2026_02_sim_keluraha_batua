@@ -47,6 +47,29 @@ class PetaLayer extends Model
         return $this->hasMany(PetaLayerPolygon::class);
     }
 
+    // ── Layer Slugs (konvensi per jenis data) ───────────────
+    public const LAYER_SEKOLAH        = 'sekolah';
+    public const LAYER_FASKES         = 'fasilitas-kesehatan';
+    public const LAYER_TEMPAT_IBADAH  = 'tempat-ibadah';
+    public const LAYER_KONTRAKAN_KOST = 'kontrakan-kost';
+    public const LAYER_ASRAMA         = 'asrama';
+    public const LAYER_DATA_USAHA     = 'data-usaha';
+
+    /**
+     * Daftar layer default beserta konfigurasi warna.
+     */
+    public static function facilityLayers(): array
+    {
+        return [
+            self::LAYER_SEKOLAH        => ['nama' => 'Sekolah',              'warna' => '#2563EB', 'sort' => 10],
+            self::LAYER_FASKES         => ['nama' => 'Fasilitas Kesehatan',  'warna' => '#DC2626', 'sort' => 20],
+            self::LAYER_TEMPAT_IBADAH  => ['nama' => 'Tempat Ibadah',        'warna' => '#059669', 'sort' => 30],
+            self::LAYER_KONTRAKAN_KOST => ['nama' => 'Kontrakan & Kost',     'warna' => '#D97706', 'sort' => 40],
+            self::LAYER_ASRAMA         => ['nama' => 'Asrama',               'warna' => '#7C3AED', 'sort' => 50],
+            self::LAYER_DATA_USAHA     => ['nama' => 'Data Usaha',           'warna' => '#EA580C', 'sort' => 60],
+        ];
+    }
+
     // ── Scopes ──────────────────────────────────────────────
     public function scopeActive($query)
     {

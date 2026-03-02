@@ -12,6 +12,7 @@ class Faskes extends Model {
 
     protected $fillable = [
         'kelurahan_id',
+        'peta_layer_polygon_id',
         'nama_rs',
         'alamat',
         'rw_id',
@@ -19,7 +20,9 @@ class Faskes extends Model {
         'kelas',
         'jenis_pelayanan',
         'akreditasi',
-        'telp'
+        'telp',
+        'latitude',
+        'longitude',
     ];
 
 
@@ -31,6 +34,11 @@ class Faskes extends Model {
     public function rw()
     {
         return $this->belongsTo(Rw::class);
+    }
+
+    public function petaLayerPolygon()
+    {
+        return $this->belongsTo(PetaLayerPolygon::class);
     }
 }
 

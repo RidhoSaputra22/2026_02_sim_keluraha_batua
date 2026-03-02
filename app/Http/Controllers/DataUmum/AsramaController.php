@@ -3,14 +3,27 @@
 namespace App\Http\Controllers\DataUmum;
 
 use App\Http\Controllers\Concerns\HasWilayahScope;
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
 use App\Http\Controllers\Controller;
 use App\Models\Asrama;
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class AsramaController extends Controller
 {
-    use HasWilayahScope;
+    use HasWilayahScope, SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_ASRAMA;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama ?? 'Asrama';
+    }
 
     public function index(Request $request)
     {
@@ -31,7 +44,7 @@ class AsramaController extends Controller
             $query->where('jenis', $jenis);
         }
 
-        $asramaList = $query->latest()->paginate(15)->withQueryString();
+        $asramaList = $query->orderBy('nama')->paginate(15)->withQueryString();
         $jenisOptions = Asrama::jenisOptions();
         $summaryData = Asrama::selectRaw('jenis, SUM(jumlah) as total')->groupBy('jenis')->pluck('total', 'jenis');
 
@@ -59,9 +72,13 @@ class AsramaController extends Controller
             'jenis'        => ['required', 'string', 'in:TNI,POLRI,Mahasiswa,Kerukunan'],
             'jumlah'       => ['nullable', 'integer', 'min:0'],
             'keterangan'   => ['nullable', 'string', 'max:1000'],
+            'latitude'     => ['nullable', 'numeric'],
+            'longitude'    => ['nullable', 'numeric'],
         ]);
 
-        Asrama::create($validated);
+        $asrama = Asrama::create($validated);
+
+        $this->syncPetaPolygon($asrama, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.asrama.index')
             ->with('success', 'Data asrama berhasil ditambahkan.');
@@ -92,9 +109,13 @@ class AsramaController extends Controller
             'jenis'        => ['required', 'string', 'in:TNI,POLRI,Mahasiswa,Kerukunan'],
             'jumlah'       => ['nullable', 'integer', 'min:0'],
             'keterangan'   => ['nullable', 'string', 'max:1000'],
+            'latitude'     => ['nullable', 'numeric'],
+            'longitude'    => ['nullable', 'numeric'],
         ]);
 
         $asrama->update($validated);
+
+        $this->syncPetaPolygon($asrama, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.asrama.index')
             ->with('success', 'Data asrama berhasil diperbarui.');
@@ -104,6 +125,7 @@ class AsramaController extends Controller
     {
         $this->authorizeWilayahByRtId($asrama->rt_id);
 
+        $this->removePetaPolygon($asrama);
         $asrama->delete();
 
         return redirect()->route('data-umum.asrama.index')

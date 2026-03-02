@@ -36,7 +36,7 @@
                     @csrf @method('PUT')
                     @include('peta.layers._form')
                     <div class="flex justify-end gap-2 mt-4">
-                        <x-ui.button type="primary" size="sm">Simpan Pengaturan</x-ui.button>
+                        <x-ui.button type="primary" size="sm" :isSubmit="true">Simpan Pengaturan</x-ui.button>
                     </div>
                 </form>
             </div>
@@ -248,7 +248,7 @@
             },
 
             async deletePolygon(poly, index) {
-                if (!confirm('Hapus polygon ini?')) return;
+                if (!await confirmAction('Hapus polygon ini?')) return;
                 if (poly.id) await this._deleteFromServer(poly.id);
                 if (poly.layer) this._editor.drawnItems.removeLayer(poly.layer);
                 this.polygonList.splice(index, 1);

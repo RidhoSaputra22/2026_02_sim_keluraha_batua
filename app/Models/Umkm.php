@@ -10,6 +10,7 @@ class Umkm extends Model {
 
     protected $fillable = [
         'kelurahan_id',
+        'peta_layer_polygon_id',
         'rt_id',
         'penduduk_id',
         'nama_pemilik',
@@ -20,6 +21,8 @@ class Umkm extends Model {
         'sektor_umkm',
         'jenis_usaha_id',
         'status',
+        'latitude',
+        'longitude',
     ];
 
 
@@ -41,6 +44,11 @@ class Umkm extends Model {
     public function jenisUsaha()
     {
         return $this->belongsTo(JenisUsaha::class);
+    }
+
+    public function petaLayerPolygon()
+    {
+        return $this->belongsTo(PetaLayerPolygon::class);
     }
 }
 

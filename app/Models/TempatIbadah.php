@@ -12,13 +12,16 @@ class TempatIbadah extends Model {
 
     protected $fillable = [
         'kelurahan_id',
+        'peta_layer_polygon_id',
         'tempat_ibadah',
         'nama',
         'alamat',
         'rt_id',
         'rw_id',
         'pengurus',
-        'arsip_path'
+        'arsip_path',
+        'latitude',
+        'longitude',
     ];
 
 
@@ -35,6 +38,11 @@ class TempatIbadah extends Model {
     public function rw()
     {
         return $this->belongsTo(Rw::class);
+    }
+
+    public function petaLayerPolygon()
+    {
+        return $this->belongsTo(PetaLayerPolygon::class);
     }
 }
 

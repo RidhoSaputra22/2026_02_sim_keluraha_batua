@@ -3,15 +3,28 @@
 namespace App\Http\Controllers\Usaha;
 
 use App\Http\Controllers\Concerns\HasWilayahScope;
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
 use App\Http\Controllers\Controller;
 use App\Models\JenisUsaha;
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
 use App\Models\Umkm;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class UsahaController extends Controller
 {
-    use HasWilayahScope;
+    use HasWilayahScope, SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_DATA_USAHA;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama_ukm;
+    }
 
     public function index(Request $request)
     {
@@ -40,7 +53,7 @@ class UsahaController extends Controller
             $query->where('status', $status);
         }
 
-        $usahaList = $query->latest()->paginate(15)->withQueryString();
+        $usahaList = $query->orderBy('nama_ukm')->paginate(15)->withQueryString();
         $jenisUsahaList = JenisUsaha::orderBy('nama')->get();
         $sektorList = Umkm::distinct()->whereNotNull('sektor_umkm')->pluck('sektor_umkm');
 
@@ -71,9 +84,13 @@ class UsahaController extends Controller
             'sektor_umkm'    => ['nullable', 'string', 'max:255'],
             'jenis_usaha_id' => ['nullable', 'exists:jenis_usaha,id'],
             'status'         => ['nullable', 'string', 'in:aktif,tidak_aktif'],
+            'latitude'       => ['nullable', 'numeric'],
+            'longitude'      => ['nullable', 'numeric'],
         ]);
 
-        Umkm::create($validated);
+        $usaha = Umkm::create($validated);
+
+        $this->syncPetaPolygon($usaha, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('usaha.index')
             ->with('success', 'Data usaha berhasil ditambahkan.');
@@ -108,9 +125,13 @@ class UsahaController extends Controller
             'sektor_umkm'    => ['nullable', 'string', 'max:255'],
             'jenis_usaha_id' => ['nullable', 'exists:jenis_usaha,id'],
             'status'         => ['nullable', 'string', 'in:aktif,tidak_aktif'],
+            'latitude'       => ['nullable', 'numeric'],
+            'longitude'      => ['nullable', 'numeric'],
         ]);
 
         $usaha->update($validated);
+
+        $this->syncPetaPolygon($usaha, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('usaha.index')
             ->with('success', 'Data usaha berhasil diperbarui.');
@@ -120,6 +141,7 @@ class UsahaController extends Controller
     {
         $this->authorizeWilayahByRtId($usaha->rt_id);
 
+        $this->removePetaPolygon($usaha);
         $usaha->delete();
 
         return redirect()->route('usaha.index')

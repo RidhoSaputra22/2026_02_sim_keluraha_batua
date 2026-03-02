@@ -3,14 +3,27 @@
 namespace App\Http\Controllers\DataUmum;
 
 use App\Http\Controllers\Concerns\HasWilayahScope;
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
 use App\Http\Controllers\Controller;
 use App\Models\Faskes;
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class FaskesController extends Controller
 {
-    use HasWilayahScope;
+    use HasWilayahScope, SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_FASKES;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama_rs;
+    }
 
     public function index(Request $request)
     {
@@ -30,8 +43,9 @@ class FaskesController extends Controller
             $query->where('jenis', $jenis);
         }
 
-        $faskesList = $query->latest()->paginate(15)->withQueryString();
+        $faskesList = $query->orderBy('nama_rs')->paginate(15)->withQueryString();
         $jenisList = Faskes::distinct()->whereNotNull('jenis')->pluck('jenis');
+
 
         return view('data-umum.faskes.index', compact('faskesList', 'jenisList'));
     }
@@ -56,9 +70,13 @@ class FaskesController extends Controller
             'jenis_pelayanan' => ['nullable', 'string', 'max:255'],
             'akreditasi'      => ['nullable', 'string', 'max:100'],
             'telp'            => ['nullable', 'string', 'max:20'],
+            'latitude'        => ['nullable', 'numeric'],
+            'longitude'       => ['nullable', 'numeric'],
         ]);
 
-        Faskes::create($validated);
+        $faskes = Faskes::create($validated);
+
+        $this->syncPetaPolygon($faskes, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.faskes.index')
             ->with('success', 'Data fasilitas kesehatan berhasil ditambahkan.');
@@ -70,6 +88,9 @@ class FaskesController extends Controller
 
         $kelurahanList = Kelurahan::orderBy('nama')->get();
         $rwList        = $this->wilayahRwList();
+
+        // dd($faske, $kelurahanList, $rwList);
+
 
         return view('data-umum.faskes.edit', compact('faske', 'kelurahanList', 'rwList'));
     }
@@ -88,9 +109,13 @@ class FaskesController extends Controller
             'jenis_pelayanan' => ['nullable', 'string', 'max:255'],
             'akreditasi'      => ['nullable', 'string', 'max:100'],
             'telp'            => ['nullable', 'string', 'max:20'],
+            'latitude'        => ['required', 'numeric'],
+            'longitude'       => ['required', 'numeric'],
         ]);
 
         $faske->update($validated);
+
+        $this->syncPetaPolygon($faske, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.faskes.index')
             ->with('success', 'Data fasilitas kesehatan berhasil diperbarui.');
@@ -100,6 +125,7 @@ class FaskesController extends Controller
     {
         $this->authorizeWilayahByRwId($faske->rw_id);
 
+        $this->removePetaPolygon($faske);
         $faske->delete();
 
         return redirect()->route('data-umum.faskes.index')

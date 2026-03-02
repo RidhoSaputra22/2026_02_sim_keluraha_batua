@@ -306,7 +306,7 @@
             },
 
             async deletePolygon(askConfirm = true) {
-                if (askConfirm && !confirm('Hapus polygon RW ini?')) return;
+                if (askConfirm && !await confirmAction('Hapus polygon RW ini?')) return;
                 this.saving = true;
                 try {
                     const data = await SimPeta.apiDelete(RW_EDITOR.routes.delete);

@@ -59,8 +59,9 @@ $classes .= ' loading';
     {{ $slot }}
 </a>
 @else
-<button {{ $attributes->merge(['class' => $classes, 'disabled' => $disabled]) }}
-    type="{{ $isSubmit ? 'submit' : 'button' }}">
+<button type="{{ $isSubmit ? 'submit' : 'button' }}"
+    {{ $attributes->merge(['class' => $classes]) }}
+    @disabled($disabled)>
     @if($loading)
     <span class="loading loading-spinner loading-sm"></span>
     @endif

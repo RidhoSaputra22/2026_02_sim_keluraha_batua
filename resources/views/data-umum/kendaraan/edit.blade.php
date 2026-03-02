@@ -27,7 +27,7 @@
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('data-umum.kendaraan.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Perbarui</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Perbarui</x-ui.button>
             </div>
         </form>
     </x-ui.card>

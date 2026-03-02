@@ -3,14 +3,27 @@
 namespace App\Http\Controllers\DataUmum;
 
 use App\Http\Controllers\Concerns\HasWilayahScope;
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
 use App\Http\Controllers\Controller;
 use App\Models\Kelurahan;
 use App\Models\Kontrakan;
+use App\Models\PetaLayer;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class KontrakanController extends Controller
 {
-    use HasWilayahScope;
+    use HasWilayahScope, SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_KONTRAKAN_KOST;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama ?? 'Kontrakan/Kost';
+    }
 
     public function index(Request $request)
     {
@@ -27,7 +40,7 @@ class KontrakanController extends Controller
             });
         }
 
-        $kontrakanList = $query->latest()->paginate(15)->withQueryString();
+        $kontrakanList = $query->orderBy('nama')->paginate(15)->withQueryString();
 
         return view('data-umum.kontrakan.index', compact('kontrakanList'));
     }
@@ -55,9 +68,13 @@ class KontrakanController extends Controller
             'jumlah_kost_putri'   => ['nullable', 'integer', 'min:0'],
             'jumlah_kost_campur'  => ['nullable', 'integer', 'min:0'],
             'keterangan'          => ['nullable', 'string', 'max:1000'],
+            'latitude'            => ['nullable', 'numeric'],
+            'longitude'           => ['nullable', 'numeric'],
         ]);
 
-        Kontrakan::create($validated);
+        $kontrakan = Kontrakan::create($validated);
+
+        $this->syncPetaPolygon($kontrakan, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.kontrakan.index')
             ->with('success', 'Data kontrakan/kost berhasil ditambahkan.');
@@ -90,9 +107,13 @@ class KontrakanController extends Controller
             'jumlah_kost_putri'   => ['nullable', 'integer', 'min:0'],
             'jumlah_kost_campur'  => ['nullable', 'integer', 'min:0'],
             'keterangan'          => ['nullable', 'string', 'max:1000'],
+            'latitude'            => ['nullable', 'numeric'],
+            'longitude'           => ['nullable', 'numeric'],
         ]);
 
         $kontrakan->update($validated);
+
+        $this->syncPetaPolygon($kontrakan, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.kontrakan.index')
             ->with('success', 'Data kontrakan/kost berhasil diperbarui.');
@@ -102,6 +123,7 @@ class KontrakanController extends Controller
     {
         $this->authorizeWilayahByRtId($kontrakan->rt_id);
 
+        $this->removePetaPolygon($kontrakan);
         $kontrakan->delete();
 
         return redirect()->route('data-umum.kontrakan.index')

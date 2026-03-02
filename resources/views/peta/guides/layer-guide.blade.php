@@ -141,21 +141,13 @@
                                 <div class="grid grid-cols-2 gap-2">
                                     <div class="flex items-center gap-2">
                                         <div class="w-7 h-7 rounded bg-base-300 flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5z" />
-                                            </svg>
+                                            <svg fill="#000000"   viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24"><path d="M21.9,11.5l-4.5-7.8c-0.2-0.3-0.5-0.5-0.9-0.5h-9c-0.4,0-0.7,0.2-0.9,0.5l-4.5,7.8c-0.2,0.3-0.2,0.7,0,1l4.5,7.8c0.2,0.3,0.5,0.5,0.9,0.5h9c0.4,0,0.7-0.2,0.9-0.5l4.5-7.8C22,12.2,22,11.8,21.9,11.5z"/></svg>
                                         </div>
                                         <span class="text-xs text-base-content/60">Polygon (segi lima)</span>
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <div class="w-7 h-7 rounded bg-base-300 flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
-                                                viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M4 6h16M4 12h16M4 18h16" />
-                                            </svg>
+                                          <svg fill="#000000"   viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" enable-background="new 0 0 24 24"><path d="M21,2H3C2.4,2,2,2.4,2,3v18c0,0.6,0.4,1,1,1h18c0.6,0,1-0.4,1-1V3C22,2.4,21.6,2,21,2z M20"/></svg>
                                         </div>
                                         <span class="text-xs text-base-content/60">Rectangle (kotak)</span>
                                     </div>

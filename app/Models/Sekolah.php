@@ -12,6 +12,7 @@ class Sekolah extends Model {
 
     protected $fillable = [
         'kelurahan_id',
+        'peta_layer_polygon_id',
         'npsn',
         'nama_sekolah',
         'jenjang',
@@ -33,6 +34,11 @@ class Sekolah extends Model {
     public function kelurahan()
     {
         return $this->belongsTo(Kelurahan::class);
+    }
+
+    public function petaLayerPolygon()
+    {
+        return $this->belongsTo(PetaLayerPolygon::class);
     }
 }
 

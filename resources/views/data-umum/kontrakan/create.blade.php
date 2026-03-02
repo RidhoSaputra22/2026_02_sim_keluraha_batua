@@ -39,6 +39,12 @@
                 <x-ui.input label="Campur" name="jumlah_kost_campur" type="number" placeholder="0" value="{{ old('jumlah_kost_campur', 0) }}" />
             </div>
 
+            <x-ui.map-picker
+                label="Lokasi Kontrakan/Kost (Opsional)"
+                :latitudeValue="old('latitude')"
+                :longitudeValue="old('longitude')"
+            />
+
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Keterangan</h3>
             <div class="mb-6">
                 <x-ui.textarea name="keterangan" placeholder="Keterangan tambahan (opsional)" value="{{ old('keterangan') }}" />
@@ -46,7 +52,7 @@
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('data-umum.kontrakan.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Simpan</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Simpan</x-ui.button>
             </div>
         </form>
     </x-ui.card>

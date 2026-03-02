@@ -30,9 +30,15 @@
                 </div>
             </div>
 
+            <x-ui.map-picker
+                label="Lokasi Tempat Ibadah (Opsional)"
+                :latitudeValue="old('latitude', $tempatIbadah->latitude)"
+                :longitudeValue="old('longitude', $tempatIbadah->longitude)"
+            />
+
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('data-umum.tempat-ibadah.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Perbarui</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Perbarui</x-ui.button>
             </div>
         </form>
     </x-ui.card>

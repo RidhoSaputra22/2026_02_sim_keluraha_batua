@@ -45,7 +45,7 @@
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('kependudukan.kelahiran.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Update Data Kelahiran</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Update Data Kelahiran</x-ui.button>
             </div>
         </form>
     </x-ui.card>

@@ -52,9 +52,15 @@
                 </div>
             </div>
 
+            <x-ui.map-picker
+                label="Lokasi Usaha (Opsional)"
+                :latitudeValue="old('latitude', $usaha->latitude)"
+                :longitudeValue="old('longitude', $usaha->longitude)"
+            />
+
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('usaha.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Simpan Perubahan</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Simpan Perubahan</x-ui.button>
             </div>
         </form>
     </x-ui.card>

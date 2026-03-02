@@ -359,7 +359,7 @@ function layerManager() {
         },
 
         async deletePolygon(poly, index) {
-            if (!confirm('Hapus polygon ini?')) return;
+            if (!await confirmAction('Hapus polygon ini?')) return;
             if (poly.id) await this._deletePolygonFromServer(poly.id);
             if (poly.layer && this._editor && this._editor.drawnItems) this._editor.drawnItems.removeLayer(poly
                 .layer);
@@ -460,7 +460,7 @@ function layerManager() {
         },
 
         async deleteLayer(layer) {
-            if (!confirm('Hapus layer "' + layer.nama + '" beserta semua polygonnya?')) return;
+            if (!await confirmAction('Hapus layer "' + layer.nama + '" beserta semua polygonnya?')) return;
             const url = LAYER_ROUTES.destroyJson + '/' + layer.id + '/destroy-json';
             try {
                 await SimPeta.apiDelete(url);

@@ -2,13 +2,28 @@
 
 namespace App\Http\Controllers\DataUmum;
 
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
 use App\Http\Controllers\Controller;
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
 use App\Models\Sekolah;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class SekolahController extends Controller
 {
+    use SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_SEKOLAH;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama_sekolah;
+    }
+
     public function index(Request $request)
     {
         $query = Sekolah::with('kelurahan');
@@ -29,7 +44,7 @@ class SekolahController extends Controller
             $query->where('status', $status);
         }
 
-        $sekolahList = $query->latest()->paginate(15)->withQueryString();
+        $sekolahList = $query->orderBy('nama_sekolah')->paginate(15)->withQueryString();
         $jenjangList = Sekolah::distinct()->whereNotNull('jenjang')->pluck('jenjang');
 
         return view('data-umum.sekolah.index', compact('sekolahList', 'jenjangList'));
@@ -62,7 +77,9 @@ class SekolahController extends Controller
             'jumlah_r_perpus' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        Sekolah::create($validated);
+        $sekolah = Sekolah::create($validated);
+
+        $this->syncPetaPolygon($sekolah, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.sekolah.index')
             ->with('success', 'Data sekolah berhasil ditambahkan.');
@@ -97,12 +114,15 @@ class SekolahController extends Controller
 
         $sekolah->update($validated);
 
+        $this->syncPetaPolygon($sekolah, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
+
         return redirect()->route('data-umum.sekolah.index')
             ->with('success', 'Data sekolah berhasil diperbarui.');
     }
 
     public function destroy(Sekolah $sekolah)
     {
+        $this->removePetaPolygon($sekolah);
         $sekolah->delete();
 
         return redirect()->route('data-umum.sekolah.index')

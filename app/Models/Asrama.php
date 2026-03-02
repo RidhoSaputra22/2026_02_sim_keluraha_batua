@@ -13,6 +13,7 @@ class Asrama extends Model
 
     protected $fillable = [
         'kelurahan_id',
+        'peta_layer_polygon_id',
         'rw_id',
         'rt_id',
         'nama',
@@ -20,6 +21,8 @@ class Asrama extends Model
         'jenis',
         'jumlah',
         'keterangan',
+        'latitude',
+        'longitude',
     ];
 
     public function kelurahan()
@@ -35,6 +38,11 @@ class Asrama extends Model
     public function rt()
     {
         return $this->belongsTo(Rt::class);
+    }
+
+    public function petaLayerPolygon()
+    {
+        return $this->belongsTo(PetaLayerPolygon::class);
     }
 
     /**

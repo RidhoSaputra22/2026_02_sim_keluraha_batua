@@ -39,15 +39,15 @@
                 <x-ui.input label="Ruang Perpustakaan" name="jumlah_r_perpus" type="number" placeholder="0" value="{{ old('jumlah_r_perpus', $sekolah->jumlah_r_perpus) }}" />
             </div>
 
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Koordinat (Opsional)</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <x-ui.input label="Latitude" name="latitude" placeholder="-5.xxxxx" value="{{ old('latitude', $sekolah->latitude) }}" />
-                <x-ui.input label="Longitude" name="longitude" placeholder="119.xxxxx" value="{{ old('longitude', $sekolah->longitude) }}" />
-            </div>
+            <x-ui.map-picker
+                label="Lokasi Sekolah (Opsional)"
+                :latitudeValue="old('latitude', $sekolah->latitude)"
+                :longitudeValue="old('longitude', $sekolah->longitude)"
+            />
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('data-umum.sekolah.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Perbarui</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Perbarui</x-ui.button>
             </div>
         </form>
     </x-ui.card>

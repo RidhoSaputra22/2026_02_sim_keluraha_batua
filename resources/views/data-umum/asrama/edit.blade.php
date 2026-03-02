@@ -32,6 +32,12 @@
                 </div>
             </div>
 
+            <x-ui.map-picker
+                label="Lokasi Asrama (Opsional)"
+                :latitudeValue="old('latitude', $asrama->latitude)"
+                :longitudeValue="old('longitude', $asrama->longitude)"
+            />
+
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Keterangan</h3>
             <div class="mb-6">
                 <x-ui.textarea name="keterangan" placeholder="Keterangan tambahan (opsional)" value="{{ old('keterangan', $asrama->keterangan) }}" />
@@ -39,7 +45,7 @@
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
                 <x-ui.button type="ghost" href="{{ route('data-umum.asrama.index') }}">Batal</x-ui.button>
-                <x-ui.button type="primary">Perbarui</x-ui.button>
+                <x-ui.button type="primary" :isSubmit="true">Perbarui</x-ui.button>
             </div>
         </form>
     </x-ui.card>

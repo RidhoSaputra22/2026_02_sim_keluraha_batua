@@ -18,7 +18,9 @@ class PetaLayerController extends Controller
      */
     public function index()
     {
+
         $layers = PetaLayer::ordered()
+
             ->withCount('polygons')
             ->get();
 
@@ -27,6 +29,7 @@ class PetaLayerController extends Controller
         // Build per-layer GeoJSON collections for the map
         $layersGeojson = [];
         foreach ($layers as $layer) {
+
             $polygons = DB::select(
                 'SELECT id, nama, deskripsi, ST_AsGeoJSON(polygon) as geojson
                  FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
@@ -361,7 +364,7 @@ class PetaLayerController extends Controller
      */
     public function geojsonLayers(): JsonResponse
     {
-        $layers = PetaLayer::active()->ordered()->get();
+        $layers = PetaLayer::active()->has('polygons')->ordered()->get();
 
         $result = [];
 

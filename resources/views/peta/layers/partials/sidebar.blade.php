@@ -25,14 +25,15 @@
     <div class="flex-1 overflow-y-auto" id="layer-list-container">
         <div class="px-1 py-2">
             <template x-for="(layer, index) in layers" :key="layer.id">
-                <div class="layer-item rounded-lg px-2 py-2 mb-0.5 mx-1"
+                <div class="layer-item rounded-lg  mb-0.5 mx-1 px-3 py-3 cursor-pointer group  hover:shadow"
                     :class="{ 'active': activeLayer?.id === layer.id }"
                     draggable="true"
                     @dragstart="onDragStart($event, index)"
                     @dragover.prevent="onDragOver($event, index)"
                     @dragleave="onDragLeave($event)"
                     @drop="onDrop($event, index)"
-                    @dragend="onDragEnd($event)">
+                    @dragend="onDragEnd($event)"
+                    @click="selectLayer(layer)">
 
                     <div class="flex items-center gap-2">
                         {{-- Drag handle --}}
@@ -57,7 +58,7 @@
                         <div class="layer-color-dot flex-shrink-0" :style="'background-color:' + layer.warna"></div>
 
                         {{-- Layer name (click to select) --}}
-                        <div class="flex-1 min-w-0" @click="selectLayer(layer)">
+                        <div class="flex-1 min-w-0  " >
                             <div class="flex items-center gap-1.5">
                                 <span class="text-xs font-semibold truncate" x-text="layer.nama"></span>
                                 <span class="badge badge-ghost" style="font-size: 9px; padding: 0 4px; height: 14px;" x-text="layer.polygons_count + 'p'"></span>

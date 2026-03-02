@@ -13,6 +13,7 @@ class Kontrakan extends Model
 
     protected $fillable = [
         'kelurahan_id',
+        'peta_layer_polygon_id',
         'rw_id',
         'rt_id',
         'nama',
@@ -23,6 +24,8 @@ class Kontrakan extends Model
         'jumlah_kost_putri',
         'jumlah_kost_campur',
         'keterangan',
+        'latitude',
+        'longitude',
     ];
 
     public function kelurahan()
@@ -38,6 +41,11 @@ class Kontrakan extends Model
     public function rt()
     {
         return $this->belongsTo(Rt::class);
+    }
+
+    public function petaLayerPolygon()
+    {
+        return $this->belongsTo(PetaLayerPolygon::class);
     }
 
     /**

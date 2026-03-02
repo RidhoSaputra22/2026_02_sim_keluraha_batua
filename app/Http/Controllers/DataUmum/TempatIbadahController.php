@@ -3,14 +3,27 @@
 namespace App\Http\Controllers\DataUmum;
 
 use App\Http\Controllers\Concerns\HasWilayahScope;
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
 use App\Http\Controllers\Controller;
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
 use App\Models\TempatIbadah;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class TempatIbadahController extends Controller
 {
-    use HasWilayahScope;
+    use HasWilayahScope, SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_TEMPAT_IBADAH;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama;
+    }
 
     public function index(Request $request)
     {
@@ -31,7 +44,7 @@ class TempatIbadahController extends Controller
             $query->where('tempat_ibadah', $jenis);
         }
 
-        $tempatIbadahList = $query->latest()->paginate(15)->withQueryString();
+        $tempatIbadahList = $query->orderBy('nama')->paginate(15)->withQueryString();
         $jenisList = TempatIbadah::distinct()->whereNotNull('tempat_ibadah')->pluck('tempat_ibadah');
 
         return view('data-umum.tempat-ibadah.index', compact('tempatIbadahList', 'jenisList'));
@@ -56,9 +69,13 @@ class TempatIbadahController extends Controller
             'rt_id'         => $this->rtIdRules(),
             'rw_id'         => ['nullable', 'exists:rws,id'],
             'pengurus'      => ['nullable', 'string', 'max:255'],
+            'latitude'      => ['nullable', 'numeric'],
+            'longitude'     => ['nullable', 'numeric'],
         ]);
 
-        TempatIbadah::create($validated);
+        $tempatIbadah = TempatIbadah::create($validated);
+
+        $this->syncPetaPolygon($tempatIbadah, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.tempat-ibadah.index')
             ->with('success', 'Data tempat ibadah berhasil ditambahkan.');
@@ -87,9 +104,13 @@ class TempatIbadahController extends Controller
             'rt_id'         => $this->rtIdRules(),
             'rw_id'         => ['nullable', 'exists:rws,id'],
             'pengurus'      => ['nullable', 'string', 'max:255'],
+            'latitude'      => ['nullable', 'numeric'],
+            'longitude'     => ['nullable', 'numeric'],
         ]);
 
         $tempatIbadah->update($validated);
+
+        $this->syncPetaPolygon($tempatIbadah, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
 
         return redirect()->route('data-umum.tempat-ibadah.index')
             ->with('success', 'Data tempat ibadah berhasil diperbarui.');
@@ -99,6 +120,7 @@ class TempatIbadahController extends Controller
     {
         $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
 
+        $this->removePetaPolygon($tempatIbadah);
         $tempatIbadah->delete();
 
         return redirect()->route('data-umum.tempat-ibadah.index')

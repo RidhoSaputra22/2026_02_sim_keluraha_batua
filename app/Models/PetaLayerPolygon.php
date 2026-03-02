@@ -29,6 +29,36 @@ class PetaLayerPolygon extends Model
         return $this->belongsTo(PetaLayer::class, 'peta_layer_id');
     }
 
+    public function sekolah()
+    {
+        return $this->hasOne(Sekolah::class);
+    }
+
+    public function faskes()
+    {
+        return $this->hasOne(Faskes::class);
+    }
+
+    public function tempatIbadah()
+    {
+        return $this->hasOne(TempatIbadah::class);
+    }
+
+    public function kontrakan()
+    {
+        return $this->hasOne(Kontrakan::class);
+    }
+
+    public function asrama()
+    {
+        return $this->hasOne(Asrama::class);
+    }
+
+    public function umkm()
+    {
+        return $this->hasOne(Umkm::class);
+    }
+
     // ── PostGIS Methods ─────────────────────────────────────
 
     /**

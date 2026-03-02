@@ -64,6 +64,9 @@
         <x-layouts.footer />
     </div>
 
+    {{-- Global delete confirmation modal --}}
+    <x-ui.confirm-delete />
+
     @stack('modals')
     @stack('scripts')
 </body>
