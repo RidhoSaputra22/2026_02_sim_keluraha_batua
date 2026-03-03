@@ -43,6 +43,8 @@
                 label="Lokasi Kontrakan/Kost (Opsional)"
                 :latitudeValue="old('latitude', $kontrakan->latitude)"
                 :longitudeValue="old('longitude', $kontrakan->longitude)"
+                addressField="alamat"
+                :addressValue="old('alamat', $kontrakan->alamat)"
             />
 
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Keterangan</h3>

@@ -36,6 +36,8 @@
                 label="Lokasi Asrama (Opsional)"
                 :latitudeValue="old('latitude', $asrama->latitude)"
                 :longitudeValue="old('longitude', $asrama->longitude)"
+                addressField="alamat"
+                :addressValue="old('alamat', $asrama->alamat)"
             />
 
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Keterangan</h3>

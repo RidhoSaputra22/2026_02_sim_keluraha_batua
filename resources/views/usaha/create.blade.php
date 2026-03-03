@@ -56,6 +56,8 @@
                 label="Lokasi Usaha (Opsional)"
                 :latitudeValue="old('latitude')"
                 :longitudeValue="old('longitude')"
+                addressField="alamat"
+                :addressValue="old('alamat')"
             />
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">

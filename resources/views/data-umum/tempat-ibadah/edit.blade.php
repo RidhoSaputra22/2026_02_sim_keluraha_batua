@@ -34,6 +34,8 @@
                 label="Lokasi Tempat Ibadah (Opsional)"
                 :latitudeValue="old('latitude', $tempatIbadah->latitude)"
                 :longitudeValue="old('longitude', $tempatIbadah->longitude)"
+                addressField="alamat"
+                :addressValue="old('alamat', $tempatIbadah->alamat)"
             />
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">

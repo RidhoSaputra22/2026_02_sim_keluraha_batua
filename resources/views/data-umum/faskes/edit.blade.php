@@ -35,6 +35,8 @@
                 label="Lokasi Faskes (Opsional)"
                 :latitudeValue="old('latitude', $faske->latitude)"
                 :longitudeValue="old('longitude', $faske->longitude)"
+                addressField="alamat"
+                :addressValue="old('alamat', $faske->alamat)"
             />
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">

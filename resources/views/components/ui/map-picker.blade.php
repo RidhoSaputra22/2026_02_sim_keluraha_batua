@@ -14,6 +14,9 @@
     @param array $center - Koordinat pusat default [lat, lng]
     @param int $zoom - Zoom level (default: 15)
 
+    @param string|null $addressField - Nama field alamat di form untuk auto-fill (default: null)
+    @param string|null $addressValue - Nilai alamat saat ini
+
     Usage:
     <x-ui.map-picker />
 
@@ -23,6 +26,8 @@
         :latitudeValue="old('latitude', $model->latitude)"
         :longitudeValue="old('longitude', $model->longitude)"
         label="Lokasi Sekolah"
+        addressField="alamat"
+        :addressValue="old('alamat', $model->alamat)"
     />
 --}}
 
@@ -35,6 +40,8 @@
     'height' => '400px',
     'center' => [-5.1476, 119.4934],
     'zoom' => 15,
+    'addressField' => null,
+    'addressValue' => null,
 ])
 
 @php
@@ -42,6 +49,7 @@
     $initLat = old($latitude, $latitudeValue) ?: $center[0];
     $initLng = old($longitude, $longitudeValue) ?: $center[1];
     $hasInitial = old($latitude, $latitudeValue) && old($longitude, $longitudeValue);
+    $initAddress = $addressField ? old($addressField, $addressValue) : '';
 @endphp
 
 @once
@@ -207,6 +215,36 @@
         <div id="{{ $mapId }}" class="w-full h-full rounded-lg"></div>
     </div>
 
+    {{-- Address from reverse geocoding --}}
+    <div class="form-control w-full mb-4" x-show="lat && lng" x-cloak>
+        <label class="label">
+            <span class="label-text font-medium">Alamat dari Peta</span>
+            <span class="label-text-alt">
+                <span x-show="reverseLoading" class="loading loading-spinner loading-xs"></span>
+                <span x-show="!reverseLoading && resolvedAddress" class="text-success text-xs">Otomatis terdeteksi</span>
+            </span>
+        </label>
+        <div class="flex gap-2">
+            <input type="text" x-model="resolvedAddress" readonly
+                class="input input-bordered w-full input-sm bg-base-200 cursor-not-allowed"
+                placeholder="Mendeteksi alamat...">
+            @if($addressField)
+            <button type="button" class="btn btn-sm btn-primary btn-outline gap-1 whitespace-nowrap"
+                x-show="resolvedAddress" x-cloak
+                @click="applyAddress()"
+                :class="{ 'btn-success': addressApplied }">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <span x-text="addressApplied ? 'Tersalin' : 'Isi ke Alamat'"></span>
+            </button>
+            @endif
+        </div>
+        <label class="label" x-show="resolvedAddress && !addressApplied" x-cloak>
+            <span class="label-text-alt text-info">@if($addressField)Klik "Isi ke Alamat" untuk menyalin ke form alamat, atau edit manual.@else Alamat berdasarkan koordinat.@endif</span>
+        </label>
+    </div>
+
     {{-- Coordinate inputs --}}
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="form-control w-full">
@@ -256,6 +294,11 @@
                 rwLayer: null,
                 rwLabelLayer: null,
                 showRw: true,
+                resolvedAddress: '',
+                reverseLoading: false,
+                reverseTimeout: null,
+                addressApplied: false,
+                addressFieldName: '{{ $addressField ?? '' }}',
 
                 init() {
                     this.$nextTick(() => {
@@ -388,6 +431,7 @@
                 placeMarker(lat, lng) {
                     this.lat = parseFloat(lat).toFixed(7);
                     this.lng = parseFloat(lng).toFixed(7);
+                    this.addressApplied = false;
 
                     if (this.marker) {
                         this.marker.setLatLng([lat, lng]);
@@ -402,17 +446,96 @@
                             const pos = e.target.getLatLng();
                             this.lat = parseFloat(pos.lat).toFixed(7);
                             this.lng = parseFloat(pos.lng).toFixed(7);
+                            this.addressApplied = false;
+                            this.reverseGeocode(pos.lat, pos.lng);
                         });
                     }
 
+                    // Update popup and run reverse geocoding
+                    this.updatePopup();
+                    this.reverseGeocode(lat, lng);
+                },
+
+                updatePopup() {
+                    if (!this.marker) return;
+                    const addrHtml = this.resolvedAddress
+                        ? `<br><span style="color:#666">${this.resolvedAddress}</span>`
+                        : '';
                     this.marker.bindPopup(
-                        `<div class="text-sm"><strong>Lokasi Terpilih</strong><br>Lat: ${this.lat}<br>Lng: ${this.lng}</div>`
+                        `<div class="text-sm"><strong>Lokasi Terpilih</strong><br>Lat: ${this.lat}<br>Lng: ${this.lng}${addrHtml}</div>`
                     ).openPopup();
+                },
+
+                reverseGeocode(lat, lng) {
+                    // Debounce to avoid too many API calls
+                    if (this.reverseTimeout) clearTimeout(this.reverseTimeout);
+
+                    this.reverseLoading = true;
+                    this.resolvedAddress = '';
+
+                    this.reverseTimeout = setTimeout(async () => {
+                        try {
+                            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=id`;
+
+                            const resp = await fetch(url, {
+                                headers: { 'Accept': 'application/json' }
+                            });
+                            if (!resp.ok) throw new Error('Nominatim error');
+
+                            const data = await resp.json();
+                            if (data && data.display_name) {
+                                // Build a cleaner address from address parts
+                                const addr = data.address || {};
+                                const parts = [];
+                                if (addr.road) parts.push(addr.road);
+                                if (addr.house_number) parts[parts.length - 1] = (parts[parts.length - 1] || '') + ' No. ' + addr.house_number;
+                                if (addr.neighbourhood) parts.push(addr.neighbourhood);
+                                if (addr.suburb || addr.village) parts.push(addr.suburb || addr.village);
+                                if (addr.city_district || addr.county) parts.push(addr.city_district || addr.county);
+                                if (addr.city || addr.town) parts.push(addr.city || addr.town);
+                                if (addr.state) parts.push(addr.state);
+
+                                this.resolvedAddress = parts.length > 0 ? parts.join(', ') : data.display_name;
+                                this.updatePopup();
+
+                                // Auto-apply to the form field if addressField is set
+                                if (this.addressFieldName) {
+                                    this.applyAddress();
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Reverse geocoding gagal:', e);
+                            this.resolvedAddress = '';
+                        } finally {
+                            this.reverseLoading = false;
+                        }
+                    }, 600);
+                },
+
+                applyAddress() {
+                    if (!this.addressFieldName || !this.resolvedAddress) return;
+
+                    // Find the form input by name attribute
+                    const form = this.$el.closest('form');
+                    if (form) {
+                        const input = form.querySelector(`[name="${this.addressFieldName}"]`);
+                        if (input) {
+                            input.value = this.resolvedAddress;
+                            // Trigger input event for Alpine/other frameworks
+                            input.dispatchEvent(new Event('input', { bubbles: true }));
+                            this.addressApplied = true;
+
+                            // Reset the applied state after 3 seconds
+                            setTimeout(() => { this.addressApplied = false; }, 3000);
+                        }
+                    }
                 },
 
                 clearLocation() {
                     this.lat = '';
                     this.lng = '';
+                    this.resolvedAddress = '';
+                    this.addressApplied = false;
                     if (this.marker) {
                         this.map.removeLayer(this.marker);
                         this.marker = null;

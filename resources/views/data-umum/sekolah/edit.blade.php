@@ -43,6 +43,8 @@
                 label="Lokasi Sekolah (Opsional)"
                 :latitudeValue="old('latitude', $sekolah->latitude)"
                 :longitudeValue="old('longitude', $sekolah->longitude)"
+                addressField="alamat"
+                :addressValue="old('alamat', $sekolah->alamat)"
             />
 
             <div class="flex justify-end gap-2 mt-6 border-t pt-4">
