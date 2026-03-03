@@ -3,6 +3,7 @@
         <x-layouts.page-header title="Data Pajak Bumi dan Bangunan (PBB)"
             description="Kelola data PBB wajib pajak di wilayah kelurahan">
             <x-slot:actions>
+                <x-ui.import-export-buttons module="pbb" />
                 <x-ui.button type="primary" size="sm" href="{{ route('data-umum.pbb.create') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">

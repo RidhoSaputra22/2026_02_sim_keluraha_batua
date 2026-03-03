@@ -2,6 +2,7 @@
     <x-slot:header>
         <x-layouts.page-header title="Data Kematian" description="Kelola pencatatan kematian penduduk">
             <x-slot:actions>
+                <x-ui.import-export-buttons module="kematian" />
                 <x-ui.button type="primary" size="sm" href="{{ route('kependudukan.kematian.create') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                     Tambah Kematian

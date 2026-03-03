@@ -17,6 +17,7 @@ use App\Http\Controllers\DataUmum\PetugasKebersihanController;
 use App\Http\Controllers\DataUmum\SekolahController;
 use App\Http\Controllers\DataUmum\TempatIbadahController;
 use App\Http\Controllers\GlobalSearchController;
+use App\Http\Controllers\ImportExportController;
 use App\Http\Controllers\Kependudukan\KelahiranController;
 use App\Http\Controllers\Kependudukan\KeluargaController as AdminKeluargaController;
 use App\Http\Controllers\Kependudukan\KematianController;
@@ -63,6 +64,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  IMPORT & EXPORT DATA                                       ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    Route::middleware('role:admin,rt_rw')->prefix('import-export')->name('import-export.')->group(function () {
+        // Export
+        Route::get('/{module}/export', [ImportExportController::class, 'exportForm'])->name('export');
+        Route::post('/{module}/export', [ImportExportController::class, 'export'])->name('export.process');
+        // Import
+        Route::get('/{module}/import', [ImportExportController::class, 'importForm'])->name('import');
+        Route::post('/{module}/import', [ImportExportController::class, 'import'])->name('import.process');
+        // Template
+        Route::get('/{module}/template', [ImportExportController::class, 'downloadTemplate'])->name('template');
+    });
 
     // ╔══════════════════════════════════════════════════════════════╗
     // ║  ADMIN PANEL                                                ║

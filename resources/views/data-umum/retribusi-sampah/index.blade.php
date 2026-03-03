@@ -3,6 +3,7 @@
         <x-layouts.page-header title="Data Retribusi Sampah"
             description="Kelola data retribusi sampah nasabah di wilayah kelurahan">
             <x-slot:actions>
+                <x-ui.import-export-buttons module="retribusi-sampah" />
                 <x-ui.button type="primary" size="sm" href="{{ route('data-umum.retribusi-sampah.create') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">

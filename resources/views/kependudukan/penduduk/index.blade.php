@@ -2,6 +2,7 @@
     <x-slot:header>
         <x-layouts.page-header title="Data Penduduk" description="Kelola data kependudukan">
             <x-slot:actions>
+                <x-ui.import-export-buttons module="penduduk" />
                 <x-ui.button type="primary" size="sm" href="{{ route('kependudukan.penduduk.create') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24"
                         stroke="currentColor">

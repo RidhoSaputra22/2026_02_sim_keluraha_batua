@@ -2,6 +2,7 @@
     <x-slot:header>
         <x-layouts.page-header title="Data Sekolah" description="Kelola data sekolah di wilayah kelurahan">
             <x-slot:actions>
+                <x-ui.import-export-buttons module="sekolah" />
                 <x-ui.button type="primary" size="sm" href="{{ route('data-umum.sekolah.create') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
                     Tambah Sekolah
