@@ -37,10 +37,8 @@
                         <th class="w-12">No</th>
                         <th>Nama / Alamat</th>
                         <th>Pemilik</th>
-                        <th class="text-center">R. Kontrakan</th>
-                        <th class="text-center">Kost Putera</th>
-                        <th class="text-center">Kost Putri</th>
-                        <th class="text-center">Campur</th>
+                        <th>Jenis Unit</th>
+                        <th class="text-center">Jumlah Kamar</th>
                         <th>RT/RW</th>
                         <th class="w-32 text-right">Aksi</th>
                     </tr>
@@ -53,11 +51,14 @@
                             <div class="font-medium">{{ $item->nama ?? '-' }}</div>
                             <div class="text-xs text-base-content/60">{{ Str::limit($item->alamat, 35) }}</div>
                         </td>
-                        <td class="text-sm">{{ $item->pemilik ?? '-' }}</td>
-                        <td class="text-sm text-center">{{ $item->jumlah_kontrakan ?? 0 }}</td>
-                        <td class="text-sm text-center">{{ $item->jumlah_kost_putera ?? 0 }}</td>
-                        <td class="text-sm text-center">{{ $item->jumlah_kost_putri ?? 0 }}</td>
-                        <td class="text-sm text-center">{{ $item->jumlah_kost_campur ?? 0 }}</td>
+                        <td class="text-sm">
+                            <div>{{ $item->pemilik ?? '-' }}</div>
+                            @if($item->no_hp_pemilik)
+                                <div class="text-xs text-base-content/60">{{ $item->no_hp_pemilik }}</div>
+                            @endif
+                        </td>
+                        <td class="text-sm">{{ $item->jenis_unit ?? '-' }}</td>
+                        <td class="text-sm text-center">{{ $item->jumlah_kamar ?? 0 }}</td>
                         <td class="text-sm">
                             @if($item->rt)
                                 RT {{ $item->rt->nomor }} / RW {{ $item->rt->rw->nomor ?? '-' }}
@@ -80,7 +81,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="9" class="text-center py-8 text-base-content/50">
+                        <td colspan="7" class="text-center py-8 text-base-content/50">
                             <div class="flex flex-col items-center gap-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                                 <p>Belum ada data kontrakan & rumah kost</p>

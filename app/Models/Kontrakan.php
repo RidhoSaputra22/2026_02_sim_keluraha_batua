@@ -19,10 +19,9 @@ class Kontrakan extends Model
         'nama',
         'alamat',
         'pemilik',
-        'jumlah_kontrakan',
-        'jumlah_kost_putera',
-        'jumlah_kost_putri',
-        'jumlah_kost_campur',
+        'no_hp_pemilik',
+        'jenis_unit',
+        'jumlah_kamar',
         'keterangan',
         'latitude',
         'longitude',
@@ -49,12 +48,12 @@ class Kontrakan extends Model
     }
 
     /**
-     * Total semua unit kost.
+     * Label jenis unit.
      */
-    public function getTotalKostAttribute(): int
-    {
-        return ($this->jumlah_kost_putera ?? 0)
-             + ($this->jumlah_kost_putri ?? 0)
-             + ($this->jumlah_kost_campur ?? 0);
-    }
+    public const JENIS_UNIT_OPTIONS = [
+        'Kontrakan'    => 'Kontrakan',
+        'Kost Putera'  => 'Kost Putera',
+        'Kost Putri'   => 'Kost Putri',
+        'Kost Campur'  => 'Kost Campur',
+    ];
 }

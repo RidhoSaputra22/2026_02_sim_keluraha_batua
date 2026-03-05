@@ -26,17 +26,16 @@
                     <x-ui.select label="RW" name="rw_id" placeholder="Pilih RW" :options="$rwOptions" selected="{{ old('rw_id', $kontrakan->rw_id) }}" />
                 @endif
                 <x-ui.input label="Pemilik" name="pemilik" placeholder="Nama pemilik" value="{{ old('pemilik', $kontrakan->pemilik) }}" />
+                <x-ui.input label="No HP Pemilik" name="no_hp_pemilik" placeholder="08xxxxxxxxxx" value="{{ old('no_hp_pemilik', $kontrakan->no_hp_pemilik) }}" />
                 <div class="md:col-span-2">
                     <x-ui.input label="Alamat" name="alamat" placeholder="Alamat lengkap" value="{{ old('alamat', $kontrakan->alamat) }}" />
                 </div>
             </div>
 
-            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Jumlah Unit</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <x-ui.input label="R. Kontrakan" name="jumlah_kontrakan" type="number" placeholder="0" value="{{ old('jumlah_kontrakan', $kontrakan->jumlah_kontrakan) }}" />
-                <x-ui.input label="Kost Putera" name="jumlah_kost_putera" type="number" placeholder="0" value="{{ old('jumlah_kost_putera', $kontrakan->jumlah_kost_putera) }}" />
-                <x-ui.input label="Kost Putri" name="jumlah_kost_putri" type="number" placeholder="0" value="{{ old('jumlah_kost_putri', $kontrakan->jumlah_kost_putri) }}" />
-                <x-ui.input label="Campur" name="jumlah_kost_campur" type="number" placeholder="0" value="{{ old('jumlah_kost_campur', $kontrakan->jumlah_kost_campur) }}" />
+            <h3 class="text-lg font-semibold mb-4 border-b pb-2">Jenis Unit</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <x-ui.select label="Jenis Unit" name="jenis_unit" placeholder="Pilih Jenis Unit" :options="\App\Models\Kontrakan::JENIS_UNIT_OPTIONS" selected="{{ old('jenis_unit', $kontrakan->jenis_unit) }}" />
+                <x-ui.input label="Jumlah Kamar" name="jumlah_kamar" type="number" placeholder="0" value="{{ old('jumlah_kamar', $kontrakan->jumlah_kamar) }}" />
             </div>
 
             <x-ui.map-picker
