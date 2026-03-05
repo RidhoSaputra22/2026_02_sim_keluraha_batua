@@ -1,9 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
+use App\Http\Controllers\Admin\PegawaiController;
+use App\Http\Controllers\Admin\PengurusController;
 use App\Http\Controllers\Admin\PetaLayerController;
+use App\Http\Controllers\Admin\ProfilWilayahController;
+use App\Http\Controllers\Admin\RoleController as AdminRoleController;
+use App\Http\Controllers\Admin\RtController as AdminRtController;
+use App\Http\Controllers\Admin\RwController as AdminRwController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 // ─── Role-specific Dashboard Controllers ───────────────────────
-use App\Http\Controllers\Admin\WilayahController as AdminWilayahController;
 use App\Http\Controllers\Auth\LoginController;
 // ─── Admin Module Controllers ──────────────────────────────────
 use App\Http\Controllers\DashboardController;
@@ -87,6 +93,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard', [AdminDashboard::class, 'index'])->name('dashboard');
 
         // Pengguna (CRUD)
+        Route::resource('users', AdminUserController::class)->except(['show']);
+        Route::patch('users/{user}/toggle-active', [AdminUserController::class, 'toggleActive'])->name('users.toggle-active');
+
+        // Role (read-only)
+        Route::get('roles', [AdminRoleController::class, 'index'])->name('roles.index');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗
@@ -97,8 +108,33 @@ Route::middleware('auth')->group(function () {
         Route::resource('penduduk', AdminPendudukController::class);
         Route::resource('keluarga', AdminKeluargaController::class);
 
-        // Data Master (admin-scoped)
-        Route::resource('wilayah', AdminWilayahController::class);
+        // ─── Kelola RW (CRUD + profil/biodata + pengurus) ──────────
+        Route::resource('rw', AdminRwController::class);
+        Route::delete('rw/{rw}/foto', [AdminRwController::class, 'deleteFoto'])->name('rw.delete-foto');
+        Route::post('rw/{rw}/pengurus', [AdminRwController::class, 'storePengurus'])->name('rw.pengurus.store');
+        Route::put('rw/{rw}/pengurus/{penguru}', [AdminRwController::class, 'updatePengurus'])->name('rw.pengurus.update');
+        Route::delete('rw/{rw}/pengurus/{penguru}', [AdminRwController::class, 'destroyPengurus'])->name('rw.pengurus.destroy');
+
+        // ─── Kelola RT (CRUD + profil/biodata + pengurus) ──────────
+        Route::resource('rt', AdminRtController::class);
+        Route::delete('rt/{rt}/foto', [AdminRtController::class, 'deleteFoto'])->name('rt.delete-foto');
+        Route::post('rt/{rt}/pengurus', [AdminRtController::class, 'storePengurus'])->name('rt.pengurus.store');
+        Route::put('rt/{rt}/pengurus/{penguru}', [AdminRtController::class, 'updatePengurus'])->name('rt.pengurus.update');
+        Route::delete('rt/{rt}/pengurus/{penguru}', [AdminRtController::class, 'destroyPengurus'])->name('rt.pengurus.destroy');
+
+        // ─── Pengurus RT/RW (standalone CRUD) ─────────────────────
+        Route::resource('pengurus', PengurusController::class);
+
+        // ─── Pegawai / Staff Kelurahan ────────────────────────────
+        Route::resource('pegawai', PegawaiController::class)->except(['show']);
+
+        // ─── Profil Kelurahan ─────────────────────────────────────
+        Route::prefix('profil-wilayah')->name('profil-wilayah.')->group(function () {
+            Route::get('/kelurahan/{kelurahan}', [ProfilWilayahController::class, 'kelurahanShow'])->name('kelurahan.show');
+            Route::get('/kelurahan/{kelurahan}/edit', [ProfilWilayahController::class, 'kelurahanEdit'])->name('kelurahan.edit');
+            Route::put('/kelurahan/{kelurahan}', [ProfilWilayahController::class, 'kelurahanUpdate'])->name('kelurahan.update');
+            Route::delete('/kelurahan/{kelurahan}/foto', [ProfilWilayahController::class, 'kelurahanDeleteFoto'])->name('kelurahan.delete-foto');
+        });
 
         // Referensi
     });

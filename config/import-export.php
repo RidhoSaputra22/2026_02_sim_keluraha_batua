@@ -266,7 +266,7 @@ return [
         'title'       => 'Data Wilayah RT/RW',
         'model'       => \App\Models\Rt::class,
         'date_column' => 'created_at',
-        'back_route'  => 'master.wilayah.index',
+        'back_route'  => 'master.rt.index',
         'with'        => ['rw'],
         'columns'     => ['nomor', 'rw_nomor'],
         'headers'     => ['Nomor RT', 'Nomor RW'],

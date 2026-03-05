@@ -16,7 +16,24 @@ class Rw extends Model {
         'nomor',
         'warna',
         'polygon',
+        'foto',
+        'luas_area',
+        'alamat_sekretariat',
+        'no_telp',
+        'deskripsi',
+        'fasilitas',
+        'batas_utara',
+        'batas_selatan',
+        'batas_timur',
+        'batas_barat',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'luas_area' => 'decimal:2',
+        ];
+    }
 
     /**
      * Get polygon as GeoJSON string.
@@ -62,6 +79,11 @@ class Rw extends Model {
     public function rts()
     {
         return $this->hasMany(Rt::class);
+    }
+
+    public function pengurus()
+    {
+        return $this->hasMany(RtRwPengurus::class);
     }
 }
 

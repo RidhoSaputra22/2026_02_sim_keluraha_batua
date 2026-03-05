@@ -37,102 +37,55 @@ class WilayahControllerTest extends TestCase
         ]);
     }
 
-    // ─── INDEX ────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // RT SHOW (includes pengurus section)
+    // ═══════════════════════════════════════════════════════════════
 
-    public function test_admin_can_view_wilayah_index(): void
+    public function test_admin_can_view_rt_show_with_pengurus(): void
     {
-        RtRwPengurus::factory()->count(3)->create();
-
-        $response = $this->actingAs($this->admin)->get(route('master.wilayah.index'));
-
-        $response->assertStatus(200);
-        $response->assertViewHas('wilayah');
-        $response->assertViewHas('rwList');
-        $response->assertViewHas('jabatanList');
-        $response->assertViewHas('totalRT');
-        $response->assertViewHas('totalRW');
-        $response->assertViewHas('totalAktif');
-        $response->assertViewHas('totalNonaktif');
-    }
-
-    public function test_wilayah_index_search_by_nama(): void
-    {
-        $penduduk = Penduduk::factory()->create(['nama' => 'Pak Usman Unik']);
-        RtRwPengurus::factory()->create(['penduduk_id' => $penduduk->id]);
-
-        $response = $this->actingAs($this->admin)
-            ->get(route('master.wilayah.index', ['search' => 'Pak Usman Unik']));
-
-        $response->assertStatus(200);
-    }
-
-    public function test_wilayah_index_filter_by_status(): void
-    {
-        RtRwPengurus::factory()->create(['status' => 'aktif']);
-        RtRwPengurus::factory()->create(['status' => 'nonaktif']);
-
-        $response = $this->actingAs($this->admin)
-            ->get(route('master.wilayah.index', ['status' => 'aktif']));
-
-        $response->assertStatus(200);
-    }
-
-    public function test_wilayah_index_filter_by_rw(): void
-    {
-        $rw = Rw::factory()->create();
-        RtRwPengurus::factory()->create(['rw_id' => $rw->id]);
-
-        $response = $this->actingAs($this->admin)
-            ->get(route('master.wilayah.index', ['rw' => $rw->id]));
-
-        $response->assertStatus(200);
-    }
-
-    // ─── CREATE ───────────────────────────────────────────────────
-
-    public function test_admin_can_view_create_wilayah_form(): void
-    {
-        $response = $this->actingAs($this->admin)->get(route('admin.wilayah.create'));
-
-        $response->assertStatus(200);
-    }
-
-    // ─── STORE ────────────────────────────────────────────────────
-
-    public function test_admin_can_store_new_wilayah(): void
-    {
-        $penduduk = Penduduk::factory()->create();
-        $kelurahan = Kelurahan::factory()->create();
-        $jabatan = JabatanRtRw::factory()->create();
-        $rw = Rw::factory()->create();
         $rt = Rt::factory()->create();
+        RtRwPengurus::factory()->create(['rt_id' => $rt->id, 'rw_id' => $rt->rw_id]);
+
+        $response = $this->actingAs($this->admin)->get(route('master.rt.show', $rt));
+
+        $response->assertStatus(200);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // RT → PENGURUS STORE
+    // ═══════════════════════════════════════════════════════════════
+
+    public function test_admin_can_store_pengurus_for_rt(): void
+    {
+        $rt = Rt::factory()->create();
+        $penduduk = Penduduk::factory()->create();
+        $jabatan = JabatanRtRw::factory()->create();
 
         $data = [
             'penduduk_id' => $penduduk->id,
-            'kelurahan_id' => $kelurahan->id,
             'jabatan_id' => $jabatan->id,
-            'rw_id' => $rw->id,
-            'rt_id' => $rt->id,
             'status' => 'aktif',
             'alamat' => 'Jl. Batua Raya',
             'no_telp' => '08123456789',
         ];
 
-        $response = $this->actingAs($this->admin)->post(route('admin.wilayah.store'), $data);
+        $response = $this->actingAs($this->admin)->post(route('master.rt.pengurus.store', $rt), $data);
 
-        $response->assertRedirect(route('master.wilayah.index'));
+        $response->assertRedirect(route('master.rt.show', $rt));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('rt_rw_pengurus', [
             'penduduk_id' => $penduduk->id,
             'jabatan_id' => $jabatan->id,
+            'rt_id' => $rt->id,
         ]);
     }
 
-    public function test_store_wilayah_validates_penduduk_id_required(): void
+    public function test_store_rt_pengurus_validates_penduduk_id_required(): void
     {
+        $rt = Rt::factory()->create();
         $jabatan = JabatanRtRw::factory()->create();
 
-        $response = $this->actingAs($this->admin)->post(route('admin.wilayah.store'), [
+        $response = $this->actingAs($this->admin)->post(route('master.rt.pengurus.store', $rt), [
             'jabatan_id' => $jabatan->id,
             'status' => 'aktif',
         ]);
@@ -140,12 +93,13 @@ class WilayahControllerTest extends TestCase
         $response->assertSessionHasErrors('penduduk_id');
     }
 
-    public function test_store_wilayah_validates_status_in_aktif_nonaktif(): void
+    public function test_store_rt_pengurus_validates_status(): void
     {
+        $rt = Rt::factory()->create();
         $penduduk = Penduduk::factory()->create();
         $jabatan = JabatanRtRw::factory()->create();
 
-        $response = $this->actingAs($this->admin)->post(route('admin.wilayah.store'), [
+        $response = $this->actingAs($this->admin)->post(route('master.rt.pengurus.store', $rt), [
             'penduduk_id' => $penduduk->id,
             'jabatan_id' => $jabatan->id,
             'status' => 'invalid_status',
@@ -154,50 +108,109 @@ class WilayahControllerTest extends TestCase
         $response->assertSessionHasErrors('status');
     }
 
-    // ─── EDIT ─────────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // RT → PENGURUS UPDATE
+    // ═══════════════════════════════════════════════════════════════
 
-    public function test_admin_can_view_edit_wilayah_form(): void
+    public function test_admin_can_update_pengurus_for_rt(): void
     {
-        $wilayah = RtRwPengurus::factory()->create();
-
-        $response = $this->actingAs($this->admin)->get(route('admin.wilayah.edit', $wilayah));
-
-        $response->assertStatus(200);
-        $response->assertViewHas('wilayah');
-    }
-
-    // ─── UPDATE ───────────────────────────────────────────────────
-
-    public function test_admin_can_update_wilayah(): void
-    {
-        $wilayah = RtRwPengurus::factory()->create();
+        $rt = Rt::factory()->create();
+        $pengurus = RtRwPengurus::factory()->create(['rt_id' => $rt->id, 'rw_id' => $rt->rw_id]);
         $newJabatan = JabatanRtRw::factory()->create();
 
-        $response = $this->actingAs($this->admin)->put(route('admin.wilayah.update', $wilayah), [
-            'penduduk_id' => $wilayah->penduduk_id,
-            'kelurahan_id' => $wilayah->kelurahan_id,
-            'jabatan_id' => $newJabatan->id,
-            'status' => 'aktif',
-        ]);
+        $response = $this->actingAs($this->admin)->put(
+            route('master.rt.pengurus.update', [$rt, $pengurus]),
+            [
+                'penduduk_id' => $pengurus->penduduk_id,
+                'jabatan_id' => $newJabatan->id,
+                'status' => 'aktif',
+            ]
+        );
 
-        $response->assertRedirect(route('master.wilayah.index'));
+        $response->assertRedirect(route('master.rt.show', $rt));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('rt_rw_pengurus', [
-            'id' => $wilayah->id,
+            'id' => $pengurus->id,
             'jabatan_id' => $newJabatan->id,
         ]);
     }
 
-    // ─── DESTROY ──────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════════════════
+    // RT → PENGURUS DESTROY
+    // ═══════════════════════════════════════════════════════════════
 
-    public function test_admin_can_delete_wilayah(): void
+    public function test_admin_can_delete_pengurus_for_rt(): void
     {
-        $wilayah = RtRwPengurus::factory()->create();
+        $rt = Rt::factory()->create();
+        $pengurus = RtRwPengurus::factory()->create(['rt_id' => $rt->id, 'rw_id' => $rt->rw_id]);
 
-        $response = $this->actingAs($this->admin)->delete(route('admin.wilayah.destroy', $wilayah));
+        $response = $this->actingAs($this->admin)->delete(
+            route('master.rt.pengurus.destroy', [$rt, $pengurus])
+        );
 
-        $response->assertRedirect(route('master.wilayah.index'));
+        $response->assertRedirect(route('master.rt.show', $rt));
         $response->assertSessionHas('success');
-        $this->assertDatabaseMissing('rt_rw_pengurus', ['id' => $wilayah->id]);
+        $this->assertDatabaseMissing('rt_rw_pengurus', ['id' => $pengurus->id]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // RW SHOW (includes pengurus section)
+    // ═══════════════════════════════════════════════════════════════
+
+    public function test_admin_can_view_rw_show_with_pengurus(): void
+    {
+        $rw = Rw::factory()->create();
+        RtRwPengurus::factory()->create(['rw_id' => $rw->id, 'rt_id' => null]);
+
+        $response = $this->actingAs($this->admin)->get(route('master.rw.show', $rw));
+
+        $response->assertStatus(200);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // RW → PENGURUS STORE
+    // ═══════════════════════════════════════════════════════════════
+
+    public function test_admin_can_store_pengurus_for_rw(): void
+    {
+        $rw = Rw::factory()->create();
+        $penduduk = Penduduk::factory()->create();
+        $jabatan = JabatanRtRw::factory()->create();
+
+        $data = [
+            'penduduk_id' => $penduduk->id,
+            'jabatan_id' => $jabatan->id,
+            'status' => 'aktif',
+            'alamat' => 'Jl. Batua Raya',
+            'no_telp' => '08123456789',
+        ];
+
+        $response = $this->actingAs($this->admin)->post(route('master.rw.pengurus.store', $rw), $data);
+
+        $response->assertRedirect(route('master.rw.show', $rw));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('rt_rw_pengurus', [
+            'penduduk_id' => $penduduk->id,
+            'jabatan_id' => $jabatan->id,
+            'rw_id' => $rw->id,
+        ]);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // RW → PENGURUS DESTROY
+    // ═══════════════════════════════════════════════════════════════
+
+    public function test_admin_can_delete_pengurus_for_rw(): void
+    {
+        $rw = Rw::factory()->create();
+        $pengurus = RtRwPengurus::factory()->create(['rw_id' => $rw->id, 'rt_id' => null]);
+
+        $response = $this->actingAs($this->admin)->delete(
+            route('master.rw.pengurus.destroy', [$rw, $pengurus])
+        );
+
+        $response->assertRedirect(route('master.rw.show', $rw));
+        $response->assertSessionHas('success');
+        $this->assertDatabaseMissing('rt_rw_pengurus', ['id' => $pengurus->id]);
     }
 }

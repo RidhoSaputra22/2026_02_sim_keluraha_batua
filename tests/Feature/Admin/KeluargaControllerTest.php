@@ -40,7 +40,7 @@ class KeluargaControllerTest extends TestCase
     {
         Keluarga::factory()->count(3)->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.keluarga.index'));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.keluarga.index'));
 
         $response->assertStatus(200);
         $response->assertViewHas('keluarga');
@@ -53,7 +53,7 @@ class KeluargaControllerTest extends TestCase
         $keluarga = Keluarga::factory()->create(['no_kk' => '7371012345670001']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.keluarga.index', ['search' => '7371012345670001']));
+            ->get(route('kependudukan.keluarga.index', ['search' => '7371012345670001']));
 
         $response->assertStatus(200);
     }
@@ -64,7 +64,7 @@ class KeluargaControllerTest extends TestCase
         Keluarga::factory()->create(['kepala_keluarga_id' => $penduduk->id]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.keluarga.index', ['search' => 'Pak Budi Istimewa']));
+            ->get(route('kependudukan.keluarga.index', ['search' => 'Pak Budi Istimewa']));
 
         $response->assertStatus(200);
     }
@@ -75,7 +75,7 @@ class KeluargaControllerTest extends TestCase
         Keluarga::factory()->create(['rt_id' => $rt->id]);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.keluarga.index', ['rt' => $rt->id]));
+            ->get(route('kependudukan.keluarga.index', ['rt' => $rt->id]));
 
         $response->assertStatus(200);
     }
@@ -85,7 +85,7 @@ class KeluargaControllerTest extends TestCase
         $keluarga = Keluarga::factory()->create();
 
         $response = $this->actingAs($this->admin)
-            ->get(route('admin.keluarga.index', ['rw' => $keluarga->rt->rw_id]));
+            ->get(route('kependudukan.keluarga.index', ['rw' => $keluarga->rt->rw_id]));
 
         $response->assertStatus(200);
     }
@@ -94,7 +94,7 @@ class KeluargaControllerTest extends TestCase
 
     public function test_admin_can_view_create_keluarga_form(): void
     {
-        $response = $this->actingAs($this->admin)->get(route('admin.keluarga.create'));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.keluarga.create'));
 
         $response->assertStatus(200);
     }
@@ -113,9 +113,9 @@ class KeluargaControllerTest extends TestCase
             'rt_id'                   => $rt->id,
         ];
 
-        $response = $this->actingAs($this->admin)->post(route('admin.keluarga.store'), $data);
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.keluarga.store'), $data);
 
-        $response->assertRedirect(route('admin.keluarga.index'));
+        $response->assertRedirect(route('kependudukan.keluarga.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('keluargas', [
             'no_kk'              => '7371012345670001',
@@ -125,7 +125,7 @@ class KeluargaControllerTest extends TestCase
 
     public function test_store_keluarga_validates_no_kk_required(): void
     {
-        $response = $this->actingAs($this->admin)->post(route('admin.keluarga.store'), [
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.keluarga.store'), [
             'kepala_keluarga_id' => 1,
         ]);
 
@@ -136,7 +136,7 @@ class KeluargaControllerTest extends TestCase
     {
         Keluarga::factory()->create(['no_kk' => '7371012345670001']);
 
-        $response = $this->actingAs($this->admin)->post(route('admin.keluarga.store'), [
+        $response = $this->actingAs($this->admin)->post(route('kependudukan.keluarga.store'), [
             'no_kk'              => '7371012345670001',
             'kepala_keluarga_id' => 1,
         ]);
@@ -155,7 +155,7 @@ class KeluargaControllerTest extends TestCase
             'rt_id'              => $rt->id,
         ];
 
-        $this->actingAs($this->admin)->post(route('admin.keluarga.store'), $data);
+        $this->actingAs($this->admin)->post(route('kependudukan.keluarga.store'), $data);
 
         $keluarga = Keluarga::where('no_kk', '7371012345670001')->first();
         $this->assertNotNull($keluarga);
@@ -169,7 +169,7 @@ class KeluargaControllerTest extends TestCase
     {
         $keluarga = Keluarga::factory()->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.keluarga.show', $keluarga));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.keluarga.show', $keluarga));
 
         $response->assertStatus(200);
         $response->assertViewHas('keluarga');
@@ -180,7 +180,7 @@ class KeluargaControllerTest extends TestCase
         $keluarga = Keluarga::factory()->create();
         Penduduk::factory()->count(3)->create(['keluarga_id' => $keluarga->id]);
 
-        $response = $this->actingAs($this->admin)->get(route('admin.keluarga.show', $keluarga));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.keluarga.show', $keluarga));
 
         $response->assertStatus(200);
     }
@@ -191,7 +191,7 @@ class KeluargaControllerTest extends TestCase
     {
         $keluarga = Keluarga::factory()->create();
 
-        $response = $this->actingAs($this->admin)->get(route('admin.keluarga.edit', $keluarga));
+        $response = $this->actingAs($this->admin)->get(route('kependudukan.keluarga.edit', $keluarga));
 
         $response->assertStatus(200);
         $response->assertViewHas('keluarga');
@@ -204,12 +204,12 @@ class KeluargaControllerTest extends TestCase
         $keluarga = Keluarga::factory()->create();
         $newPenduduk = Penduduk::factory()->create();
 
-        $response = $this->actingAs($this->admin)->put(route('admin.keluarga.update', $keluarga), [
+        $response = $this->actingAs($this->admin)->put(route('kependudukan.keluarga.update', $keluarga), [
             'no_kk'              => $keluarga->no_kk,
             'kepala_keluarga_id' => $newPenduduk->id,
         ]);
 
-        $response->assertRedirect(route('admin.keluarga.index'));
+        $response->assertRedirect(route('kependudukan.keluarga.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseHas('keluargas', [
             'id'                 => $keluarga->id,
@@ -221,11 +221,11 @@ class KeluargaControllerTest extends TestCase
     {
         $keluarga = Keluarga::factory()->create(['no_kk' => '7371012345670001']);
 
-        $response = $this->actingAs($this->admin)->put(route('admin.keluarga.update', $keluarga), [
+        $response = $this->actingAs($this->admin)->put(route('kependudukan.keluarga.update', $keluarga), [
             'no_kk' => '7371012345670001',
         ]);
 
-        $response->assertRedirect(route('admin.keluarga.index'));
+        $response->assertRedirect(route('kependudukan.keluarga.index'));
         $response->assertSessionHas('success');
     }
 
@@ -235,9 +235,9 @@ class KeluargaControllerTest extends TestCase
     {
         $keluarga = Keluarga::factory()->create();
 
-        $response = $this->actingAs($this->admin)->delete(route('admin.keluarga.destroy', $keluarga));
+        $response = $this->actingAs($this->admin)->delete(route('kependudukan.keluarga.destroy', $keluarga));
 
-        $response->assertRedirect(route('admin.keluarga.index'));
+        $response->assertRedirect(route('kependudukan.keluarga.index'));
         $response->assertSessionHas('success');
         $this->assertDatabaseMissing('keluargas', ['id' => $keluarga->id]);
     }

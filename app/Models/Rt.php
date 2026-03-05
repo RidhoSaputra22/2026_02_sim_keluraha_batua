@@ -12,8 +12,21 @@ class Rt extends Model {
 
     protected $fillable = [
         'rw_id',
-        'nomor'
+        'nomor',
+        'foto',
+        'luas_area',
+        'alamat_pos',
+        'no_telp',
+        'deskripsi',
+        'fasilitas',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'luas_area' => 'decimal:2',
+        ];
+    }
 
 
     public function rw()
@@ -34,6 +47,11 @@ class Rt extends Model {
     public function umkms()
     {
         return $this->hasMany(Umkm::class);
+    }
+
+    public function pengurus()
+    {
+        return $this->hasMany(RtRwPengurus::class);
     }
 }
 

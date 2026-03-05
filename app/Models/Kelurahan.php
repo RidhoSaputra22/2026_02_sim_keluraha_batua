@@ -15,7 +15,30 @@ class Kelurahan extends Model {
         'kecamatan_id',
         'nama',
         'polygon',
+        'foto',
+        'kode_pos',
+        'luas_area',
+        'alamat_kantor',
+        'no_telp',
+        'email',
+        'website',
+        'nama_lurah',
+        'nip_lurah',
+        'visi',
+        'misi',
+        'deskripsi',
+        'batas_utara',
+        'batas_selatan',
+        'batas_timur',
+        'batas_barat',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'luas_area' => 'decimal:2',
+        ];
+    }
 
     /**
      * Get polygon as GeoJSON string.
