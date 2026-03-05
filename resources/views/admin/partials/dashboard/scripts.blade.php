@@ -293,6 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const engine = new SimPeta.MapEngine('dashboard-map', {
                 center: [-5.1532008, 119.4682932],
                 zoom: 16,
+                maxZoom:25,
                 zoomPosition: 'bottomleft',
                 useSvgRenderer: true,
             }).init();

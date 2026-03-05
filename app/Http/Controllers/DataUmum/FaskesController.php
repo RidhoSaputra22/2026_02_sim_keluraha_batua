@@ -43,7 +43,7 @@ class FaskesController extends Controller
             $query->where('jenis', $jenis);
         }
 
-        $faskesList = $query->orderBy('nama_rs')->paginate(15)->withQueryString();
+        $faskesList = $query->orderBy('created_at')->paginate(15)->withQueryString();
         $jenisList = Faskes::distinct()->whereNotNull('jenis')->pluck('jenis');
 
 

@@ -18,7 +18,7 @@
                 <x-ui.select label="Kelurahan" name="kelurahan_id" placeholder="Pilih Kelurahan" :options="$kelurahanOptions" selected="{{ old('kelurahan_id', $petugasKebersihan->kelurahan_id) }}" required />
                 <x-ui.input label="Nama" name="nama" placeholder="Nama petugas" value="{{ old('nama', $petugasKebersihan->nama) }}" required />
                 <x-ui.input label="NIK" name="nik" placeholder="Nomor Induk Kependudukan" value="{{ old('nik', $petugasKebersihan->nik) }}" />
-                <x-ui.select label="Jenis Kelamin" name="jenis_kelamin" placeholder="Pilih" :options="['Laki-laki' => 'Laki-laki', 'Perempuan' => 'Perempuan']" selected="{{ old('jenis_kelamin', $petugasKebersihan->jenis_kelamin) }}" />
+                <x-ui.select label="Jenis Kelamin" name="jenis_kelamin" placeholder="Pilih" :options="['L' => 'Laki-laki', 'P' => 'Perempuan']" selected="{{ old('jenis_kelamin', $petugasKebersihan->jenis_kelamin) }}" />
                 <x-ui.input label="Pekerjaan" name="pekerjaan" placeholder="Pekerjaan" value="{{ old('pekerjaan', $petugasKebersihan->pekerjaan) }}" />
                 <x-ui.input label="Unit Kerja" name="unit_kerja" placeholder="Unit kerja" value="{{ old('unit_kerja', $petugasKebersihan->unit_kerja) }}" />
                 <x-ui.input label="Lokasi" name="lokasi" placeholder="Lokasi penugasan" value="{{ old('lokasi', $petugasKebersihan->lokasi) }}" />

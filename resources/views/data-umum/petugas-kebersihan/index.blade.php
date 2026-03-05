@@ -51,7 +51,13 @@
                         <td class="text-sm text-base-content/60">{{ $petugasList->firstItem() + $loop->index }}</td>
                         <td class="font-medium">{{ $item->nama }}</td>
                         <td class="text-sm">{{ $item->nik ?? '-' }}</td>
-                        <td class="text-sm">{{ $item->jenis_kelamin ?? '-' }}</td>
+                        <td class="text-sm">
+                            {{ match($item->jenis_kelamin) {
+                                'L' => 'Laki-laki',
+                                'P' => 'Perempuan',
+                                default => $item->jenis_kelamin ?? '-',
+                            } }}
+                        </td>
                         <td class="text-sm">{{ $item->unit_kerja ?? '-' }}</td>
                         <td class="text-sm">{{ Str::limit($item->lokasi, 30) }}</td>
                         <td>

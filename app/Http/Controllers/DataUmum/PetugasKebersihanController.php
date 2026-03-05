@@ -45,10 +45,10 @@ class PetugasKebersihanController extends Controller
             'nama' => ['required', 'string', 'max:255'],
             'nik' => ['nullable', 'string', 'max:16'],
             'unit_kerja' => ['nullable', 'string', 'max:255'],
-            'jenis_kelamin' => ['nullable', 'string', 'max:20'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
             'pekerjaan' => ['nullable', 'string', 'max:100'],
             'lokasi' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', 'in:aktif,tidak_aktif'],
         ]);
 
         PetugasKebersihan::create($validated);
@@ -71,10 +71,10 @@ class PetugasKebersihanController extends Controller
             'nama' => ['required', 'string', 'max:255'],
             'nik' => ['nullable', 'string', 'max:16'],
             'unit_kerja' => ['nullable', 'string', 'max:255'],
-            'jenis_kelamin' => ['nullable', 'string', 'max:20'],
+            'jenis_kelamin' => ['nullable', 'in:L,P'],
             'pekerjaan' => ['nullable', 'string', 'max:100'],
             'lokasi' => ['nullable', 'string', 'max:255'],
-            'status' => ['nullable', 'string', 'max:50'],
+            'status' => ['nullable', 'in:aktif,tidak_aktif'],
         ]);
 
         $petugasKebersihan->update($validated);

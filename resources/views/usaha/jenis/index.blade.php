@@ -66,17 +66,17 @@
 
                     {{-- Edit Modal --}}
                     <x-ui.modal id="modal-edit-{{ $jenis->id }}" title="Edit Jenis Usaha">
-                        <form method="POST" action="{{ route('usaha.jenis.update', $jenis) }}">
+                        <form id="form-edit-{{ $jenis->id }}" method="POST" action="{{ route('usaha.jenis.update', $jenis) }}">
                             @csrf @method('PUT')
                             <div class="space-y-4">
                                 <x-ui.input label="Nama Jenis Usaha" name="nama" placeholder="Masukkan nama jenis usaha" value="{{ old('nama', $jenis->nama) }}" required />
                                 <x-ui.input label="Keterangan" name="keterangan" placeholder="Keterangan singkat (opsional)" value="{{ old('keterangan', $jenis->keterangan) }}" />
                             </div>
-                            <x-slot:actions>
-                                <form method="dialog"><x-ui.button type="ghost" :isSubmit="false">Batal</x-ui.button></form>
-                                <x-ui.button type="primary" :isSubmit="true">Simpan</x-ui.button>
-                            </x-slot:actions>
                         </form>
+                        <x-slot:actions>
+                            <form method="dialog"><x-ui.button type="ghost" :isSubmit="false">Batal</x-ui.button></form>
+                            <x-ui.button  type="primary" :isSubmit="true" form="form-edit-{{ $jenis->id }}">Simpan</x-ui.button>
+                        </x-slot:actions>
                     </x-ui.modal>
 
                     @empty
@@ -102,16 +102,39 @@
 
     {{-- Add Modal --}}
     <x-ui.modal id="modal-tambah-jenis" title="Tambah Jenis Usaha">
-        <form method="POST" action="{{ route('usaha.jenis.store') }}">
-            @csrf
-            <div class="space-y-4">
-                <x-ui.input label="Nama Jenis Usaha" name="nama" placeholder="Masukkan nama jenis usaha" value="{{ old('nama') }}" required />
-                <x-ui.input label="Keterangan" name="keterangan" placeholder="Keterangan singkat (opsional)" value="{{ old('keterangan') }}" />
-            </div>
-            <x-slot:actions>
-                <form method="dialog"><x-ui.button type="ghost" :isSubmit="false">Batal</x-ui.button></form>
-                <x-ui.button type="primary" :isSubmit="true">Simpan</x-ui.button>
-            </x-slot:actions>
+
+    <form id="form-tambah-jenis" method="POST" action="{{ route('usaha.jenis.store') }}">
+        @csrf
+
+         <div class="space-y-4">
+            <x-ui.input
+                label="Nama Jenis Usaha"
+                name="nama"
+                placeholder="Masukkan nama jenis usaha"
+                value="{{ old('nama') }}"
+                required
+            />
+
+            <x-ui.input
+                label="Keterangan"
+                name="keterangan"
+                placeholder="Keterangan singkat (opsional)"
+                value="{{ old('keterangan') }}"
+            />
+        </div>
+    </form>
+
+    <x-slot:actions>
+        <form method="dialog">
+            <x-ui.button type="ghost">Batal</x-ui.button>
         </form>
-    </x-ui.modal>
+
+        <x-ui.button  type="primary" :isSubmit="true"
+                form="form-tambah-jenis"
+                >
+            Simpan
+        </x-ui.button>
+    </x-slot:actions>
+
+</x-ui.modal>
 </x-layouts.app>

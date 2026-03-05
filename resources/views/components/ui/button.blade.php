@@ -7,6 +7,8 @@
     @param bool $loading - Show loading state
     @param string $href - If set, renders as anchor tag
     @param bool $disabled - Disabled state
+    @param bool $isSubmit - Whether the button is a submit button (default: true)
+
 --}}
 
 @props([
