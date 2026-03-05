@@ -67,9 +67,9 @@
 
                 <div class="flex items-center gap-2 mb-2">
                     <h3 class="text-lg font-bold">RW {{ str_pad($rw->nomor, 3, '0', STR_PAD_LEFT) }}</h3>
-                    @if ($rw->warna)
+                    @if ($rw->petaPolygon?->warna)
                         <span class="w-4 h-4 rounded-full inline-block border border-base-300"
-                            style="background-color: {{ $rw->warna }}"></span>
+                            style="background-color: {{ $rw->petaPolygon->warna }}"></span>
                     @endif
                 </div>
 

@@ -52,7 +52,7 @@
                         <x-ui.input label="Nomor RW" name="nomor" type="number" required value="{{ old('nomor') }}" placeholder="Contoh: 1" min="1" :error="$errors->first('nomor')" />
                         <div>
                             <label class="label"><span class="label-text font-medium">Warna Peta</span></label>
-                            <input type="color" name="warna" value="{{ old('warna', '#3b82f6') }}" class="w-full h-10 rounded-lg cursor-pointer border border-base-300">
+                            <p class="text-sm text-base-content/60 mt-1">Warna polygon RW dikelola di halaman peta setelah RW dibuat.</p>
                         </div>
                     </div>
                 </x-ui.card>

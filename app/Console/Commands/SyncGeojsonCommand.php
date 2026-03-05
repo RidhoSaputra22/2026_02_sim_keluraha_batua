@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Kelurahan;
+use App\Models\PetaLayer;
+use App\Models\PetaLayerPolygon;
 use App\Models\Rw;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,7 @@ class SyncGeojsonCommand extends Command
                             {--kelurahan-file=geojson/lurah.geojson : Path to Kelurahan GeoJSON file in public disk}
                             {--only= : Sync only "rw" or "kelurahan"}';
 
-    protected $description = 'Sinkronisasi data GeoJSON ke kolom polygon di tabel rws dan kelurahans (PostGIS)';
+    protected $description = 'Sinkronisasi data GeoJSON ke peta_layer_polygons (RW) dan kelurahans (PostGIS)';
 
     public function handle(): int
     {
@@ -35,7 +37,7 @@ class SyncGeojsonCommand extends Command
     }
 
     /**
-     * Sync RW polygons from batua1.geojson.
+     * Sync RW polygons from batua1.geojson into peta_layer_polygons (layer "wilayah-rw").
      */
     private function syncRwPolygons(): void
     {
@@ -54,7 +56,6 @@ class SyncGeojsonCommand extends Command
                 '#00ff00', // Hijau
                 '#0000ff', // Biru
                 '#ffff00', // Kuning
-
             ];
 
         if (! $disk->exists($file)) {
@@ -68,6 +69,21 @@ class SyncGeojsonCommand extends Command
             $this->error('Format GeoJSON RW tidak valid (features tidak ditemukan).');
             return;
         }
+
+        // Ensure the RW layer exists
+        $rwLayer = PetaLayer::firstOrCreate(
+            ['slug' => PetaLayer::LAYER_WILAYAH_RW],
+            [
+                'nama'         => 'Wilayah RW',
+                'deskripsi'    => 'Batas wilayah RW',
+                'warna'        => '#6366f1',
+                'fill_opacity' => 0.30,
+                'stroke_width' => 2.5,
+                'pattern_type' => 'solid',
+                'is_active'    => true,
+                'sort_order'   => 1,
+            ]
+        );
 
         $this->info('Sinkronisasi polygon RW...');
         $synced = 0;
@@ -100,15 +116,25 @@ class SyncGeojsonCommand extends Command
                 continue;
             }
 
-            // Store polygon using PostGIS
+            $warna = $polygonColor[$index % count($polygonColor)];
+            $nama = 'RW ' . str_pad($nomorRw, 2, '0', STR_PAD_LEFT);
             $geometryJson = json_encode($geometry);
 
-            DB::statement(
-                'UPDATE rws SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326), warna = ? WHERE id = ?',
-                [$geometryJson, $polygonColor[$index % count($polygonColor)], $rw->id]
+            // Find or create polygon record in peta_layer_polygons
+            $polygon = PetaLayerPolygon::firstOrCreate(
+                ['peta_layer_id' => $rwLayer->id, 'rw_id' => $rw->id],
+                ['nama' => $nama, 'warna' => $warna]
             );
 
-            $this->line("  ✓ RW {$nomorRw} ({$rwName}) — polygon disimpan");
+            $polygon->update(['nama' => $nama, 'warna' => $warna]);
+
+            // Store polygon geometry using PostGIS
+            DB::statement(
+                'UPDATE peta_layer_polygons SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
+                [$geometryJson, $polygon->id]
+            );
+
+            $this->line("  ✓ RW {$nomorRw} ({$rwName}) — polygon disimpan ke peta_layer_polygons");
             $synced++;
         }
 

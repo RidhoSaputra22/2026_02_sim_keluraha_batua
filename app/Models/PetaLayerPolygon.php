@@ -16,6 +16,8 @@ class PetaLayerPolygon extends Model
         'peta_layer_id',
         'nama',
         'deskripsi',
+        'warna',
+        'rw_id',
         'properties',
     ];
 
@@ -57,6 +59,11 @@ class PetaLayerPolygon extends Model
     public function umkm()
     {
         return $this->hasOne(Umkm::class);
+    }
+
+    public function rw()
+    {
+        return $this->belongsTo(Rw::class);
     }
 
     // ── PostGIS Methods ─────────────────────────────────────

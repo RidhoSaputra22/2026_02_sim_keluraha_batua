@@ -31,7 +31,7 @@ class PetaLayerController extends Controller
         foreach ($layers as $layer) {
 
             $polygons = DB::select(
-                'SELECT id, nama, deskripsi, ST_AsGeoJSON(polygon) as geojson
+                'SELECT id, nama, deskripsi, warna, ST_AsGeoJSON(polygon) as geojson
                  FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
                 [$layer->id]
             );
@@ -45,6 +45,7 @@ class PetaLayerController extends Controller
                             'id' => $p->id,
                             'nama' => $p->nama,
                             'deskripsi' => $p->deskripsi,
+                            'warna' => $p->warna,
                         ],
                         'geometry' => json_decode($p->geojson, true),
                     ];
@@ -103,7 +104,7 @@ class PetaLayerController extends Controller
 
         // Get existing polygons as GeoJSON FeatureCollection
         $polygons = DB::select(
-            'SELECT id, nama, deskripsi, properties, ST_AsGeoJSON(polygon) as geojson
+            'SELECT id, nama, deskripsi, warna, properties, ST_AsGeoJSON(polygon) as geojson
              FROM peta_layer_polygons WHERE peta_layer_id = ? ORDER BY id',
             [$petaLayer->id]
         );
@@ -117,6 +118,7 @@ class PetaLayerController extends Controller
                         'id' => $p->id,
                         'nama' => $p->nama,
                         'deskripsi' => $p->deskripsi,
+                        'warna' => $p->warna,
                     ],
                     'geometry' => json_decode($p->geojson, true),
                 ];
@@ -280,6 +282,7 @@ class PetaLayerController extends Controller
         $request->validate([
             'nama' => ['nullable', 'string', 'max:150'],
             'deskripsi' => ['nullable', 'string'],
+            'warna' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'geojson' => ['required', 'array'],
             'geojson.type' => ['required', 'string'],
             'geojson.coordinates' => ['required', 'array'],
@@ -289,6 +292,7 @@ class PetaLayerController extends Controller
             'peta_layer_id' => $petaLayer->id,
             'nama' => $request->input('nama'),
             'deskripsi' => $request->input('deskripsi'),
+            'warna' => $request->input('warna'),
         ]);
 
         // Convert Polygon to MultiPolygon if needed
@@ -317,12 +321,14 @@ class PetaLayerController extends Controller
         $request->validate([
             'nama' => ['nullable', 'string', 'max:150'],
             'deskripsi' => ['nullable', 'string'],
+            'warna' => ['nullable', 'string', 'max:7', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'geojson' => ['nullable', 'array'],
         ]);
 
         $polygon->update([
             'nama' => $request->input('nama', $polygon->nama),
             'deskripsi' => $request->input('deskripsi', $polygon->deskripsi),
+            'warna' => $request->input('warna', $polygon->warna),
         ]);
 
         if ($request->has('geojson')) {
@@ -370,7 +376,7 @@ class PetaLayerController extends Controller
 
         foreach ($layers as $layer) {
             $polygons = DB::select(
-                'SELECT id, nama, deskripsi, ST_AsGeoJSON(polygon) as geojson
+                'SELECT id, nama, deskripsi, warna, ST_AsGeoJSON(polygon) as geojson
                  FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
                 [$layer->id]
             );
@@ -384,6 +390,7 @@ class PetaLayerController extends Controller
                             'id' => $p->id,
                             'nama' => $p->nama,
                             'deskripsi' => $p->deskripsi,
+                            'warna' => $p->warna,
                         ],
                         'geometry' => json_decode($p->geojson, true),
                     ];

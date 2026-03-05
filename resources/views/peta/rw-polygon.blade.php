@@ -164,16 +164,16 @@
     @push('scripts')
     @php
     $rwPolygonsForJs = collect($allRwPolygons)
-    ->filter(fn($p) => $p->id !== $rw->id && $p->geojson)
+    ->filter(fn($p) => $p->rw_id !== $rw->id && $p->geojson)
     ->map(fn($p) => [
-    'label' => 'RW ' . str_pad($p->nomor, 2, '0', STR_PAD_LEFT),
+    'label' => $p->nama,
     'warna' => $p->warna ?? '#6b7280',
     'geojson' => json_decode($p->geojson),
     ])
     ->values()
     ->toArray();
     $rwId = $rw->id;
-    $rwWarna = $rw->warna ?? '#6366f1';
+    $rwWarnaVal = $rwWarna ?? '#6366f1';
     @endphp
     {{-- Leaflet & Leaflet.Draw already loaded by <x-ui.leaflet-draw> component --}}
     @vite('resources/js/map/index.js')
@@ -181,7 +181,7 @@
     <script>
     const RW_EDITOR = {
         currentRwId: @json($rwId),
-        currentWarna: @json($rwWarna),
+        currentWarna: @json($rwWarnaVal),
         hasExisting: @json((bool) $polygonGeojson),
         kelurahanGeojson: @json($kelurahanGeojson ? json_decode($kelurahanGeojson) : null),
         polygonGeojson: @json($polygonGeojson ? json_decode($polygonGeojson) : null),

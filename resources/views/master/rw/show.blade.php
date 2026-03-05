@@ -47,10 +47,10 @@
                         <span class="text-sm text-base-content/60">Luas Area</span>
                         <span class="font-bold">{{ $rw->luas_area ? $rw->luas_area . ' km²' : '-' }}</span>
                     </div>
-                    @if($rw->warna)
+                    @if($rw->petaPolygon?->warna)
                     <div class="flex justify-between items-center">
                         <span class="text-sm text-base-content/60">Warna Peta</span>
-                        <span class="w-6 h-6 rounded border border-base-300" style="background-color: {{ $rw->warna }}"></span>
+                        <span class="w-6 h-6 rounded border border-base-300" style="background-color: {{ $rw->petaPolygon->warna }}"></span>
                     </div>
                     @endif
                 </div>

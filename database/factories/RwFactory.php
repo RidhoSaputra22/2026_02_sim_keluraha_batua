@@ -14,7 +14,6 @@ class RwFactory extends Factory
         return [
             'kelurahan_id' => \App\Models\Kelurahan::factory(),
             'nomor' => $this->faker->numberBetween(1, 20),
-            'warna' => $this->faker->hexColor(),
         ];
     }
 }

@@ -20,7 +20,7 @@ class RwController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Rw::with('kelurahan', 'rts')->orderBy('nomor');
+        $query = Rw::with('kelurahan', 'rts', 'petaPolygon')->orderBy('nomor');
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -54,7 +54,6 @@ class RwController extends Controller
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
             'nomor' => ['required', 'integer', 'min:1'],
-            'warna' => ['nullable', 'string', 'max:20'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'luas_area' => ['nullable', 'numeric', 'min:0'],
             'alamat_sekretariat' => ['nullable', 'string', 'max:255'],
@@ -88,7 +87,7 @@ class RwController extends Controller
 
     public function show(Rw $rw)
     {
-        $rw->load('kelurahan', 'rts', 'pengurus.penduduk', 'pengurus.jabatan', 'pengurus.user');
+        $rw->load('kelurahan', 'rts', 'pengurus.penduduk', 'pengurus.jabatan', 'pengurus.user', 'petaPolygon');
         $totalRt = $rw->rts->count();
 
         $pendudukList = Penduduk::orderBy('nama')->get(['id', 'nik', 'nama']);
@@ -116,7 +115,6 @@ class RwController extends Controller
     {
         $validated = $request->validate([
             'nomor' => ['required', 'integer', 'min:1'],
-            'warna' => ['nullable', 'string', 'max:20'],
             'foto' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'luas_area' => ['nullable', 'numeric', 'min:0'],
             'alamat_sekretariat' => ['nullable', 'string', 'max:255'],

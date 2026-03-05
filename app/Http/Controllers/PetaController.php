@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Keluarga;
 use App\Models\Kelurahan;
 use App\Models\PetaLayer;
+use App\Models\PetaLayerPolygon;
 use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\Rw;
@@ -56,15 +57,25 @@ class PetaController extends Controller
     }
 
     /**
-     * API: Ambil data GeoJSON wilayah RW beserta statistik dari database (PostGIS).
+     * API: Ambil data GeoJSON wilayah RW dari peta_layer_polygons (layer "wilayah-rw").
      */
     public function geojsonRw(): JsonResponse
     {
-        $rwRows = DB::select(
-            'SELECT id, nomor, warna, ST_AsGeoJSON(polygon) as geojson FROM rws WHERE polygon IS NOT NULL ORDER BY nomor'
+        $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
+
+        if (! $rwLayer) {
+            return response()->json(['error' => 'Layer RW belum tersedia'], 404);
+        }
+
+        $rows = DB::select(
+            'SELECT plp.id, plp.nama, plp.warna, plp.rw_id, ST_AsGeoJSON(plp.polygon) as geojson
+             FROM peta_layer_polygons plp
+             WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
+             ORDER BY plp.nama',
+            [$rwLayer->id]
         );
 
-        if (empty($rwRows)) {
+        if (empty($rows)) {
             return response()->json(['error' => 'Data polygon RW belum tersedia'], 404);
         }
 
@@ -73,15 +84,17 @@ class PetaController extends Controller
 
         $features = [];
 
-        foreach ($rwRows as $index => $rw) {
-            $rwLabel = 'RW '.str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+        foreach ($rows as $index => $row) {
+            $rwLabel = $row->nama; // e.g. "RW 05"
             $stats = $rwStats[$rwLabel] ?? [];
 
             $properties = array_merge(
                 [
                     'id' => $index + 1,
                     'RW' => $rwLabel,
-                    'warna' => $rw->warna ?? '#6b7280',
+                    'warna' => $row->warna ?? '#6b7280',
+                    'polygon_id' => $row->id,
+                    'rw_id' => $row->rw_id,
                 ],
                 $stats
             );
@@ -89,7 +102,7 @@ class PetaController extends Controller
             $features[] = [
                 'type' => 'Feature',
                 'properties' => $properties,
-                'geometry' => json_decode($rw->geojson, true),
+                'geometry' => json_decode($row->geojson, true),
             ];
         }
 
@@ -156,7 +169,7 @@ class PetaController extends Controller
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  RW Polygon Management API
+    //  RW Polygon Management API (via peta_layer_polygons)
     // ═══════════════════════════════════════════════════════════
 
     /**
@@ -165,21 +178,32 @@ class PetaController extends Controller
     public function editRwPolygon(Rw $rw)
     {
         $rwList = Rw::orderBy('nomor')->get();
+        $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
 
-        // Get current polygon as GeoJSON
+        // Get current polygon from peta_layer_polygons
         $polygonGeojson = null;
-        $row = DB::selectOne(
-            'SELECT ST_AsGeoJSON(polygon) as geojson FROM rws WHERE id = ? AND polygon IS NOT NULL',
-            [$rw->id]
-        );
-        if ($row && $row->geojson) {
-            $polygonGeojson = $row->geojson;
+        $currentPolygonRecord = null;
+        if ($rwLayer) {
+            $currentPolygonRecord = DB::selectOne(
+                'SELECT id, warna, ST_AsGeoJSON(polygon) as geojson FROM peta_layer_polygons WHERE peta_layer_id = ? AND rw_id = ? AND polygon IS NOT NULL',
+                [$rwLayer->id, $rw->id]
+            );
+            if ($currentPolygonRecord && $currentPolygonRecord->geojson) {
+                $polygonGeojson = $currentPolygonRecord->geojson;
+            }
         }
 
         // Get all RW polygons for reference overlay
-        $allRwPolygons = DB::select(
-            'SELECT id, nomor, warna, ST_AsGeoJSON(polygon) as geojson FROM rws WHERE polygon IS NOT NULL ORDER BY nomor'
-        );
+        $allRwPolygons = [];
+        if ($rwLayer) {
+            $allRwPolygons = DB::select(
+                'SELECT plp.id, plp.nama, plp.warna, plp.rw_id, ST_AsGeoJSON(plp.polygon) as geojson
+                 FROM peta_layer_polygons plp
+                 WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
+                 ORDER BY plp.nama',
+                [$rwLayer->id]
+            );
+        }
 
         // Get kelurahan boundary
         $kelurahanGeojson = null;
@@ -190,11 +214,13 @@ class PetaController extends Controller
             $kelurahanGeojson = $kel->geojson;
         }
 
-        return view('peta.rw-polygon', compact('rw', 'rwList', 'polygonGeojson', 'allRwPolygons', 'kelurahanGeojson'));
+        $rwWarna = $currentPolygonRecord->warna ?? '#6366f1';
+
+        return view('peta.rw-polygon', compact('rw', 'rwList', 'polygonGeojson', 'allRwPolygons', 'kelurahanGeojson', 'rwWarna'));
     }
 
     /**
-     * API: Simpan/update polygon RW.
+     * API: Simpan/update polygon RW (into peta_layer_polygons).
      */
     public function updateRwPolygon(Request $request, Rw $rw): JsonResponse
     {
@@ -215,15 +241,35 @@ class PetaController extends Controller
             ];
         }
 
-        $rw->setPolygonFromGeojson($geojson);
+        $rwLayer = PetaLayer::firstOrCreate(
+            ['slug' => PetaLayer::LAYER_WILAYAH_RW],
+            [
+                'nama'         => 'Wilayah RW',
+                'deskripsi'    => 'Batas wilayah RW',
+                'warna'        => '#6366f1',
+                'fill_opacity' => 0.30,
+                'stroke_width' => 2.5,
+                'pattern_type' => 'solid',
+                'is_active'    => true,
+                'sort_order'   => 1,
+            ]
+        );
 
-        if ($request->has('warna')) {
-            $rw->update(['warna' => $request->input('warna')]);
-        }
+        $rwNama = 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+        $warna = $request->input('warna', '#6366f1');
+
+        // Find or create polygon record
+        $polygon = PetaLayerPolygon::firstOrCreate(
+            ['peta_layer_id' => $rwLayer->id, 'rw_id' => $rw->id],
+            ['nama' => $rwNama, 'warna' => $warna]
+        );
+
+        $polygon->update(['nama' => $rwNama, 'warna' => $warna]);
+        $polygon->setPolygonFromGeojson($geojson);
 
         return response()->json([
             'success' => true,
-            'message' => 'Polygon RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) . ' berhasil disimpan.',
+            'message' => 'Polygon ' . $rwNama . ' berhasil disimpan.',
         ]);
     }
 
@@ -232,11 +278,22 @@ class PetaController extends Controller
      */
     public function deleteRwPolygon(Rw $rw): JsonResponse
     {
-        DB::statement('UPDATE rws SET polygon = NULL WHERE id = ?', [$rw->id]);
+        $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
+        $rwNama = 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+
+        if ($rwLayer) {
+            $polygon = PetaLayerPolygon::where('peta_layer_id', $rwLayer->id)
+                ->where('rw_id', $rw->id)
+                ->first();
+
+            if ($polygon) {
+                DB::statement('UPDATE peta_layer_polygons SET polygon = NULL WHERE id = ?', [$polygon->id]);
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Polygon RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) . ' berhasil dihapus.',
+            'message' => 'Polygon ' . $rwNama . ' berhasil dihapus.',
         ]);
     }
 
@@ -249,11 +306,18 @@ class PetaController extends Controller
             'warna' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
-        $rw->update(['warna' => $request->input('warna')]);
+        $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
+        $rwNama = 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+
+        if ($rwLayer) {
+            PetaLayerPolygon::where('peta_layer_id', $rwLayer->id)
+                ->where('rw_id', $rw->id)
+                ->update(['warna' => $request->input('warna')]);
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Warna RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT) . ' berhasil diperbarui.',
+            'message' => 'Warna ' . $rwNama . ' berhasil diperbarui.',
         ]);
     }
 }

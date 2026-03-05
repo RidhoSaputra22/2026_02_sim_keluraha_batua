@@ -15,6 +15,22 @@ class PetaLayerFasilitasSeeder extends Seeder
      */
     public function run(): void
     {
+        // Layer RW (wilayah batas RW)
+        PetaLayer::updateOrCreate(
+            ['slug' => PetaLayer::LAYER_WILAYAH_RW],
+            [
+                'nama'         => 'Wilayah RW',
+                'deskripsi'    => 'Batas wilayah RW',
+                'warna'        => '#6366f1',
+                'fill_opacity' => 0.30,
+                'stroke_width' => 2.5,
+                'pattern_type' => 'solid',
+                'is_active'    => true,
+                'sort_order'   => 1,
+            ]
+        );
+
+        // Layer fasilitas
         foreach (PetaLayer::facilityLayers() as $slug => $config) {
             PetaLayer::updateOrCreate(
                 ['slug' => $slug],
@@ -31,6 +47,6 @@ class PetaLayerFasilitasSeeder extends Seeder
             );
         }
 
-        $this->command->info('✓ 6 layer peta fasilitas berhasil di-seed.');
+        $this->command->info('✓ 1 layer RW + 6 layer peta fasilitas berhasil di-seed.');
     }
 }
