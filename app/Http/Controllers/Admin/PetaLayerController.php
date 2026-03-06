@@ -366,35 +366,64 @@ class PetaLayerController extends Controller
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * API: Ambil semua layer aktif dengan polygon sebagai GeoJSON.
+     * API: Ambil semua layer aktif dengan polygon sebagai GeoJSON (unified endpoint).
+     *
+     * Returns ALL layers (kelurahan, RW, custom) sorted by sort_order.
+     * Each layer includes a `layer_type` field: 'kelurahan', 'rw', or 'custom'.
+     * RW layer features include per-RW statistics.
      */
     public function geojsonLayers(): JsonResponse
     {
         $layers = PetaLayer::active()->has('polygons')->ordered()->get();
 
+        // Precompute RW stats for the RW layer
+        $rwStats = [];
+        if ($layers->contains('slug', PetaLayer::LAYER_WILAYAH_RW)) {
+            $rwStats = $this->getRwStats();
+        }
+
         $result = [];
 
         foreach ($layers as $layer) {
+            $layerType = match ($layer->slug) {
+                PetaLayer::LAYER_BATAS_KELURAHAN => 'kelurahan',
+                PetaLayer::LAYER_WILAYAH_RW      => 'rw',
+                default                          => 'custom',
+            };
+
             $polygons = DB::select(
-                'SELECT id, nama, deskripsi, warna, ST_AsGeoJSON(polygon) as geojson
+                'SELECT id, nama, deskripsi, warna, rw_id, kelurahan_id, ST_AsGeoJSON(polygon) as geojson
                  FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
                 [$layer->id]
             );
 
             $features = [];
-            foreach ($polygons as $p) {
-                if ($p->geojson) {
-                    $features[] = [
-                        'type' => 'Feature',
-                        'properties' => [
-                            'id' => $p->id,
-                            'nama' => $p->nama,
-                            'deskripsi' => $p->deskripsi,
-                            'warna' => $p->warna,
-                        ],
-                        'geometry' => json_decode($p->geojson, true),
-                    ];
+            foreach ($polygons as $index => $p) {
+                if (! $p->geojson) {
+                    continue;
                 }
+
+                $properties = [
+                    'id' => $p->id,
+                    'nama' => $p->nama,
+                    'deskripsi' => $p->deskripsi,
+                    'warna' => $p->warna,
+                ];
+
+                // Enrich RW features with stats
+                if ($layerType === 'rw' && $p->nama) {
+                    $properties['RW'] = $p->nama;
+                    $properties['polygon_id'] = $p->id;
+                    $properties['rw_id'] = $p->rw_id;
+                    $stats = $rwStats[$p->nama] ?? [];
+                    $properties = array_merge($properties, $stats);
+                }
+
+                $features[] = [
+                    'type' => 'Feature',
+                    'properties' => $properties,
+                    'geometry' => json_decode($p->geojson, true),
+                ];
             }
 
             $result[] = [
@@ -405,6 +434,8 @@ class PetaLayerController extends Controller
                 'fill_opacity' => $layer->fill_opacity,
                 'stroke_width' => $layer->stroke_width,
                 'pattern_type' => $layer->pattern_type,
+                'sort_order' => $layer->sort_order,
+                'layer_type' => $layerType,
                 'geojson' => [
                     'type' => 'FeatureCollection',
                     'features' => $features,
@@ -413,5 +444,36 @@ class PetaLayerController extends Controller
         }
 
         return response()->json($result);
+    }
+
+    /**
+     * Hitung statistik per RW dari database.
+     */
+    private function getRwStats(): array
+    {
+        $rwList = \App\Models\Rw::with(['rts'])->get();
+        $stats = [];
+
+        foreach ($rwList as $rw) {
+            $rwLabel = 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+            $rtIds = $rw->rts->pluck('id')->toArray();
+
+            $totalPenduduk = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->count();
+            $totalKK = \App\Models\Keluarga::whereIn('rt_id', $rtIds)->count();
+            $totalUmkm = \App\Models\Umkm::whereIn('rt_id', $rtIds)->count();
+            $lakiLaki = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->where('jenis_kelamin', 'L')->count();
+            $perempuan = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->where('jenis_kelamin', 'P')->count();
+
+            $stats[$rwLabel] = [
+                'total_penduduk' => $totalPenduduk,
+                'total_kk' => $totalKK,
+                'total_rt' => count($rtIds),
+                'total_umkm' => $totalUmkm,
+                'laki_laki' => $lakiLaki,
+                'perempuan' => $perempuan,
+            ];
+        }
+
+        return $stats;
     }
 }

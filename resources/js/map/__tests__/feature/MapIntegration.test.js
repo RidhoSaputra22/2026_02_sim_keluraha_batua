@@ -2,15 +2,13 @@
  * Feature tests — Full map engine integration scenarios.
  *
  * These tests verify that multiple components work together
- * (MapEngine + layers + patterns + editor) as a cohesive system.
+ * (MapEngine + LayerManager + patterns + editor) as a cohesive system.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import MapEngine from "../../MapEngine";
-import KelurahanLayer from "../../layers/KelurahanLayer";
-import RwLayer from "../../layers/RwLayer";
-import CustomLayerManager from "../../layers/CustomLayerManager";
+import LayerManager from "../../layers/LayerManager";
 
-// ── Test data ───────────────────────────────────────────────
+// ── Test data (unified format with layer_type) ──────────────
 const kelurahanGeojson = {
     type: "FeatureCollection",
     features: [
@@ -111,37 +109,61 @@ const rwGeojson = {
     ],
 };
 
-const customLayersData = [
-    {
-        id: 1,
-        nama: "Tempat Ibadah",
-        slug: "tempat-ibadah",
-        warna: "#10b981",
-        fill_opacity: 0.3,
-        stroke_width: 2,
-        pattern_type: "dots",
-        geojson: {
-            type: "FeatureCollection",
-            features: [
-                {
-                    type: "Feature",
-                    properties: { nama: "Masjid Al-Ikhlas" },
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: [
-                            [
-                                [119.46, -5.15],
-                                [119.465, -5.15],
-                                [119.465, -5.155],
-                                [119.46, -5.15],
-                            ],
+// Unified layer data wrappers
+const kelLayerData = {
+    id: 100,
+    layer_type: "kelurahan",
+    nama: "Kelurahan Batua",
+    slug: "kelurahan-batua",
+    warna: "#1e293b",
+    fill_opacity: 0.02,
+    stroke_width: 3,
+    pattern_type: "solid",
+    geojson: kelurahanGeojson,
+};
+
+const rwLayerData = {
+    id: 200,
+    layer_type: "rw",
+    nama: "RW Layer",
+    slug: "rw-layer",
+    warna: "#6b7280",
+    fill_opacity: 0.3,
+    stroke_width: 2.5,
+    pattern_type: "solid",
+    geojson: rwGeojson,
+};
+
+const customLayerData = {
+    id: 1,
+    layer_type: "custom",
+    nama: "Tempat Ibadah",
+    slug: "tempat-ibadah",
+    warna: "#10b981",
+    fill_opacity: 0.3,
+    stroke_width: 2,
+    pattern_type: "dots",
+    geojson: {
+        type: "FeatureCollection",
+        features: [
+            {
+                type: "Feature",
+                properties: { nama: "Masjid Al-Ikhlas" },
+                geometry: {
+                    type: "Polygon",
+                    coordinates: [
+                        [
+                            [119.46, -5.15],
+                            [119.465, -5.15],
+                            [119.465, -5.155],
+                            [119.46, -5.15],
                         ],
-                    },
+                    ],
                 },
-            ],
-        },
+            },
+        ],
     },
-];
+};
 
 // ── Feature: Full Map Initialization ────────────────────────
 describe("Feature: Map Initialization & Layer Loading", () => {
@@ -161,40 +183,37 @@ describe("Feature: Map Initialization & Layer Loading", () => {
         expect(engine.patterns).not.toBeNull();
     });
 
-    it("loads kelurahan boundary and RW polygons in sequence", () => {
+    it("loads kelurahan boundary and RW polygons via renderAll", () => {
         engine = new MapEngine("map").init();
 
-        const kelurahan = new KelurahanLayer(engine);
-        kelurahan.render(kelurahanGeojson);
-        expect(kelurahan.layer).not.toBeNull();
-        expect(kelurahan.bounds).not.toBeNull();
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([kelLayerData, rwLayerData]);
 
-        const rw = new RwLayer(engine);
-        rw.render(rwGeojson);
-        expect(rw.layer).not.toBeNull();
-        expect(rw.dataList).toHaveLength(3);
-        expect(rw.colors).toHaveProperty("RW 01");
-        expect(rw.colors).toHaveProperty("RW 02");
-        expect(rw.colors).toHaveProperty("RW 03");
+        expect(mgr.kelurahanLayer).not.toBeNull();
+        expect(mgr.kelurahanBounds).not.toBeNull();
+        expect(mgr.rwLayer).not.toBeNull();
+        expect(mgr.rwDataList).toHaveLength(3);
+        expect(mgr.rwColors).toHaveProperty("RW 01");
+        expect(mgr.rwColors).toHaveProperty("RW 02");
+        expect(mgr.rwColors).toHaveProperty("RW 03");
     });
 
     it("passes engine.patterns to RW layer for hatch rendering", () => {
         engine = new MapEngine("map").init();
 
-        // Spy on patterns method
         const spy = vi.spyOn(engine.patterns, "applyRwPatterns");
 
-        const rw = new RwLayer(engine);
-        rw.render(rwGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([rwLayerData]);
 
-        expect(spy).toHaveBeenCalledWith(rw.colors, rw.layerMap);
+        expect(spy).toHaveBeenCalledWith(mgr.rwColors, mgr.rwLayerMap);
     });
 });
 
 // ── Feature: RW Selection Workflow ──────────────────────────
 describe("Feature: RW Selection & Interaction", () => {
     let engine;
-    let rw;
+    let mgr;
     let selectHistory;
     let deselectCount;
 
@@ -207,20 +226,20 @@ describe("Feature: RW Selection & Interaction", () => {
         deselectCount = 0;
 
         engine = new MapEngine("map").init();
-        engine.flyToBounds = vi.fn(); // mock since it delegates to map
+        engine.flyToBounds = vi.fn();
 
-        rw = new RwLayer(engine, {
-            onSelect: (name, data) => selectHistory.push({ name, data }),
-            onDeselect: () => deselectCount++,
+        mgr = new LayerManager(engine, {
+            onRwSelect: (name, data) => selectHistory.push({ name, data }),
+            onRwDeselect: () => deselectCount++,
         });
-        rw.render(rwGeojson);
+        mgr.renderAll([rwLayerData]);
 
-        // Setup mock layers in layerMap
+        // Setup mock layers in rwLayerMap
         ["RW 01", "RW 02", "RW 03"].forEach((name) => {
             const layer = globalThis.__mockLayer();
             layer.feature = { properties: { RW: name } };
-            rw.layerMap[name] = layer;
-            rw.colors[name] =
+            mgr.rwLayerMap[name] = layer;
+            mgr.rwColors[name] =
                 rwGeojson.features.find(
                     (f) => f.properties.RW === name,
                 )?.properties.warna || "#6b7280";
@@ -228,36 +247,36 @@ describe("Feature: RW Selection & Interaction", () => {
     });
 
     it("selects RW and fires callback with correct data", () => {
-        rw.select("RW 01");
+        mgr.selectRw("RW 01");
 
-        expect(rw.selectedRw).toBe("RW 01");
+        expect(mgr.selectedRw).toBe("RW 01");
         expect(selectHistory).toHaveLength(1);
         expect(selectHistory[0].name).toBe("RW 01");
     });
 
     it("switching selection from one RW to another", () => {
-        rw.select("RW 01");
-        expect(rw.selectedRw).toBe("RW 01");
+        mgr.selectRw("RW 01");
+        expect(mgr.selectedRw).toBe("RW 01");
 
-        rw.select("RW 02");
-        expect(rw.selectedRw).toBe("RW 02");
+        mgr.selectRw("RW 02");
+        expect(mgr.selectedRw).toBe("RW 02");
         expect(selectHistory).toHaveLength(2);
     });
 
     it("toggling same RW deselects", () => {
-        rw.select("RW 01");
-        rw.select("RW 01");
+        mgr.selectRw("RW 01");
+        mgr.selectRw("RW 01");
 
-        expect(rw.selectedRw).toBeNull();
+        expect(mgr.selectedRw).toBeNull();
         expect(deselectCount).toBe(1);
     });
 
     it("deselect clears everything", () => {
-        rw.select("RW 02");
-        rw.deselect();
+        mgr.selectRw("RW 02");
+        mgr.deselectRw();
 
-        expect(rw.selectedRw).toBeNull();
-        expect(rw._highlightedLayer).toBeNull();
+        expect(mgr.selectedRw).toBeNull();
+        expect(mgr._highlightedRw).toBeNull();
         expect(deselectCount).toBe(1);
     });
 });
@@ -275,43 +294,41 @@ describe("Feature: Layer Visibility Management", () => {
     });
 
     it("toggling kelurahan boundary visibility", () => {
-        const kelurahan = new KelurahanLayer(engine);
-        kelurahan.render(kelurahanGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([kelLayerData]);
 
-        expect(kelurahan.visible).toBe(true);
+        expect(mgr.showKelurahan).toBe(true);
 
-        kelurahan.toggle(false);
-        expect(kelurahan.visible).toBe(false);
+        mgr.toggleKelurahan(false);
+        expect(mgr.showKelurahan).toBe(false);
         expect(engine.map.removeLayer).toHaveBeenCalled();
 
-        kelurahan.toggle(true);
-        expect(kelurahan.visible).toBe(true);
+        mgr.toggleKelurahan(true);
+        expect(mgr.showKelurahan).toBe(true);
         expect(engine.map.addLayer).toHaveBeenCalled();
     });
 
     it("toggling RW layer hides both polygons and labels", () => {
-        const rw = new RwLayer(engine);
-        rw.render(rwGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([rwLayerData]);
 
-        rw.toggle(false);
-        expect(rw.visible).toBe(false);
-        // removeLayer should be called for both the polygon layer and label layer
+        mgr.toggleRw(false);
+        expect(mgr.showRw).toBe(false);
         expect(engine.map.removeLayer).toHaveBeenCalled();
     });
 
     it("toggling RW labels independently", () => {
-        const rw = new RwLayer(engine);
-        rw.render(rwGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([rwLayerData]);
 
-        // Labels visible by default
-        expect(rw.labelsVisible).toBe(true);
+        expect(mgr.showRwLabels).toBe(true);
 
-        rw.toggleLabels(false);
-        expect(rw.labelsVisible).toBe(false);
+        mgr.toggleRwLabels(false);
+        expect(mgr.showRwLabels).toBe(false);
         expect(engine.map.removeLayer).toHaveBeenCalled();
 
-        rw.toggleLabels(true);
-        expect(rw.labelsVisible).toBe(true);
+        mgr.toggleRwLabels(true);
+        expect(mgr.showRwLabels).toBe(true);
         expect(engine.map.addLayer).toHaveBeenCalled();
     });
 });
@@ -332,29 +349,19 @@ describe("Feature: Custom Layer Loading & Toggle", () => {
         };
     });
 
-    it("loads custom layers from API and renders on map", async () => {
-        globalThis.fetch.mockResolvedValue({
-            ok: true,
-            json: () => Promise.resolve(customLayersData),
-        });
+    it("renders custom layers via renderAll", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([customLayerData]);
 
-        const mgr = new CustomLayerManager(engine);
-        const layers = await mgr.load("/peta/custom-layers");
-
-        expect(layers).toHaveLength(1);
-        expect(layers[0].nama).toBe("Tempat Ibadah");
-        expect(layers[0].visible).toBe(true);
+        expect(mgr.customLayers).toHaveLength(1);
+        expect(mgr.customLayers[0].nama).toBe("Tempat Ibadah");
+        expect(mgr.customLayers[0].visible).toBe(true);
         expect(L.geoJSON).toHaveBeenCalled();
     });
 
-    it("applies non-solid pattern to custom layer", async () => {
-        globalThis.fetch.mockResolvedValue({
-            ok: true,
-            json: () => Promise.resolve(customLayersData),
-        });
-
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/custom-layers");
+    it("applies non-solid pattern to custom layer", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([customLayerData]);
 
         expect(engine.patterns.applyCustomLayerPattern).toHaveBeenCalledWith(
             "tempat-ibadah",
@@ -365,20 +372,15 @@ describe("Feature: Custom Layer Loading & Toggle", () => {
         );
     });
 
-    it("toggles custom layer on and off", async () => {
-        globalThis.fetch.mockResolvedValue({
-            ok: true,
-            json: () => Promise.resolve(customLayersData),
-        });
+    it("toggles custom layer on and off", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([customLayerData]);
 
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/custom-layers");
+        mgr.toggleCustomLayer(1);
+        expect(mgr.customLayers[0].visible).toBe(false);
 
-        mgr.toggle(1);
-        expect(mgr.layers[0].visible).toBe(false);
-
-        mgr.toggle(1);
-        expect(mgr.layers[0].visible).toBe(true);
+        mgr.toggleCustomLayer(1);
+        expect(mgr.customLayers[0].visible).toBe(true);
     });
 });
 
@@ -393,46 +395,38 @@ describe("Feature: API Data Loading Pipeline", () => {
         engine = new MapEngine("map").init();
     });
 
-    it("loads kelurahan boundary from API", async () => {
+    it("loads all layers from unified API endpoint", async () => {
+        const allLayers = [kelLayerData, rwLayerData, customLayerData];
+
         globalThis.fetch.mockResolvedValue({
             ok: true,
-            json: () => Promise.resolve(kelurahanGeojson),
+            json: () => Promise.resolve(allLayers),
+            text: () => Promise.resolve(JSON.stringify(allLayers)),
         });
 
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
-            "/peta/geojson/kelurahan",
+            "/peta/geojson/layers",
             expect.any(Object),
         );
-        expect(kelurahan.layer).not.toBeNull();
-    });
-
-    it("loads RW GeoJSON from API", async () => {
-        globalThis.fetch.mockResolvedValue({
-            ok: true,
-            json: () => Promise.resolve(rwGeojson),
-        });
-
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        expect(globalThis.fetch).toHaveBeenCalledWith(
-            "/peta/geojson/rw",
-            expect.any(Object),
-        );
-        expect(rw.dataList).toHaveLength(3);
+        expect(mgr.kelurahanLayer).not.toBeNull();
+        expect(mgr.rwDataList).toHaveLength(3);
+        expect(mgr.customLayers).toHaveLength(1);
     });
 
     it("provides correct headers including CSRF token", async () => {
+        const allLayers = [kelLayerData];
+
         globalThis.fetch.mockResolvedValue({
             ok: true,
-            json: () => Promise.resolve(kelurahanGeojson),
+            json: () => Promise.resolve(allLayers),
+            text: () => Promise.resolve(JSON.stringify(allLayers)),
         });
 
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
 
         const [, opts] = globalThis.fetch.mock.calls[0];
         expect(opts.headers["X-CSRF-TOKEN"]).toBe("test-csrf-token-12345");
@@ -442,13 +436,14 @@ describe("Feature: API Data Loading Pipeline", () => {
     it("handles API errors gracefully without crashing map", async () => {
         globalThis.fetch.mockRejectedValue(new Error("Network error"));
 
-        const kelurahan = new KelurahanLayer(engine);
-        await expect(
-            kelurahan.load("/peta/geojson/kelurahan"),
-        ).rejects.toThrow();
+        const mgr = new LayerManager(engine);
+        // load() catches errors internally
+        await mgr.load("/peta/geojson/layers");
 
         // Map should still be operational
         expect(engine.map).not.toBeNull();
+        expect(mgr.kelurahanLayer).toBeNull();
+        expect(mgr.rwDataList).toHaveLength(0);
     });
 });
 
@@ -467,9 +462,9 @@ describe("Feature: MapEngine Lifecycle", () => {
         expect(engine.patterns).not.toBeNull();
 
         // Simulate usage
-        const kelurahan = new KelurahanLayer(engine);
-        kelurahan.render(kelurahanGeojson);
-        expect(kelurahan.layer).not.toBeNull();
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([kelLayerData]);
+        expect(mgr.kelurahanLayer).not.toBeNull();
 
         // Destroy
         engine.destroy();
@@ -512,20 +507,20 @@ describe("Feature: RW Data for Dashboard Display", () => {
     it("provides sorted RW data for sidebar rendering", () => {
         const { sortRwList } = require("../../utils/helpers");
 
-        const rw = new RwLayer(engine);
-        rw.render(rwGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([rwLayerData]);
 
-        const sorted = sortRwList(rw.dataList);
+        const sorted = sortRwList(mgr.rwDataList);
         expect(sorted[0].name).toBe("RW 01");
         expect(sorted[1].name).toBe("RW 02");
         expect(sorted[2].name).toBe("RW 03");
     });
 
     it("includes population statistics per RW", () => {
-        const rw = new RwLayer(engine);
-        rw.render(rwGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([rwLayerData]);
 
-        const rw01 = rw.dataList.find((d) => d.name === "RW 01");
+        const rw01 = mgr.rwDataList.find((d) => d.name === "RW 01");
         expect(rw01).toEqual(
             expect.objectContaining({
                 total_penduduk: 500,
@@ -538,13 +533,13 @@ describe("Feature: RW Data for Dashboard Display", () => {
         );
     });
 
-    it("onDataLoad callback receives complete data", () => {
-        const onDataLoad = vi.fn();
-        const rw = new RwLayer(engine, { onDataLoad });
-        rw.render(rwGeojson);
+    it("onRwDataLoad callback receives complete data", () => {
+        const onRwDataLoad = vi.fn();
+        const mgr = new LayerManager(engine, { onRwDataLoad });
+        mgr.renderAll([rwLayerData]);
 
-        expect(onDataLoad).toHaveBeenCalledOnce();
-        const data = onDataLoad.mock.calls[0][0];
+        expect(onRwDataLoad).toHaveBeenCalledOnce();
+        const data = onRwDataLoad.mock.calls[0][0];
         expect(data).toHaveLength(3);
         data.forEach((item) => {
             expect(item).toHaveProperty("name");

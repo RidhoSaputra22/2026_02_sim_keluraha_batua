@@ -65,7 +65,7 @@ describe("KelurahanLayer", () => {
             expect(L.geoJSON).toHaveBeenCalledWith(
                 sampleGeojson,
                 expect.objectContaining({
-                    pane: "basePane",
+                    pane: "kelurahanPane",
                     interactive: false,
                     style: expect.objectContaining({
                         color: "#1e293b",

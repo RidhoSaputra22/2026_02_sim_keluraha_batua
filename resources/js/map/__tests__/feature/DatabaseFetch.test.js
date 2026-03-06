@@ -15,9 +15,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import MapEngine from "../../MapEngine";
-import KelurahanLayer from "../../layers/KelurahanLayer";
-import RwLayer from "../../layers/RwLayer";
-import CustomLayerManager from "../../layers/CustomLayerManager";
+import LayerManager from "../../layers/LayerManager";
 import {
     apiFetch,
     apiGet,
@@ -392,6 +390,38 @@ const DB_CUSTOM_LAYERS = [
     },
 ];
 
+// ── Unified layer wrappers ──────────────────────────────────
+const DB_KELURAHAN_LAYER = {
+    id: 100,
+    layer_type: "kelurahan",
+    nama: "Kelurahan Batua",
+    slug: "kelurahan-batua",
+    warna: "#1e293b",
+    fill_opacity: 0.02,
+    stroke_width: 3,
+    pattern_type: "solid",
+    geojson: DB_KELURAHAN_GEOJSON,
+};
+
+const DB_RW_LAYER = {
+    id: 200,
+    layer_type: "rw",
+    nama: "RW Layer",
+    slug: "rw-layer",
+    warna: "#6b7280",
+    fill_opacity: 0.3,
+    stroke_width: 2.5,
+    pattern_type: "solid",
+    geojson: DB_RW_GEOJSON,
+};
+
+const DB_CUSTOM_LAYER_DATA = DB_CUSTOM_LAYERS.map((l) => ({
+    ...l,
+    layer_type: "custom",
+}));
+
+const DB_ALL_LAYERS = [DB_KELURAHAN_LAYER, DB_RW_LAYER, ...DB_CUSTOM_LAYER_DATA];
+
 // ── Helpers ─────────────────────────────────────────────────
 
 function mockFetchOk(data) {
@@ -434,15 +464,24 @@ describe("System: Fetch Kelurahan GeoJSON from Database", () => {
         engine = new MapEngine("map").init();
     });
 
-    it("fetches kelurahan boundary and renders as dashed polygon", async () => {
-        mockFetchOk(DB_KELURAHAN_GEOJSON);
+    it("renders kelurahan boundary as dashed polygon via renderAll", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_KELURAHAN_LAYER]);
 
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
+        expect(mgr.kelurahanLayer).not.toBeNull();
+        expect(mgr.kelurahanBounds).not.toBeNull();
+        expect(mgr.showKelurahan).toBe(true);
+    });
+
+    it("loads all layers from unified endpoint including kelurahan", async () => {
+        mockFetchOk(DB_ALL_LAYERS);
+
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
 
         expect(globalThis.fetch).toHaveBeenCalledTimes(1);
         expect(globalThis.fetch).toHaveBeenCalledWith(
-            "/peta/geojson/kelurahan",
+            "/peta/geojson/layers",
             expect.objectContaining({
                 headers: expect.objectContaining({
                     "X-CSRF-TOKEN": "test-csrf-token-12345",
@@ -452,16 +491,13 @@ describe("System: Fetch Kelurahan GeoJSON from Database", () => {
             }),
         );
 
-        expect(kelurahan.layer).not.toBeNull();
-        expect(kelurahan.bounds).not.toBeNull();
-        expect(kelurahan.visible).toBe(true);
+        expect(mgr.kelurahanLayer).not.toBeNull();
+        expect(mgr.kelurahanBounds).not.toBeNull();
     });
 
-    it("parses CRS header from database response", async () => {
-        mockFetchOk(DB_KELURAHAN_GEOJSON);
-
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
+    it("parses CRS header from database response", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_KELURAHAN_LAYER]);
 
         // L.geoJSON receives the full FeatureCollection including CRS
         expect(L.geoJSON).toHaveBeenCalledWith(
@@ -478,36 +514,38 @@ describe("System: Fetch Kelurahan GeoJSON from Database", () => {
         );
     });
 
-    it("handles 404 when kelurahan polygon not available", async () => {
-        mockFetchOk({ error: "Data polygon kelurahan belum tersedia" });
+    it("handles empty kelurahan features gracefully", () => {
+        const emptyKelLayer = {
+            ...DB_KELURAHAN_LAYER,
+            geojson: { type: "FeatureCollection", features: [] },
+        };
 
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([emptyKelLayer]);
 
-        // Layer should not be rendered when error response
-        expect(kelurahan.layer).toBeNull();
+        expect(mgr.kelurahanLayer).toBeNull();
     });
 
-    it("handles network failure on kelurahan fetch", async () => {
+    it("handles network failure on load", async () => {
         globalThis.fetch.mockRejectedValue(new Error("Network error"));
 
-        const kelurahan = new KelurahanLayer(engine);
-        await expect(
-            kelurahan.load("/peta/geojson/kelurahan"),
-        ).rejects.toThrow("Network error");
+        const mgr = new LayerManager(engine);
+        // load() catches errors internally
+        await mgr.load("/peta/geojson/layers");
 
         expect(engine.map).not.toBeNull();
+        expect(mgr.kelurahanLayer).toBeNull();
     });
 
-    it("handles HTTP 500 on kelurahan fetch", async () => {
+    it("handles HTTP 500 on load", async () => {
         mockFetchError(500, "Internal Server Error");
 
-        const kelurahan = new KelurahanLayer(engine);
-        await expect(
-            kelurahan.load("/peta/geojson/kelurahan"),
-        ).rejects.toThrow("HTTP 500");
+        const mgr = new LayerManager(engine);
+        // load() catches errors internally via apiGet which throws
+        await mgr.load("/peta/geojson/layers");
 
         expect(engine.map).not.toBeNull();
+        expect(mgr.kelurahanLayer).toBeNull();
     });
 });
 
@@ -524,27 +562,33 @@ describe("System: Fetch RW GeoJSON + Statistics from Database", () => {
         engine = new MapEngine("map").init();
     });
 
-    it("fetches all 6 RW polygons with statistics from database", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("renders all 6 RW polygons with statistics via renderAll", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        expect(globalThis.fetch).toHaveBeenCalledWith(
-            "/peta/geojson/rw",
-            expect.any(Object),
-        );
-        expect(rw.layer).not.toBeNull();
-        expect(rw.dataList).toHaveLength(6);
+        expect(mgr.rwLayer).not.toBeNull();
+        expect(mgr.rwDataList).toHaveLength(6);
     });
 
-    it("correctly maps database statistics to each RW", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("loads all layers from unified endpoint including RW", async () => {
+        mockFetchOk(DB_ALL_LAYERS);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
 
-        const rw01 = rw.dataList.find((d) => d.name === "RW 01");
+        expect(globalThis.fetch).toHaveBeenCalledWith(
+            "/peta/geojson/layers",
+            expect.any(Object),
+        );
+        expect(mgr.rwLayer).not.toBeNull();
+        expect(mgr.rwDataList).toHaveLength(6);
+    });
+
+    it("correctly maps database statistics to each RW", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
+
+        const rw01 = mgr.rwDataList.find((d) => d.name === "RW 01");
         expect(rw01).toEqual(
             expect.objectContaining({
                 name: "RW 01",
@@ -558,7 +602,7 @@ describe("System: Fetch RW GeoJSON + Statistics from Database", () => {
             }),
         );
 
-        const rw04 = rw.dataList.find((d) => d.name === "RW 04");
+        const rw04 = mgr.rwDataList.find((d) => d.name === "RW 04");
         expect(rw04).toEqual(
             expect.objectContaining({
                 name: "RW 04",
@@ -572,7 +616,7 @@ describe("System: Fetch RW GeoJSON + Statistics from Database", () => {
             }),
         );
 
-        const rw06 = rw.dataList.find((d) => d.name === "RW 06");
+        const rw06 = mgr.rwDataList.find((d) => d.name === "RW 06");
         expect(rw06).toEqual(
             expect.objectContaining({
                 name: "RW 06",
@@ -587,30 +631,26 @@ describe("System: Fetch RW GeoJSON + Statistics from Database", () => {
         );
     });
 
-    it("builds complete color map from database warna values", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("builds complete color map from database warna values", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        expect(Object.keys(rw.colors)).toHaveLength(6);
-        expect(rw.colors["RW 01"]).toBe("#6366f1");
-        expect(rw.colors["RW 02"]).toBe("#ef4444");
-        expect(rw.colors["RW 03"]).toBe("#22c55e");
-        expect(rw.colors["RW 04"]).toBe("#f59e0b");
-        expect(rw.colors["RW 05"]).toBe("#8b5cf6");
-        expect(rw.colors["RW 06"]).toBe("#ec4899");
+        expect(Object.keys(mgr.rwColors)).toHaveLength(6);
+        expect(mgr.rwColors["RW 01"]).toBe("#6366f1");
+        expect(mgr.rwColors["RW 02"]).toBe("#ef4444");
+        expect(mgr.rwColors["RW 03"]).toBe("#22c55e");
+        expect(mgr.rwColors["RW 04"]).toBe("#f59e0b");
+        expect(mgr.rwColors["RW 05"]).toBe("#8b5cf6");
+        expect(mgr.rwColors["RW 06"]).toBe("#ec4899");
     });
 
-    it("fires onDataLoad callback with all RW data", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("fires onRwDataLoad callback with all RW data", () => {
+        const onRwDataLoad = vi.fn();
+        const mgr = new LayerManager(engine, { onRwDataLoad });
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const onDataLoad = vi.fn();
-        const rw = new RwLayer(engine, { onDataLoad });
-        await rw.load("/peta/geojson/rw");
-
-        expect(onDataLoad).toHaveBeenCalledOnce();
-        const loadedData = onDataLoad.mock.calls[0][0];
+        expect(onRwDataLoad).toHaveBeenCalledOnce();
+        const loadedData = onRwDataLoad.mock.calls[0][0];
         expect(loadedData).toHaveLength(6);
         loadedData.forEach((item) => {
             expect(item).toHaveProperty("name");
@@ -624,18 +664,19 @@ describe("System: Fetch RW GeoJSON + Statistics from Database", () => {
         });
     });
 
-    it("aggregates total population across all RW", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("aggregates total population across all RW", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        const totalPenduduk = rw.dataList.reduce(
+        const totalPenduduk = mgr.rwDataList.reduce(
             (sum, d) => sum + d.total_penduduk,
             0,
         );
-        const totalKK = rw.dataList.reduce((sum, d) => sum + d.total_kk, 0);
-        const totalUmkm = rw.dataList.reduce(
+        const totalKK = mgr.rwDataList.reduce(
+            (sum, d) => sum + d.total_kk,
+            0,
+        );
+        const totalUmkm = mgr.rwDataList.reduce(
             (sum, d) => sum + d.total_umkm,
             0,
         );
@@ -645,38 +686,26 @@ describe("System: Fetch RW GeoJSON + Statistics from Database", () => {
         expect(totalUmkm).toBe(43);
     });
 
-    it("verifies gender split consistency per RW", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("verifies gender split consistency per RW", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        rw.dataList.forEach((item) => {
+        mgr.rwDataList.forEach((item) => {
             expect(item.laki_laki + item.perempuan).toBe(item.total_penduduk);
         });
     });
 
-    it("handles 404 when RW polygons not available", async () => {
-        mockFetchOk({ error: "Data polygon RW belum tersedia" });
+    it("handles empty features array", () => {
+        const emptyRwLayer = {
+            ...DB_RW_LAYER,
+            geojson: { type: "FeatureCollection", features: [] },
+        };
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([emptyRwLayer]);
 
-        expect(rw.layer).toBeNull();
-        expect(rw.dataList).toHaveLength(0);
-    });
-
-    it("handles empty features array", async () => {
-        mockFetchOk({
-            type: "FeatureCollection",
-            features: [],
-        });
-
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        expect(rw.dataList).toHaveLength(0);
-        expect(Object.keys(rw.colors)).toHaveLength(0);
+        expect(mgr.rwDataList).toHaveLength(0);
+        expect(Object.keys(mgr.rwColors)).toHaveLength(0);
     });
 });
 
@@ -775,28 +804,33 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         };
     });
 
-    it("fetches all active custom layers from database", async () => {
-        mockFetchOk(DB_CUSTOM_LAYERS);
+    it("renders all active custom layers via renderAll", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
-        const mgr = new CustomLayerManager(engine);
-        const layers = await mgr.load("/peta/geojson/layers");
+        expect(mgr.customLayers).toHaveLength(4);
+    });
+
+    it("loads all layers from unified endpoint including custom", async () => {
+        mockFetchOk(DB_ALL_LAYERS);
+
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
 
         expect(globalThis.fetch).toHaveBeenCalledWith(
             "/peta/geojson/layers",
             expect.any(Object),
         );
 
-        expect(layers).toHaveLength(4);
+        expect(mgr.customLayers).toHaveLength(4);
     });
 
-    it("maps all layer metadata from database correctly", async () => {
-        mockFetchOk(DB_CUSTOM_LAYERS);
-
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
+    it("maps all layer metadata from database correctly", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
         // Tempat Ibadah
-        const tempatIbadah = mgr.layers.find(
+        const tempatIbadah = mgr.customLayers.find(
             (l) => l.slug === "tempat-ibadah",
         );
         expect(tempatIbadah).toEqual(
@@ -814,7 +848,7 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         );
 
         // Fasilitas Kesehatan
-        const faskes = mgr.layers.find(
+        const faskes = mgr.customLayers.find(
             (l) => l.slug === "fasilitas-kesehatan",
         );
         expect(faskes).toEqual(
@@ -832,7 +866,7 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         );
 
         // Sekolah
-        const sekolah = mgr.layers.find((l) => l.slug === "sekolah");
+        const sekolah = mgr.customLayers.find((l) => l.slug === "sekolah");
         expect(sekolah).toEqual(
             expect.objectContaining({
                 id: 3,
@@ -848,7 +882,7 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         );
 
         // UMKM Zona (empty layer)
-        const umkm = mgr.layers.find((l) => l.slug === "umkm-zona");
+        const umkm = mgr.customLayers.find((l) => l.slug === "umkm-zona");
         expect(umkm).toEqual(
             expect.objectContaining({
                 id: 4,
@@ -862,11 +896,9 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         );
     });
 
-    it("applies non-solid patterns to layers from database", async () => {
-        mockFetchOk(DB_CUSTOM_LAYERS);
-
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
+    it("applies non-solid patterns to layers from database", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
         // Dots pattern for Tempat Ibadah
         expect(engine.patterns.applyCustomLayerPattern).toHaveBeenCalledWith(
@@ -890,11 +922,9 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         // Solid pattern for Sekolah — NOT called (solid is default)
     });
 
-    it("renders only non-empty layers on map (skips empty features)", async () => {
-        mockFetchOk(DB_CUSTOM_LAYERS);
-
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
+    it("renders only non-empty layers on map (skips empty features)", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
         // L.geoJSON should be called for each layer with features > 0
         // DB_CUSTOM_LAYERS has 3 non-empty and 1 empty
@@ -902,56 +932,50 @@ describe("System: Fetch Custom Layers + Polygons from Database", () => {
         expect(geoJsonCalls).toBe(3); // Tempat Ibadah, Faskes, Sekolah
     });
 
-    it("counts polygons per layer from database", async () => {
-        mockFetchOk(DB_CUSTOM_LAYERS);
+    it("counts polygons per layer from database", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
-
-        const totalPolygons = mgr.layers.reduce(
+        const totalPolygons = mgr.customLayers.reduce(
             (sum, l) => sum + l.polygonCount,
             0,
         );
         expect(totalPolygons).toBe(5); // 2 + 1 + 2 + 0
     });
 
-    it("toggles individual layer visibility after loading", async () => {
-        mockFetchOk(DB_CUSTOM_LAYERS);
-
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
+    it("toggles individual layer visibility after loading", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
         // All visible initially
-        mgr.layers.forEach((l) => expect(l.visible).toBe(true));
+        mgr.customLayers.forEach((l) => expect(l.visible).toBe(true));
 
         // Toggle Tempat Ibadah off
-        mgr.toggle(1);
-        expect(mgr.layers.find((l) => l.id === 1).visible).toBe(false);
+        mgr.toggleCustomLayer(1);
+        expect(mgr.customLayers.find((l) => l.id === 1).visible).toBe(false);
         expect(engine.map.removeLayer).toHaveBeenCalled();
 
         // Toggle it back on
-        mgr.toggle(1);
-        expect(mgr.layers.find((l) => l.id === 1).visible).toBe(true);
+        mgr.toggleCustomLayer(1);
+        expect(mgr.customLayers.find((l) => l.id === 1).visible).toBe(true);
         expect(engine.map.addLayer).toHaveBeenCalled();
     });
 
-    it("handles empty layers response from database", async () => {
-        mockFetchOk([]);
+    it("handles empty layers array", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([]);
 
-        const mgr = new CustomLayerManager(engine);
-        const layers = await mgr.load("/peta/geojson/layers");
-
-        expect(layers).toHaveLength(0);
+        expect(mgr.customLayers).toHaveLength(0);
     });
 
-    it("handles API failure on custom layers fetch", async () => {
+    it("handles load failure gracefully", async () => {
         globalThis.fetch.mockRejectedValue(new Error("Connection refused"));
 
-        const mgr = new CustomLayerManager(engine);
-        const layers = await mgr.load("/peta/geojson/layers");
+        const mgr = new LayerManager(engine);
+        // load() catches errors internally
+        await mgr.load("/peta/geojson/layers");
 
-        // CustomLayerManager catches errors internally
-        expect(layers).toHaveLength(0);
+        expect(mgr.customLayers).toHaveLength(0);
     });
 });
 
@@ -1297,172 +1321,121 @@ describe("System: Full Map Data Loading Pipeline", () => {
         };
     });
 
-    it("loads all data sources in sequence (kelurahan → RW → layers → stats)", async () => {
-        mockFetchSequence(
-            DB_KELURAHAN_GEOJSON,
-            DB_RW_GEOJSON,
-            DB_CUSTOM_LAYERS,
-            DB_STATS,
-        );
+    it("loads all data sources from unified endpoint", async () => {
+        mockFetchOk(DB_ALL_LAYERS);
 
-        // 1. Load kelurahan boundary
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
-        expect(kelurahan.layer).not.toBeNull();
-
-        // 2. Load RW polygons
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-        expect(rw.dataList).toHaveLength(6);
-
-        // 3. Load custom layers
-        const mgr = new CustomLayerManager(engine);
+        const mgr = new LayerManager(engine);
         await mgr.load("/peta/geojson/layers");
-        expect(mgr.layers).toHaveLength(4);
 
-        // 4. Load stats
-        const stats = await apiGet("/peta/stats");
-        expect(stats.total_penduduk).toBe(2245);
+        // 1. Kelurahan boundary
+        expect(mgr.kelurahanLayer).not.toBeNull();
 
-        // Verify all 4 API calls were made
-        expect(globalThis.fetch).toHaveBeenCalledTimes(4);
+        // 2. RW polygons
+        expect(mgr.rwDataList).toHaveLength(6);
+
+        // 3. Custom layers
+        expect(mgr.customLayers).toHaveLength(4);
+
+        // Single API call
+        expect(globalThis.fetch).toHaveBeenCalledTimes(1);
     });
 
-    it("verifies all API calls use correct CSRF headers", async () => {
-        mockFetchSequence(
-            DB_KELURAHAN_GEOJSON,
-            DB_RW_GEOJSON,
-            DB_CUSTOM_LAYERS,
-            DB_STATS,
-        );
+    it("renders all layer types via renderAll", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_ALL_LAYERS);
 
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
-
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
-
-        await apiGet("/peta/stats");
-
-        // Each call must include CSRF token
-        globalThis.fetch.mock.calls.forEach(([, opts]) => {
-            expect(opts.headers["X-CSRF-TOKEN"]).toBe("test-csrf-token-12345");
-        });
+        expect(mgr.kelurahanLayer).not.toBeNull();
+        expect(mgr.rwDataList).toHaveLength(6);
+        expect(mgr.customLayers).toHaveLength(4);
     });
 
-    it("verifies all API calls set Accept: application/json", async () => {
-        mockFetchSequence(
-            DB_KELURAHAN_GEOJSON,
-            DB_RW_GEOJSON,
-            DB_CUSTOM_LAYERS,
-            DB_STATS,
-        );
+    it("verifies API call uses correct CSRF headers", async () => {
+        mockFetchOk(DB_ALL_LAYERS);
 
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
-
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        const mgr = new CustomLayerManager(engine);
+        const mgr = new LayerManager(engine);
         await mgr.load("/peta/geojson/layers");
 
-        await apiGet("/peta/stats");
+        const [, opts] = globalThis.fetch.mock.calls[0];
+        expect(opts.headers["X-CSRF-TOKEN"]).toBe("test-csrf-token-12345");
+    });
 
-        globalThis.fetch.mock.calls.forEach(([, opts]) => {
-            expect(opts.headers["Accept"]).toBe("application/json");
-        });
+    it("verifies API call sets Accept: application/json", async () => {
+        mockFetchOk(DB_ALL_LAYERS);
+
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
+
+        const [, opts] = globalThis.fetch.mock.calls[0];
+        expect(opts.headers["Accept"]).toBe("application/json");
     });
 
     it("RW statistics from layers match aggregate stats totals", async () => {
-        mockFetchSequence(DB_RW_GEOJSON, DB_STATS);
+        mockFetchSequence(DB_ALL_LAYERS, DB_STATS);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
+        const mgr = new LayerManager(engine);
+        await mgr.load("/peta/geojson/layers");
 
         const stats = await apiGet("/peta/stats");
 
         // Sum from individual RW data should match aggregate stats
-        const sumPenduduk = rw.dataList.reduce(
+        const sumPenduduk = mgr.rwDataList.reduce(
             (s, d) => s + d.total_penduduk,
             0,
         );
-        const sumKK = rw.dataList.reduce((s, d) => s + d.total_kk, 0);
-        const sumUmkm = rw.dataList.reduce((s, d) => s + d.total_umkm, 0);
-        const sumLaki = rw.dataList.reduce((s, d) => s + d.laki_laki, 0);
-        const sumPerempuan = rw.dataList.reduce((s, d) => s + d.perempuan, 0);
+        const sumKK = mgr.rwDataList.reduce((s, d) => s + d.total_kk, 0);
+        const sumUmkm = mgr.rwDataList.reduce((s, d) => s + d.total_umkm, 0);
+        const sumLaki = mgr.rwDataList.reduce((s, d) => s + d.laki_laki, 0);
+        const sumPerempuan = mgr.rwDataList.reduce(
+            (s, d) => s + d.perempuan,
+            0,
+        );
 
         expect(sumPenduduk).toBe(stats.total_penduduk);
         expect(sumKK).toBe(stats.total_kk);
         expect(sumUmkm).toBe(stats.total_umkm);
         expect(sumLaki).toBe(stats.laki_laki);
         expect(sumPerempuan).toBe(stats.perempuan);
-        expect(rw.dataList.length).toBe(stats.total_rw);
+        expect(mgr.rwDataList.length).toBe(stats.total_rw);
     });
 
-    it("map remains operational after partial API failures", async () => {
-        // Kelurahan succeeds, RW fails, custom layers fail, stats succeed
-        globalThis.fetch
-            .mockResolvedValueOnce({
-                ok: true,
-                json: () => Promise.resolve(DB_KELURAHAN_GEOJSON),
-                text: () =>
-                    Promise.resolve(JSON.stringify(DB_KELURAHAN_GEOJSON)),
-            })
-            .mockRejectedValueOnce(new Error("RW database timeout"))
-            .mockRejectedValueOnce(new Error("Layers table locked"))
-            .mockResolvedValueOnce({
-                ok: true,
-                json: () => Promise.resolve(DB_STATS),
-                text: () => Promise.resolve(JSON.stringify(DB_STATS)),
-            });
+    it("map remains operational after API failure", async () => {
+        globalThis.fetch.mockRejectedValue(new Error("Network offline"));
 
-        // Kelurahan loads fine
-        const kelurahan = new KelurahanLayer(engine);
-        await kelurahan.load("/peta/geojson/kelurahan");
-        expect(kelurahan.layer).not.toBeNull();
-
-        // RW fails
-        const rw = new RwLayer(engine);
-        await expect(rw.load("/peta/geojson/rw")).rejects.toThrow();
-        expect(rw.dataList).toHaveLength(0);
-
-        // Custom layers catches internally
-        const mgr = new CustomLayerManager(engine);
+        const mgr = new LayerManager(engine);
+        // load() catches errors internally
         await mgr.load("/peta/geojson/layers");
-        expect(mgr.layers).toHaveLength(0);
 
-        // Stats still works
-        const stats = await apiGet("/peta/stats");
-        expect(stats.total_penduduk).toBe(2245);
+        expect(mgr.kelurahanLayer).toBeNull();
+        expect(mgr.rwDataList).toHaveLength(0);
+        expect(mgr.customLayers).toHaveLength(0);
 
         // Map engine still functional
         expect(engine.map).not.toBeNull();
+
+        // Can still render with local data
+        mgr.renderAll([DB_KELURAHAN_LAYER]);
+        expect(mgr.kelurahanLayer).not.toBeNull();
     });
 
     it("full pipeline: load → interact → modify → reload", async () => {
         // Step 1: Initial load
-        mockFetchSequence(DB_RW_GEOJSON);
+        mockFetchOk(DB_ALL_LAYERS);
 
-        const onSelect = vi.fn();
-        const rw = new RwLayer(engine, { onSelect });
-        await rw.load("/peta/geojson/rw");
-        expect(rw.dataList).toHaveLength(6);
+        const onRwSelect = vi.fn();
+        const mgr = new LayerManager(engine, { onRwSelect });
+        await mgr.load("/peta/geojson/layers");
+        expect(mgr.rwDataList).toHaveLength(6);
 
         // Step 2: User selects RW from loaded data
-        // Setup layerMap for interaction
-        rw.dataList.forEach((d) => {
+        mgr.rwDataList.forEach((d) => {
             const layer = globalThis.__mockLayer();
             layer.feature = { properties: { RW: d.name } };
-            rw.layerMap[d.name] = layer;
+            mgr.rwLayerMap[d.name] = layer;
         });
 
-        rw.select("RW 03");
-        expect(rw.selectedRw).toBe("RW 03");
-        expect(onSelect).toHaveBeenCalledWith("RW 03", expect.any(Object));
+        mgr.selectRw("RW 03");
+        expect(mgr.selectedRw).toBe("RW 03");
+        expect(onRwSelect).toHaveBeenCalledWith("RW 03", expect.any(Object));
 
         // Step 3: Admin updates polygon via API
         mockFetchOk({
@@ -1486,7 +1459,7 @@ describe("System: Full Map Data Loading Pipeline", () => {
         });
         expect(updateResult.success).toBe(true);
 
-        // Step 4: Reload fresh data
+        // Step 4: Reload fresh data with updated stats
         const updatedRwGeojson = { ...DB_RW_GEOJSON };
         updatedRwGeojson.features = updatedRwGeojson.features.map((f) => {
             if (f.properties.RW === "RW 03") {
@@ -1494,44 +1467,26 @@ describe("System: Full Map Data Loading Pipeline", () => {
                     ...f,
                     properties: {
                         ...f.properties,
-                        total_penduduk: 420, // Updated stat
+                        total_penduduk: 420,
                     },
                 };
             }
             return f;
         });
 
-        mockFetchOk(updatedRwGeojson);
+        const updatedAllLayers = [
+            DB_KELURAHAN_LAYER,
+            { ...DB_RW_LAYER, geojson: updatedRwGeojson },
+            ...DB_CUSTOM_LAYER_DATA,
+        ];
 
-        const rw2 = new RwLayer(engine);
-        await rw2.load("/peta/geojson/rw");
+        mockFetchOk(updatedAllLayers);
 
-        const updatedRw03 = rw2.dataList.find((d) => d.name === "RW 03");
+        const mgr2 = new LayerManager(engine);
+        await mgr2.load("/peta/geojson/layers");
+
+        const updatedRw03 = mgr2.rwDataList.find((d) => d.name === "RW 03");
         expect(updatedRw03.total_penduduk).toBe(420);
-    });
-
-    it("handles concurrent data loading via Promise.all", async () => {
-        mockFetchSequence(
-            DB_KELURAHAN_GEOJSON,
-            DB_RW_GEOJSON,
-            DB_CUSTOM_LAYERS,
-        );
-
-        const kelurahan = new KelurahanLayer(engine);
-        const rw = new RwLayer(engine);
-        const mgr = new CustomLayerManager(engine);
-
-        // Simulate parallel loading
-        const [kelResult, rwResult, layerResult] = await Promise.all([
-            kelurahan.load("/peta/geojson/kelurahan"),
-            rw.load("/peta/geojson/rw"),
-            mgr.load("/peta/geojson/layers"),
-        ]);
-
-        expect(kelurahan.layer).not.toBeNull();
-        expect(rw.dataList).toHaveLength(6);
-        expect(mgr.layers).toHaveLength(4);
-        expect(globalThis.fetch).toHaveBeenCalledTimes(3);
     });
 });
 
@@ -1548,13 +1503,11 @@ describe("System: Data Integrity & Validation from Database", () => {
         engine = new MapEngine("map").init();
     });
 
-    it("all RW features have required properties from database", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("all RW features have required properties from database", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        rw.dataList.forEach((item) => {
+        mgr.rwDataList.forEach((item) => {
             // Required fields from getRwStats()
             expect(item.name).toMatch(/^RW \d{2}$/);
             expect(item.warna).toMatch(/^#[0-9a-fA-F]{6}$/);
@@ -1590,29 +1543,25 @@ describe("System: Data Integrity & Validation from Database", () => {
         expect(ring[0]).toEqual(ring[ring.length - 1]);
     });
 
-    it("RW names are unique in database response", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("RW names are unique in database response", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        const names = rw.dataList.map((d) => d.name);
+        const names = mgr.rwDataList.map((d) => d.name);
         const uniqueNames = [...new Set(names)];
         expect(names).toHaveLength(uniqueNames.length);
     });
 
-    it("custom layer slugs are unique in database response", async () => {
+    it("custom layer slugs are unique in database response", () => {
         engine.patterns = {
             applyCustomLayerPattern: vi.fn(),
             applyRwPatterns: vi.fn(),
         };
 
-        mockFetchOk(DB_CUSTOM_LAYERS);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll(DB_CUSTOM_LAYER_DATA);
 
-        const mgr = new CustomLayerManager(engine);
-        await mgr.load("/peta/geojson/layers");
-
-        const slugs = mgr.layers.map((l) => l.slug);
+        const slugs = mgr.customLayers.map((l) => l.slug);
         const uniqueSlugs = [...new Set(slugs)];
         expect(slugs).toHaveLength(uniqueSlugs.length);
     });
@@ -1640,13 +1589,11 @@ describe("System: Data Integrity & Validation from Database", () => {
         });
     });
 
-    it("RW population data has reasonable values", async () => {
-        mockFetchOk(DB_RW_GEOJSON);
+    it("RW population data has reasonable values", () => {
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([DB_RW_LAYER]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        rw.dataList.forEach((item) => {
+        mgr.rwDataList.forEach((item) => {
             // Population should be positive
             expect(item.total_penduduk).toBeGreaterThan(0);
             expect(item.total_kk).toBeGreaterThan(0);
@@ -1664,7 +1611,7 @@ describe("System: Data Integrity & Validation from Database", () => {
         });
     });
 
-    it("custom layer patterns are valid enum values", async () => {
+    it("custom layer patterns are valid enum values", () => {
         const validPatterns = ["solid", "hatch", "dots", "crosshatch"];
 
         DB_CUSTOM_LAYERS.forEach((layer) => {
@@ -1772,10 +1719,9 @@ describe("System: Error Handling & Edge Cases", () => {
     it("map engine survives total API failure", async () => {
         globalThis.fetch.mockRejectedValue(new Error("Network offline"));
 
-        const kelurahan = new KelurahanLayer(engine);
-        await expect(
-            kelurahan.load("/peta/geojson/kelurahan"),
-        ).rejects.toThrow();
+        const mgr = new LayerManager(engine);
+        // load() catches errors internally
+        await mgr.load("/peta/geojson/layers");
 
         // Map + engine remain intact
         expect(engine.map).not.toBeNull();
@@ -1783,42 +1729,43 @@ describe("System: Error Handling & Edge Cases", () => {
         expect(engine.patterns).not.toBeNull();
 
         // Can still render with local data
-        kelurahan.render(DB_KELURAHAN_GEOJSON);
-        expect(kelurahan.layer).not.toBeNull();
+        mgr.renderAll([DB_KELURAHAN_LAYER]);
+        expect(mgr.kelurahanLayer).not.toBeNull();
     });
 
-    it("handles RW GeoJSON with missing optional properties", async () => {
-        const sparseRwGeojson = {
-            type: "FeatureCollection",
-            features: [
-                {
-                    type: "Feature",
-                    properties: {
-                        RW: "RW 01",
-                        // warna, stats all missing
-                    },
-                    geometry: {
-                        type: "Polygon",
-                        coordinates: [
-                            [
-                                [119.45, -5.14],
-                                [119.46, -5.14],
-                                [119.46, -5.15],
-                                [119.45, -5.14],
+    it("handles RW GeoJSON with missing optional properties", () => {
+        const sparseRwLayer = {
+            ...DB_RW_LAYER,
+            geojson: {
+                type: "FeatureCollection",
+                features: [
+                    {
+                        type: "Feature",
+                        properties: {
+                            RW: "RW 01",
+                            // warna, stats all missing
+                        },
+                        geometry: {
+                            type: "Polygon",
+                            coordinates: [
+                                [
+                                    [119.45, -5.14],
+                                    [119.46, -5.14],
+                                    [119.46, -5.15],
+                                    [119.45, -5.14],
+                                ],
                             ],
-                        ],
+                        },
                     },
-                },
-            ],
+                ],
+            },
         };
 
-        mockFetchOk(sparseRwGeojson);
+        const mgr = new LayerManager(engine);
+        mgr.renderAll([sparseRwLayer]);
 
-        const rw = new RwLayer(engine);
-        await rw.load("/peta/geojson/rw");
-
-        expect(rw.dataList).toHaveLength(1);
-        const item = rw.dataList[0];
+        expect(mgr.rwDataList).toHaveLength(1);
+        const item = mgr.rwDataList[0];
         expect(item.name).toBe("RW 01");
         expect(item.warna).toBe("#6b7280"); // fallback color
         expect(item.total_penduduk).toBe(0);

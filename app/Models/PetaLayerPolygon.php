@@ -18,6 +18,7 @@ class PetaLayerPolygon extends Model
         'deskripsi',
         'warna',
         'rw_id',
+        'kelurahan_id',
         'properties',
     ];
 
@@ -64,6 +65,11 @@ class PetaLayerPolygon extends Model
     public function rw()
     {
         return $this->belongsTo(Rw::class);
+    }
+
+    public function kelurahan()
+    {
+        return $this->belongsTo(Kelurahan::class);
     }
 
     // ── PostGIS Methods ─────────────────────────────────────

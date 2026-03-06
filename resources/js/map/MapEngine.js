@@ -97,11 +97,14 @@ export default class MapEngine {
             ...(this.svgRenderer ? { renderer: this.svgRenderer } : {}),
         });
 
-        // Custom panes for z-ordering:
-        // basePane (z 350) → kelurahan boundary & RW polygons (always below)
-        // customLayerPane (z 400) → custom overlay layers (always above base)
-        this.map.createPane("basePane");
-        this.map.getPane("basePane").style.zIndex = 350;
+        // Custom panes for z-ordering (lower z-index = further back):
+        // kelurahanPane (z 340) → kelurahan boundary (always at bottom)
+        // rwPane (z 350) → RW polygons (above kelurahan)
+        // customLayerPane (z 400) → custom overlay layers (always on top)
+        this.map.createPane("kelurahanPane");
+        this.map.getPane("kelurahanPane").style.zIndex = 340;
+        this.map.createPane("rwPane");
+        this.map.getPane("rwPane").style.zIndex = 350;
         this.map.createPane("customLayerPane");
         this.map.getPane("customLayerPane").style.zIndex = 400;
 

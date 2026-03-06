@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function () {
             text.textContent = layer.nama;
 
             input.addEventListener('change', () => {
-                clm.toggle(layer.id);
+                clm.toggleCustomLayer(layer.id);
             });
 
             label.appendChild(input);
@@ -298,16 +298,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 useSvgRenderer: true,
             }).init();
 
-            const rwLayer = new SimPeta.RwLayer(engine);
-            await rwLayer.load('{{ route("peta.geojson.rw") }}');
+            // Unified layer manager
+            const layerManager = new SimPeta.LayerManager(engine);
+            const allLayers = await SimPeta.apiGet('{{ route("peta.geojson.layers") }}');
+            layerManager.renderAll(allLayers);
+            renderCustomLayerToggles(layerManager.customLayers, layerManager);
 
-            const customLayerManager = new SimPeta.CustomLayerManager(engine);
-            const customLayers = await customLayerManager.load('{{ route("peta.geojson.layers") }}');
-            renderCustomLayerToggles(customLayers, customLayerManager);
-
-            if (rwLayer.layerMap[userRwName]) {
-                rwLayer.select(userRwName);
-                customLayerManager.bringToFront();
+            if (layerManager.rwLayerMap[userRwName]) {
+                layerManager.selectRw(userRwName);
+                layerManager.bringCustomToFront();
             } else {
                 console.warn('RW polygon not found for current user:', userRwName);
             }

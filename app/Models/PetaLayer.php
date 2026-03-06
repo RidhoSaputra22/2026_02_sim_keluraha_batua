@@ -54,7 +54,8 @@ class PetaLayer extends Model
     public const LAYER_KONTRAKAN_KOST = 'kontrakan-kost';
     public const LAYER_ASRAMA         = 'asrama';
     public const LAYER_DATA_USAHA     = 'data-usaha';
-    public const LAYER_WILAYAH_RW      = 'wilayah-rw';
+    public const LAYER_WILAYAH_RW       = 'wilayah-rw';
+    public const LAYER_BATAS_KELURAHAN  = 'batas-kelurahan';
 
     /**
      * Daftar layer default beserta konfigurasi warna.

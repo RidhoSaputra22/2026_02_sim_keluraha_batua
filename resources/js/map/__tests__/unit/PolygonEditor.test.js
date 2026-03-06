@@ -53,9 +53,10 @@ describe("PolygonEditor", () => {
             expect(editor.init()).toBe(editor);
         });
 
-        it("creates custom panes (basePane, customLayerPane, editPane)", () => {
+        it("creates custom panes (kelurahanPane, rwPane, customLayerPane, editPane)", () => {
             const editor = new PolygonEditor("map").init();
-            expect(editor.map.createPane).toHaveBeenCalledWith("basePane");
+            expect(editor.map.createPane).toHaveBeenCalledWith("kelurahanPane");
+            expect(editor.map.createPane).toHaveBeenCalledWith("rwPane");
             expect(editor.map.createPane).toHaveBeenCalledWith(
                 "customLayerPane",
             );

@@ -55,13 +55,6 @@
                     <span class="badge badge-sm" :class="polygonCount > 0 ? 'badge-primary' : 'badge-ghost'"
                         x-text="polygonCount + ' polygon'"></span>
                 </h3>
-                <div class="flex items-center gap-2">
-                    <label class="label cursor-pointer gap-2">
-                        <span class="label-text text-xs">Tampilkan RW</span>
-                        <input type="checkbox" class="toggle toggle-xs toggle-primary" checked
-                            @change="toggleRwOverlay($event.target.checked)">
-                    </label>
-                </div>
             </div>
 
             <div class="mb-3 text-xs text-base-content/60 flex items-center gap-1">
@@ -126,9 +119,15 @@
     @push('scripts')
     @php
     $layerRoutes = [
-    'geojsonRw' => route('peta.geojson.rw'),
     'polygonStore' => route('admin.peta-layer.polygon.store', $petaLayer),
     'polygonBase' => url('admin/peta-layer/' . $petaLayer->id . '/polygon'),
+    ];
+
+    $layerConfig = [
+    'color' => $petaLayer->warna,
+    'opacity' => $petaLayer->fill_opacity,
+    'strokeWidth' => $petaLayer->stroke_width,
+    'existingData' => $geojsonCollection, // from controller
     ];
     @endphp
     {{-- Leaflet & Leaflet.Draw already loaded by <x-ui.leaflet-draw> component --}}
@@ -137,9 +136,10 @@
     <script>
     const LAYER_ROUTES = @json($layerRoutes);
     const LAYER_CONFIG = {
-        color: @json($petaLayer - > warna),
-        opacity: @json($petaLayer - > fill_opacity),
-        strokeWidth: @json($petaLayer - > stroke_width),
+
+        color: @json($layerConfig['color']),
+        opacity: @json($layerConfig['opacity']),
+        strokeWidth: @json($layerConfig['strokeWidth']),
         existingData: {
             !!$geojsonCollection!!
         },
@@ -173,9 +173,6 @@
                     rectangle: true,
                 }).init();
 
-                // RW overlay for reference
-                this._editor.loadRwOverlay(LAYER_ROUTES.geojsonRw);
-
                 // Load existing polygons
                 this.polygonList = this._editor.loadExistingCollection(LAYER_CONFIG.existingData);
                 this.polygonCount = this.polygonList.length;
@@ -191,10 +188,6 @@
                         this.polygonCount = this.polygonList.length;
                     },
                 });
-            },
-
-            toggleRwOverlay(show) {
-                this._editor.toggleRwOverlay(show);
             },
 
             zoomToPolygon(poly) {

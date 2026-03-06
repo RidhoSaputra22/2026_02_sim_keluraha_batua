@@ -142,7 +142,7 @@ class SyncGeojsonCommand extends Command
     }
 
     /**
-     * Sync Kelurahan polygon from lurah.geojson.
+     * Sync Kelurahan polygon from lurah.geojson into peta_layer_polygons (layer "batas-kelurahan").
      */
     private function syncKelurahanPolygons(): void
     {
@@ -160,6 +160,21 @@ class SyncGeojsonCommand extends Command
             $this->error('Format GeoJSON Kelurahan tidak valid (features tidak ditemukan).');
             return;
         }
+
+        // Ensure the kelurahan layer exists
+        $kelLayer = PetaLayer::firstOrCreate(
+            ['slug' => PetaLayer::LAYER_BATAS_KELURAHAN],
+            [
+                'nama'         => 'Batas Kelurahan',
+                'deskripsi'    => 'Batas wilayah kelurahan',
+                'warna'        => '#1e293b',
+                'fill_opacity' => 0.02,
+                'stroke_width' => 3.0,
+                'pattern_type' => 'solid',
+                'is_active'    => true,
+                'sort_order'   => 0,
+            ]
+        );
 
         $this->info('Sinkronisasi polygon Kelurahan...');
         $synced = 0;
@@ -185,14 +200,24 @@ class SyncGeojsonCommand extends Command
                 continue;
             }
 
+            $nama = $kelurahan->nama;
             $geometryJson = json_encode($geometry);
 
-            DB::statement(
-                'UPDATE kelurahans SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
-                [$geometryJson, $kelurahan->id]
+            // Find or create polygon record in peta_layer_polygons
+            $polygon = PetaLayerPolygon::firstOrCreate(
+                ['peta_layer_id' => $kelLayer->id, 'kelurahan_id' => $kelurahan->id],
+                ['nama' => $nama, 'deskripsi' => 'Batas wilayah kelurahan ' . $nama, 'warna' => '#1e293b']
             );
 
-            $this->line("  ✓ Kelurahan {$kelurahan->nama} — polygon disimpan");
+            $polygon->update(['nama' => $nama]);
+
+            // Store polygon geometry using PostGIS
+            DB::statement(
+                'UPDATE peta_layer_polygons SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
+                [$geometryJson, $polygon->id]
+            );
+
+            $this->line("  ✓ Kelurahan {$nama} — polygon disimpan ke peta_layer_polygons");
             $synced++;
         }
 

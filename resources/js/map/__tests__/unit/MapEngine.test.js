@@ -21,7 +21,7 @@ describe("MapEngine", () => {
 
         it("uses default options when none provided", () => {
             const engine = new MapEngine("map");
-            expect(engine.options.center).toEqual([-5.155, 119.466]);
+            expect(engine.options.center).toEqual([-5.1532008, 119.4682932]);
             expect(engine.options.zoom).toBe(15);
             expect(engine.options.zoomControl).toBe(false);
             expect(engine.options.useSvgRenderer).toBe(true);
@@ -54,7 +54,7 @@ describe("MapEngine", () => {
             expect(L.map).toHaveBeenCalledWith(
                 "map",
                 expect.objectContaining({
-                    center: [-5.155, 119.466],
+                    center: [-5.1532008, 119.4682932],
                     zoom: 15,
                 }),
             );
@@ -82,9 +82,10 @@ describe("MapEngine", () => {
             expect(engine.patterns).toBeNull();
         });
 
-        it("creates custom panes (basePane, customLayerPane)", () => {
+        it("creates custom panes (kelurahanPane, rwPane, customLayerPane)", () => {
             const engine = new MapEngine("map").init();
-            expect(engine.map.createPane).toHaveBeenCalledWith("basePane");
+            expect(engine.map.createPane).toHaveBeenCalledWith("kelurahanPane");
+            expect(engine.map.createPane).toHaveBeenCalledWith("rwPane");
             expect(engine.map.createPane).toHaveBeenCalledWith(
                 "customLayerPane",
             );

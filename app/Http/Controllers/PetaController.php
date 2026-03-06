@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Keluarga;
-use App\Models\Kelurahan;
 use App\Models\PetaLayer;
 use App\Models\PetaLayerPolygon;
 use App\Models\Penduduk;
@@ -25,16 +24,38 @@ class PetaController extends Controller
     }
 
     /**
-     * API: Ambil data GeoJSON batas kelurahan dari database (PostGIS).
+     * API: Ambil data GeoJSON batas kelurahan dari peta_layer_polygons.
      */
     public function geojsonKelurahan(): JsonResponse
     {
-        $kelurahan = DB::selectOne(
-            'SELECT id, nama, ST_AsGeoJSON(polygon) as geojson FROM kelurahans WHERE polygon IS NOT NULL LIMIT 1'
+        $kelLayer = PetaLayer::where('slug', PetaLayer::LAYER_BATAS_KELURAHAN)->first();
+
+        if (! $kelLayer) {
+            return response()->json(['error' => 'Layer batas kelurahan belum tersedia'], 404);
+        }
+
+        $rows = DB::select(
+            'SELECT plp.id, plp.nama, plp.kelurahan_id, ST_AsGeoJSON(plp.polygon) as geojson
+             FROM peta_layer_polygons plp
+             WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
+             ORDER BY plp.id',
+            [$kelLayer->id]
         );
 
-        if (! $kelurahan || ! $kelurahan->geojson) {
+        if (empty($rows)) {
             return response()->json(['error' => 'Data polygon kelurahan belum tersedia'], 404);
+        }
+
+        $features = [];
+        foreach ($rows as $row) {
+            $features[] = [
+                'type' => 'Feature',
+                'properties' => [
+                    'id' => $row->kelurahan_id ?? $row->id,
+                    'nama' => $row->nama,
+                ],
+                'geometry' => json_decode($row->geojson, true),
+            ];
         }
 
         $geojson = [
@@ -44,13 +65,7 @@ class PetaController extends Controller
                 'type' => 'name',
                 'properties' => ['name' => 'urn:ogc:def:crs:OGC:1.3:CRS84'],
             ],
-            'features' => [
-                [
-                    'type' => 'Feature',
-                    'properties' => ['id' => $kelurahan->id],
-                    'geometry' => json_decode($kelurahan->geojson, true),
-                ],
-            ],
+            'features' => $features,
         ];
 
         return response()->json($geojson);
@@ -205,13 +220,17 @@ class PetaController extends Controller
             );
         }
 
-        // Get kelurahan boundary
+        // Get kelurahan boundary from peta_layer_polygons
         $kelurahanGeojson = null;
-        $kel = DB::selectOne(
-            'SELECT ST_AsGeoJSON(polygon) as geojson FROM kelurahans WHERE polygon IS NOT NULL LIMIT 1'
-        );
-        if ($kel && $kel->geojson) {
-            $kelurahanGeojson = $kel->geojson;
+        $kelLayer = PetaLayer::where('slug', PetaLayer::LAYER_BATAS_KELURAHAN)->first();
+        if ($kelLayer) {
+            $kel = DB::selectOne(
+                'SELECT ST_AsGeoJSON(polygon) as geojson FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL LIMIT 1',
+                [$kelLayer->id]
+            );
+            if ($kel && $kel->geojson) {
+                $kelurahanGeojson = $kel->geojson;
+            }
         }
 
         $rwWarna = $currentPolygonRecord->warna ?? '#6366f1';

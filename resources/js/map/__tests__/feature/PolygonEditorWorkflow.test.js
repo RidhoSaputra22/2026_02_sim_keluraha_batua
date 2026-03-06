@@ -103,7 +103,7 @@ describe("Feature: Polygon Editor Workflows", () => {
             expect(L.geoJSON).toHaveBeenCalledWith(
                 expect.any(Object),
                 expect.objectContaining({
-                    pane: "basePane",
+                    pane: "kelurahanPane",
                     style: expect.objectContaining({
                         dashArray: "10, 6",
                     }),
@@ -161,16 +161,6 @@ describe("Feature: Polygon Editor Workflows", () => {
             expect(editor.referenceLayer).not.toBeNull();
         });
 
-        it("toggles RW overlay visibility", async () => {
-            const editor = new PolygonEditor("map").init();
-            editor.rwOverlay = L.layerGroup();
-
-            editor.toggleRwOverlay(false);
-            expect(editor.map.removeLayer).toHaveBeenCalled();
-
-            editor.toggleRwOverlay(true);
-            expect(editor.map.addLayer).toHaveBeenCalled();
-        });
     });
 
     // ── Feature: GeoJSON Sanitisation Pipeline ──────────────

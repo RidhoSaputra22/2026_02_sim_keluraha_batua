@@ -122,7 +122,7 @@ describe("CustomLayerManager", () => {
             });
 
             const tooltipSpy = vi.fn();
-            L.geoJSON.mockImplementationOnce((data, opts) => {
+            L.geoJSON.mockImplementation((data, opts) => {
                 const layer = globalThis.__mockLayer();
                 if (data?.features && opts?.onEachFeature) {
                     data.features.forEach((feature) => {

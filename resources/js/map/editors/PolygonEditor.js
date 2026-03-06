@@ -42,9 +42,6 @@ export default class PolygonEditor {
         /** @type {L.Control.Draw|null} */
         this.drawControl = null;
 
-        /** @type {L.GeoJSON|null} RW reference overlay */
-        this.rwOverlay = null;
-
         /** @type {L.LayerGroup|null} */
         this.referenceLayer = null;
 
@@ -89,11 +86,14 @@ export default class PolygonEditor {
         });
 
         // Custom panes for z-ordering:
-        // basePane (z 350) → RW overlay always at bottom
+        // kelurahanPane (z 340) → kelurahan boundary at bottom
+        // rwPane (z 350) → RW overlay above kelurahan
         // customLayerPane (z 400) → custom display layers in middle
         // editPane (z 450) → actively edited drawn items on top
-        this.map.createPane("basePane");
-        this.map.getPane("basePane").style.zIndex = 350;
+        this.map.createPane("kelurahanPane");
+        this.map.getPane("kelurahanPane").style.zIndex = 340;
+        this.map.createPane("rwPane");
+        this.map.getPane("rwPane").style.zIndex = 350;
         this.map.createPane("customLayerPane");
         this.map.getPane("customLayerPane").style.zIndex = 400;
         this.map.createPane("editPane");
@@ -184,7 +184,7 @@ export default class PolygonEditor {
 
         try {
             this.kelurahanLayer = L.geoJSON(sanitised, {
-                pane: "basePane",
+                pane: "kelurahanPane",
                 style: {
                     color: "#1e293b",
                     weight: 3,
@@ -224,7 +224,7 @@ export default class PolygonEditor {
             try {
                 const color = rw.warna || "#6b7280";
                 const layer = L.geoJSON(sanitised, {
-                    pane: "basePane",
+                    pane: "rwPane",
                     style: {
                         color,
                         weight: 1.5,
@@ -255,72 +255,6 @@ export default class PolygonEditor {
                 );
             }
         });
-    }
-
-    /**
-     * Load RW polygons from GeoJSON API url as a reference overlay
-     * (used by the custom layer editor).
-     *
-     * @param {string} url
-     */
-    async loadRwOverlay(url) {
-        if (!this.map) return;
-
-        this.rwOverlay = L.layerGroup().addTo(this.map);
-
-        try {
-            const data = await apiGet(url);
-
-            const rwLayer = L.geoJSON(data, {
-                style: (feature) => ({
-                    color: feature.properties.warna || "#6b7280",
-                    weight: 1.5,
-                    fillOpacity: 0.08,
-                    fillColor: feature.properties.warna || "#6b7280",
-                    dashArray: "4, 4",
-                }),
-                pane: "basePane",
-                filter: (f) => f.properties && f.properties.RW,
-                onEachFeature: (feature, layer) => {
-                    if (!feature.properties.RW) return;
-                    const center = layer.getBounds().getCenter();
-                    this.rwOverlay.addLayer(
-                        L.marker(center, {
-                            icon: L.divIcon({
-                                className: "rw-label-ref",
-                                html: `<span>${feature.properties.RW}</span>`,
-                                iconSize: [50, 18],
-                                iconAnchor: [25, 9],
-                            }),
-                            interactive: false,
-                            pane: "basePane",
-                        }),
-                    );
-                },
-            });
-            this.rwOverlay.addLayer(rwLayer);
-
-            // Fit to RW bounds if no drawn items
-            if (this.drawnItems && this.drawnItems.getLayers().length === 0) {
-                this.map.fitBounds(rwLayer.getBounds(), { padding: [20, 20] });
-            }
-        } catch (e) {
-            console.error("[PolygonEditor] Failed to load RW overlay:", e);
-        }
-    }
-
-    /**
-     * Toggle RW overlay visibility.
-     *
-     * @param {boolean} show
-     */
-    toggleRwOverlay(show) {
-        if (!this.rwOverlay || !this.map) return;
-        if (show) {
-            this.map.addLayer(this.rwOverlay);
-        } else {
-            this.map.removeLayer(this.rwOverlay);
-        }
     }
 
     // ── Existing polygon loading ────────────────────────────

@@ -6,8 +6,6 @@
 @php
 // Pass route URLs to JS — keeps Blade directives out of JS function bodies.
 $petaRoutes = [
-'geojsonRw' => route('peta.geojson.rw'),
-'geojsonKelurahan' => route('peta.geojson.kelurahan'),
 'geojsonLayers' => route('peta.geojson.layers'),
 'stats' => route('peta.stats'),
 ];
@@ -41,7 +39,7 @@ function petaApp() {
         showRwLayer: true,
         rwDataList: [],
         rwColors: {},
-        customLayers: [],
+        allLayers: [],
         globalStats: {
             total_penduduk: 0,
             total_kk: 0,
@@ -54,13 +52,15 @@ function petaApp() {
 
         // ─── Engine instances (internal) ───────────────────
         _engine: null,
-        _rwLayer: null,
-        _kelLayer: null,
-        _clm: null,
+        _layers: null,
 
         // ─── Computed ──────────────────────────────────────
         get sortedRwList() {
             return sortRwList(this.rwDataList);
+        },
+
+        get customLayers() {
+            return this._layers ? this._layers.customLayers : [];
         },
 
         // ─── Lifecycle ─────────────────────────────────────
@@ -70,6 +70,7 @@ function petaApp() {
         },
 
         destroy() {
+            if (this._layers) this._layers.destroy();
             if (this._engine) this._engine.destroy();
         },
 
@@ -93,13 +94,12 @@ function petaApp() {
                 zoomPosition: 'bottomleft',
             }).init();
 
-            // 2. RW layer with callbacks
-            this._rwLayer = new SimPeta.RwLayer(this._engine, {
-                onSelect: (name, data) => {
+            // 2. Unified layer manager
+            this._layers = new SimPeta.LayerManager(this._engine, {
+                onRwSelect: (name, data) => {
                     this.selectedRw = name;
                     this.selectedStats = data;
-                    if (this._kelLayer) this._kelLayer.bringToFront();
-                    if (this._clm) this._clm.bringToFront();
+                    if (this._layers) this._layers.bringCustomToFront();
                     this.$nextTick(() => {
                         const el = this.$el.querySelector('.rw-list-item.active');
                         if (el) el.scrollIntoView({
@@ -108,46 +108,36 @@ function petaApp() {
                         });
                     });
                 },
-                onDeselect: () => {
+                onRwDeselect: () => {
                     this.selectedRw = null;
                     this.selectedStats = {};
-                    if (this._kelLayer && this._kelLayer.bounds) {
-                        this._engine.fitBounds(this._kelLayer.bounds);
+                    if (this._layers?.kelurahanBounds) {
+                        this._engine.fitBounds(this._layers.kelurahanBounds);
                     }
                 },
-                onDataLoad: (list) => {
+                onRwDataLoad: (list) => {
                     this.rwDataList = list;
-                    this.rwColors = Object.assign({}, this._rwLayer.colors);
+                    this.rwColors = Object.assign({}, this._layers.rwColors);
                 },
             });
 
-            // 3. Kelurahan layer
-            this._kelLayer = new SimPeta.KelurahanLayer(this._engine);
-
-            // 4. Custom layer manager
-            this._clm = new SimPeta.CustomLayerManager(this._engine);
-
-            // 5. Load data in parallel
+            // 3. Load ALL layers + stats in parallel
             this.loading = true;
             try {
-                const results = await Promise.all([
-                    this._rwLayer.load(PETA_ROUTES.geojsonRw),
-                    this._kelLayer.load(PETA_ROUTES.geojsonKelurahan),
-                    // this._clm.load(PETA_ROUTES.geojsonLayers),
+                const [layersData, statsData] = await Promise.all([
+                    SimPeta.apiGet(PETA_ROUTES.geojsonLayers),
                     SimPeta.apiGet(PETA_ROUTES.stats),
                 ]);
 
-                this.globalStats = results[2];
+                this.globalStats = statsData;
+                this._layers.renderAll(layersData);
+                this.allLayers = this._layers.allLayers;
 
                 // Fit to kelurahan bounds & constrain
-                if (this._kelLayer.bounds) {
-                    this._engine.fitBounds(this._kelLayer.bounds);
-                    this._engine.constrainToBounds(this._kelLayer.bounds);
+                if (this._layers.kelurahanBounds) {
+                    this._engine.fitBounds(this._layers.kelurahanBounds);
+                    this._engine.constrainToBounds(this._layers.kelurahanBounds);
                 }
-
-                // Custom layers (after base layers)
-                this.customLayers = await this._clm.load(PETA_ROUTES.geojsonLayers);
-
 
             } catch (err) {
                 console.error('[petaApp] Load error:', err);
@@ -159,41 +149,38 @@ function petaApp() {
 
         // ─── Actions (called from Blade templates) ─────────
         selectRw(rwName) {
-            if (this._rwLayer) this._rwLayer.select(rwName);
+            if (this._layers) this._layers.selectRw(rwName);
         },
 
         resetView() {
-            if (this._rwLayer) this._rwLayer.deselect();
+            if (this._layers) this._layers.deselectRw();
         },
 
         resetZoom() {
-            if (this._kelLayer && this._kelLayer.bounds) {
-                this._engine.fitBounds(this._kelLayer.bounds);
+            if (this._layers?.kelurahanBounds) {
+                this._engine.fitBounds(this._layers.kelurahanBounds);
             }
         },
 
         toggleKelurahan() {
             this.showKelurahan = !this.showKelurahan;
-            if (this._kelLayer) this._kelLayer.toggle(this.showKelurahan);
+            if (this._layers) this._layers.toggleKelurahan(this.showKelurahan);
         },
 
         toggleLabels() {
             this.showLabels = !this.showLabels;
-            if (this._rwLayer) this._rwLayer.toggleLabels(this.showLabels);
+            if (this._layers) this._layers.toggleRwLabels(this.showLabels);
         },
 
         toggleRwLayer() {
             this.showRwLayer = !this.showRwLayer;
-            if (this._rwLayer) this._rwLayer.toggle(this.showRwLayer);
-            if (this.showRwLayer && this._clm) this._clm.bringToFront();
-            // When hiding RW layer, also hide labels; when showing, restore label state
-            if (!this.showRwLayer) {
-                this.showLabels = false;
-            }
+            if (this._layers) this._layers.toggleRw(this.showRwLayer);
+            if (this.showRwLayer && this._layers) this._layers.bringCustomToFront();
+            if (!this.showRwLayer) this.showLabels = false;
         },
 
         toggleCustomLayer(layerId) {
-            if (this._clm) this._clm.toggle(layerId);
+            if (this._layers) this._layers.toggleCustomLayer(layerId);
         },
     };
 }

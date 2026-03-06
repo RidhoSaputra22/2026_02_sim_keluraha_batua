@@ -15,6 +15,21 @@ class PetaLayerFasilitasSeeder extends Seeder
      */
     public function run(): void
     {
+        // Layer Batas Kelurahan (always at bottom)
+        PetaLayer::updateOrCreate(
+            ['slug' => PetaLayer::LAYER_BATAS_KELURAHAN],
+            [
+                'nama'         => 'Batas Kelurahan',
+                'deskripsi'    => 'Batas wilayah kelurahan',
+                'warna'        => '#1e293b',
+                'fill_opacity' => 0.02,
+                'stroke_width' => 3.0,
+                'pattern_type' => 'solid',
+                'is_active'    => true,
+                'sort_order'   => 0,
+            ]
+        );
+
         // Layer RW (wilayah batas RW)
         PetaLayer::updateOrCreate(
             ['slug' => PetaLayer::LAYER_WILAYAH_RW],
@@ -47,6 +62,6 @@ class PetaLayerFasilitasSeeder extends Seeder
             );
         }
 
-        $this->command->info('✓ 1 layer RW + 6 layer peta fasilitas berhasil di-seed.');
+        $this->command->info('✓ 1 layer kelurahan + 1 layer RW + 6 layer peta fasilitas berhasil di-seed.');
     }
 }

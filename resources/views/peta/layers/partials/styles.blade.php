@@ -70,12 +70,46 @@
     border-top: 2px solid oklch(var(--p));
 }
 
-/* ── Polygon list item ── */
+/* ── Polygon list item (legacy) ── */
 .polygon-item {
     transition: all 0.15s ease;
 }
 .polygon-item:hover {
     background-color: oklch(var(--b2));
+}
+
+/* ── Tree structure ── */
+.tree-layer-group {
+    position: relative;
+}
+
+.tree-toggle-btn {
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.tree-toggle-btn:hover {
+    opacity: 1;
+}
+
+.tree-children {
+    border-left: 1px solid oklch(var(--bc) / 0.1);
+    margin-left: 1.15rem;
+}
+
+.polygon-tree-item {
+    transition: all 0.15s ease;
+    position: relative;
+}
+.polygon-tree-item:hover {
+    background-color: oklch(var(--b2));
+}
+.polygon-tree-item.polygon-editing {
+    background-color: oklch(var(--p) / 0.12);
+    border-left: 2px solid oklch(var(--p));
+}
+
+.tree-connector {
+    margin-left: -0.4rem;
 }
 
 /* ── Zoom controls ── */
