@@ -19,14 +19,14 @@ class PetaLayerFasilitasSeeder extends Seeder
         PetaLayer::updateOrCreate(
             ['slug' => PetaLayer::LAYER_BATAS_KELURAHAN],
             [
-                'nama'         => 'Batas Kelurahan',
-                'deskripsi'    => 'Batas wilayah kelurahan',
-                'warna'        => '#1e293b',
+                'nama' => 'Batas Kelurahan',
+                'deskripsi' => 'Batas wilayah kelurahan',
+                'warna' => '#1e293b',
                 'fill_opacity' => 0.02,
                 'stroke_width' => 3.0,
                 'pattern_type' => 'solid',
-                'is_active'    => true,
-                'sort_order'   => 0,
+                'is_active' => true,
+                'sort_order' => 0,
             ]
         );
 
@@ -34,14 +34,14 @@ class PetaLayerFasilitasSeeder extends Seeder
         PetaLayer::updateOrCreate(
             ['slug' => PetaLayer::LAYER_WILAYAH_RW],
             [
-                'nama'         => 'Wilayah RW',
-                'deskripsi'    => 'Batas wilayah RW',
-                'warna'        => '#6366f1',
+                'nama' => 'Wilayah RW',
+                'deskripsi' => 'Batas wilayah RW',
+                'warna' => '#6366f1',
                 'fill_opacity' => 0.30,
                 'stroke_width' => 2.5,
                 'pattern_type' => 'solid',
-                'is_active'    => true,
-                'sort_order'   => 1,
+                'is_active' => true,
+                'sort_order' => 1,
             ]
         );
 
@@ -50,14 +50,15 @@ class PetaLayerFasilitasSeeder extends Seeder
             PetaLayer::updateOrCreate(
                 ['slug' => $slug],
                 [
-                    'nama'         => $config['nama'],
-                    'deskripsi'    => 'Layer peta untuk data ' . $config['nama'],
-                    'warna'        => $config['warna'],
+                    'nama' => $config['nama'],
+                    'deskripsi' => 'Layer peta untuk data '.$config['nama'],
+                    'warna' => $config['warna'],
                     'fill_opacity' => 0.3,
                     'stroke_width' => 2.0,
                     'pattern_type' => 'solid',
-                    'is_active'    => true,
-                    'sort_order'   => $config['sort'],
+                    'is_active' => true,
+                    'sort_order' => $config['sort'],
+                    'jenis' => 'point', // Semua layer fasilitas menggunakan jenis 'point'
                 ]
             );
         }

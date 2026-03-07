@@ -11,6 +11,9 @@ return new class extends Migration
     {
         Schema::table('peta_layer_polygons', function (Blueprint $table) {
             $table->integer('sort_order')->default(0)->after('properties');
+            
+            // jenis layer
+            
         });
 
         // Set initial sort_order based on existing id order within each layer

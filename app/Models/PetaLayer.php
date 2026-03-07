@@ -16,6 +16,7 @@ class PetaLayer extends Model
         'nama',
         'slug',
         'deskripsi',
+        'jenis',
         'warna',
         'fill_opacity',
         'stroke_width',
@@ -31,12 +32,36 @@ class PetaLayer extends Model
         'sort_order' => 'integer',
     ];
 
+    // ── Jenis Layer ───────────────────────────────
+    public const JENIS_POINT = 'point';
+
+    public const JENIS_POLYGON = 'polygon';
+
+    public const JENIS_MULTIPOLYGON = 'multipolygon';
+
+    /**
+     * Daftar jenis layer yang didukung.
+     */
+    public static function jenisOptions(): array
+    {
+        return [
+            self::JENIS_POINT => 'Titik (Point)',
+            self::JENIS_POLYGON => 'Polygon',
+            self::JENIS_MULTIPOLYGON => 'MultiPolygon',
+        ];
+    }
+
     // ── Boot ────────────────────────────────────────────────
     protected static function booted(): void
     {
         static::creating(function (self $layer) {
             if (empty($layer->slug)) {
                 $layer->slug = Str::slug($layer->nama);
+            }
+
+            if (empty($layer->sort_order)) {
+                $maxSort = self::max('sort_order');
+                $layer->sort_order = $maxSort + 10; // Tambahkan gap 10 untuk memudahkan penyisipan
             }
         });
     }
@@ -48,14 +73,21 @@ class PetaLayer extends Model
     }
 
     // ── Layer Slugs (konvensi per jenis data) ───────────────
-    public const LAYER_SEKOLAH        = 'sekolah';
-    public const LAYER_FASKES         = 'fasilitas-kesehatan';
-    public const LAYER_TEMPAT_IBADAH  = 'tempat-ibadah';
+    public const LAYER_SEKOLAH = 'sekolah';
+
+    public const LAYER_FASKES = 'fasilitas-kesehatan';
+
+    public const LAYER_TEMPAT_IBADAH = 'tempat-ibadah';
+
     public const LAYER_KONTRAKAN_KOST = 'kontrakan-kost';
-    public const LAYER_ASRAMA         = 'asrama';
-    public const LAYER_DATA_USAHA     = 'data-usaha';
-    public const LAYER_WILAYAH_RW       = 'wilayah-rw';
-    public const LAYER_BATAS_KELURAHAN  = 'batas-kelurahan';
+
+    public const LAYER_ASRAMA = 'asrama';
+
+    public const LAYER_DATA_USAHA = 'data-usaha';
+
+    public const LAYER_WILAYAH_RW = 'wilayah-rw';
+
+    public const LAYER_BATAS_KELURAHAN = 'batas-kelurahan';
 
     /**
      * Daftar layer default beserta konfigurasi warna.
@@ -63,12 +95,12 @@ class PetaLayer extends Model
     public static function facilityLayers(): array
     {
         return [
-            self::LAYER_SEKOLAH        => ['nama' => 'Sekolah',              'warna' => '#2563EB', 'sort' => 10],
-            self::LAYER_FASKES         => ['nama' => 'Fasilitas Kesehatan',  'warna' => '#DC2626', 'sort' => 20],
-            self::LAYER_TEMPAT_IBADAH  => ['nama' => 'Tempat Ibadah',        'warna' => '#059669', 'sort' => 30],
+            self::LAYER_SEKOLAH => ['nama' => 'Sekolah',              'warna' => '#2563EB', 'sort' => 10],
+            self::LAYER_FASKES => ['nama' => 'Fasilitas Kesehatan',  'warna' => '#DC2626', 'sort' => 20],
+            self::LAYER_TEMPAT_IBADAH => ['nama' => 'Tempat Ibadah',        'warna' => '#059669', 'sort' => 30],
             self::LAYER_KONTRAKAN_KOST => ['nama' => 'Kontrakan & Kost',     'warna' => '#D97706', 'sort' => 40],
-            self::LAYER_ASRAMA         => ['nama' => 'Asrama',               'warna' => '#7C3AED', 'sort' => 50],
-            self::LAYER_DATA_USAHA     => ['nama' => 'Data Usaha',           'warna' => '#EA580C', 'sort' => 60],
+            self::LAYER_ASRAMA => ['nama' => 'Asrama',               'warna' => '#7C3AED', 'sort' => 50],
+            self::LAYER_DATA_USAHA => ['nama' => 'Data Usaha',           'warna' => '#EA580C', 'sort' => 60],
         ];
     }
 

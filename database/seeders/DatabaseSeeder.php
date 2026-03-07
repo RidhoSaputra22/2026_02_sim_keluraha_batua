@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -36,5 +37,18 @@ class DatabaseSeeder extends Seeder
             RtRwPengurusSeeder::class,          // Pengurus RT/RW
             DataUmumSeeder::class,              // UMKM, sekolah, faskes, tempat ibadah, dll.
         ]);
+
+        echo '✅ Database seeding completed successfully.'.PHP_EOL;
+
+        // Sync GeoJSON ke database (peta_layer_polygons dan kelurahans)
+        Artisan::call('geojson:sync');
+
+        echo '✅ GeoJSON synchronization completed successfully.'.PHP_EOL;
+
+        // simplified polygon sync
+        Artisan::call('polygon:simplify');
+
+        echo '✅ Polygon simplification completed successfully.'.PHP_EOL;
+
     }
 }

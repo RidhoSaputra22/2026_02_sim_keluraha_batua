@@ -60,6 +60,7 @@ trait SyncsWithPetaLayer
             'type'        => 'Point',
             'coordinates' => [(float) $longitude, (float) $latitude], // GeoJSON: [lng, lat]
         ]);
+        $jenis = 'point';
 
         if ($model->peta_layer_polygon_id) {
             // Update existing polygon
@@ -69,6 +70,7 @@ trait SyncsWithPetaLayer
                 $polygon->update([
                     'nama'       => $this->petaPolygonNama($model),
                     'properties' => $this->petaPolygonProperties($model),
+                    'jenis'      => $jenis,
                 ]);
 
                 if ($driver === 'pgsql') {
@@ -91,6 +93,7 @@ trait SyncsWithPetaLayer
             'peta_layer_id' => $layer->id,
             'nama'          => $this->petaPolygonNama($model),
             'properties'    => $this->petaPolygonProperties($model),
+            'jenis'         => $jenis,
         ]);
 
         if ($driver === 'pgsql') {

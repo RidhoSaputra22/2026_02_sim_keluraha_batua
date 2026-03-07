@@ -139,7 +139,9 @@
         color: @json($layerConfig['color']),
         opacity: @json($layerConfig['opacity']),
         strokeWidth: @json($layerConfig['strokeWidth']),
-        existingData: {!! $geojsonCollection !!},
+        existingData: {
+            !!$geojsonCollection!!
+        },
     };
     </script>
     @vite('resources/js/peta/layer-polygon-editor.js')

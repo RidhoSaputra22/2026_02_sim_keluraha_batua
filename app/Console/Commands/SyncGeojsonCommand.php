@@ -44,22 +44,23 @@ class SyncGeojsonCommand extends Command
         $file = $this->option('rw-file');
         $disk = Storage::disk('public');
         $polygonColor = [
-                '#ff0000', // Merah
-                '#00ff00', // Hijau
-                '#0000ff', // Biru
-                '#ffff00', // Kuning
-                '#ff0000', // Merah
-                '#00ff00', // Hijau
-                '#0000ff', // Biru
-                '#ffff00', // Kuning
-                '#ff0000', // Merah
-                '#00ff00', // Hijau
-                '#0000ff', // Biru
-                '#ffff00', // Kuning
-            ];
+            '#ff0000', // Merah
+            '#00ff00', // Hijau
+            '#0000ff', // Biru
+            '#ffff00', // Kuning
+            '#ff0000', // Merah
+            '#00ff00', // Hijau
+            '#0000ff', // Biru
+            '#ffff00', // Kuning
+            '#ff0000', // Merah
+            '#00ff00', // Hijau
+            '#0000ff', // Biru
+            '#ffff00', // Kuning
+        ];
 
         if (! $disk->exists($file)) {
             $this->error("File RW GeoJSON tidak ditemukan: {$file}");
+
             return;
         }
 
@@ -67,6 +68,7 @@ class SyncGeojsonCommand extends Command
 
         if (! isset($geojson['features'])) {
             $this->error('Format GeoJSON RW tidak valid (features tidak ditemukan).');
+
             return;
         }
 
@@ -74,14 +76,14 @@ class SyncGeojsonCommand extends Command
         $rwLayer = PetaLayer::firstOrCreate(
             ['slug' => PetaLayer::LAYER_WILAYAH_RW],
             [
-                'nama'         => 'Wilayah RW',
-                'deskripsi'    => 'Batas wilayah RW',
-                'warna'        => '#6366f1',
+                'nama' => 'Wilayah RW',
+                'deskripsi' => 'Batas wilayah RW',
+                'warna' => '#6366f1',
                 'fill_opacity' => 0.30,
                 'stroke_width' => 2.5,
                 'pattern_type' => 'solid',
-                'is_active'    => true,
-                'sort_order'   => 1,
+                'is_active' => true,
+                'sort_order' => 0,
             ]
         );
 
@@ -95,6 +97,7 @@ class SyncGeojsonCommand extends Command
 
             if (! $rwName || ! $geometry || empty($geometry['coordinates'])) {
                 $skipped++;
+
                 continue;
             }
 
@@ -104,6 +107,7 @@ class SyncGeojsonCommand extends Command
             if ($nomorRw <= 0) {
                 $this->warn("  ⚠ Nomor RW tidak valid: {$rwName}");
                 $skipped++;
+
                 continue;
             }
 
@@ -113,20 +117,22 @@ class SyncGeojsonCommand extends Command
             if (! $rw) {
                 $this->warn("  ⚠ RW {$nomorRw} tidak ditemukan di database, skip.");
                 $skipped++;
+
                 continue;
             }
 
             $warna = $polygonColor[$index % count($polygonColor)];
-            $nama = 'RW ' . str_pad($nomorRw, 2, '0', STR_PAD_LEFT);
+            $nama = 'RW '.str_pad($nomorRw, 2, '0', STR_PAD_LEFT);
             $geometryJson = json_encode($geometry);
+            $jenis = strtolower($geometry['type'] ?? 'polygon');
 
             // Find or create polygon record in peta_layer_polygons
             $polygon = PetaLayerPolygon::firstOrCreate(
                 ['peta_layer_id' => $rwLayer->id, 'rw_id' => $rw->id],
-                ['nama' => $nama, 'warna' => $warna]
+                ['nama' => $nama, 'warna' => $warna, 'jenis' => $jenis]
             );
 
-            $polygon->update(['nama' => $nama, 'warna' => $warna]);
+            $polygon->update(['nama' => $nama, 'warna' => $warna, 'jenis' => $jenis]);
 
             // Store polygon geometry using PostGIS
             DB::statement(
@@ -151,6 +157,7 @@ class SyncGeojsonCommand extends Command
 
         if (! $disk->exists($file)) {
             $this->error("File Kelurahan GeoJSON tidak ditemukan: {$file}");
+
             return;
         }
 
@@ -158,6 +165,7 @@ class SyncGeojsonCommand extends Command
 
         if (! isset($geojson['features'])) {
             $this->error('Format GeoJSON Kelurahan tidak valid (features tidak ditemukan).');
+
             return;
         }
 
@@ -165,14 +173,14 @@ class SyncGeojsonCommand extends Command
         $kelLayer = PetaLayer::firstOrCreate(
             ['slug' => PetaLayer::LAYER_BATAS_KELURAHAN],
             [
-                'nama'         => 'Batas Kelurahan',
-                'deskripsi'    => 'Batas wilayah kelurahan',
-                'warna'        => '#1e293b',
+                'nama' => 'Batas Kelurahan',
+                'deskripsi' => 'Batas wilayah kelurahan',
+                'warna' => '#1e293b',
                 'fill_opacity' => 0.02,
                 'stroke_width' => 3.0,
                 'pattern_type' => 'solid',
-                'is_active'    => true,
-                'sort_order'   => 0,
+                'is_active' => true,
+                'sort_order' => 1,
             ]
         );
 
@@ -197,19 +205,21 @@ class SyncGeojsonCommand extends Command
 
             if (! $kelurahan) {
                 $this->warn('  ⚠ Tidak ada data kelurahan di database.');
+
                 continue;
             }
 
             $nama = $kelurahan->nama;
             $geometryJson = json_encode($geometry);
+            $jenis = strtolower($geometry['type'] ?? 'polygon');
 
             // Find or create polygon record in peta_layer_polygons
             $polygon = PetaLayerPolygon::firstOrCreate(
                 ['peta_layer_id' => $kelLayer->id, 'kelurahan_id' => $kelurahan->id],
-                ['nama' => $nama, 'deskripsi' => 'Batas wilayah kelurahan ' . $nama, 'warna' => '#1e293b']
+                ['nama' => $nama, 'deskripsi' => 'Batas wilayah kelurahan '.$nama, 'warna' => '#1e293b', 'jenis' => $jenis]
             );
 
-            $polygon->update(['nama' => $nama]);
+            $polygon->update(['nama' => $nama, 'jenis' => $jenis]);
 
             // Store polygon geometry using PostGIS
             DB::statement(
@@ -222,5 +232,6 @@ class SyncGeojsonCommand extends Command
         }
 
         $this->info("  Synced: {$synced}");
+
     }
 }

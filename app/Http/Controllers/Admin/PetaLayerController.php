@@ -20,8 +20,9 @@ class PetaLayerController extends Controller
     {
 
         $layers = PetaLayer::ordered()
-
             ->withCount('polygons')
+            ->where('jenis', 'polygon') // Hanya tampilkan layer polygon di daftar utama
+
             ->get();
 
         $patternTypes = PetaLayer::patternTypes();
@@ -67,6 +68,7 @@ class PetaLayerController extends Controller
     public function create()
     {
         $patternTypes = PetaLayer::patternTypes();
+
         return view('peta.layers.create', compact('patternTypes'));
     }
 
@@ -75,6 +77,7 @@ class PetaLayerController extends Controller
      */
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'nama' => ['required', 'string', 'max:100'],
             'deskripsi' => ['nullable', 'string'],
@@ -88,6 +91,7 @@ class PetaLayerController extends Controller
 
         $validated['slug'] = Str::slug($validated['nama']);
         $validated['is_active'] = $request->boolean('is_active', true);
+        $validated['jenis'] = PetaLayer::JENIS_POLYGON; // Default jenis polygon untuk layer baru
 
         PetaLayer::create($validated);
 
@@ -174,7 +178,7 @@ class PetaLayerController extends Controller
      */
     public function toggleActive(PetaLayer $petaLayer)
     {
-        $petaLayer->update(['is_active' => !$petaLayer->is_active]);
+        $petaLayer->update(['is_active' => ! $petaLayer->is_active]);
 
         if (request()->wantsJson()) {
             return response()->json(['success' => true, 'is_active' => $petaLayer->is_active]);
@@ -291,22 +295,26 @@ class PetaLayerController extends Controller
         // Set sort_order to append at end
         $maxSort = PetaLayerPolygon::where('peta_layer_id', $petaLayer->id)->max('sort_order') ?? -1;
 
+        $geojson = $request->input('geojson');
+        $jenis = strtolower($geojson['type'] ?? 'polygon');
+
+        // Convert Polygon to MultiPolygon if needed
+        if ($jenis === 'polygon') {
+            $geojson = [
+                'type' => 'MultiPolygon',
+                'coordinates' => [$geojson['coordinates']],
+            ];
+            $jenis = 'multipolygon';
+        }
+
         $polygon = PetaLayerPolygon::create([
             'peta_layer_id' => $petaLayer->id,
             'nama' => $request->input('nama'),
             'deskripsi' => $request->input('deskripsi'),
             'warna' => $request->input('warna', '#6366f1'),
             'sort_order' => $maxSort + 1,
+            'jenis' => $jenis,
         ]);
-
-        // Convert Polygon to MultiPolygon if needed
-        $geojson = $request->input('geojson');
-        if ($geojson['type'] === 'Polygon') {
-            $geojson = [
-                'type' => 'MultiPolygon',
-                'coordinates' => [$geojson['coordinates']],
-            ];
-        }
 
         $polygon->setPolygonFromGeojson($geojson);
 
@@ -329,22 +337,27 @@ class PetaLayerController extends Controller
             'geojson' => ['nullable', 'array'],
         ]);
 
-        $polygon->update([
+        $updateData = [
             'nama' => $request->input('nama', $polygon->nama),
             'deskripsi' => $request->input('deskripsi', $polygon->deskripsi),
             'warna' => $request->input('warna', $polygon->warna),
-        ]);
+        ];
 
         if ($request->has('geojson')) {
             $geojson = $request->input('geojson');
-            if ($geojson['type'] === 'Polygon') {
+            $jenis = strtolower($geojson['type'] ?? 'polygon');
+            if ($jenis === 'polygon') {
                 $geojson = [
                     'type' => 'MultiPolygon',
                     'coordinates' => [$geojson['coordinates']],
                 ];
+                $jenis = 'multipolygon';
             }
+            $updateData['jenis'] = $jenis;
             $polygon->setPolygonFromGeojson($geojson);
         }
+
+        $polygon->update($updateData);
 
         return response()->json([
             'success' => true,
@@ -410,8 +423,8 @@ class PetaLayerController extends Controller
         foreach ($layers as $layer) {
             $layerType = match ($layer->slug) {
                 PetaLayer::LAYER_BATAS_KELURAHAN => 'kelurahan',
-                PetaLayer::LAYER_WILAYAH_RW      => 'rw',
-                default                          => 'custom',
+                PetaLayer::LAYER_WILAYAH_RW => 'rw',
+                default => 'custom',
             };
 
             $polygons = DB::select(
@@ -478,7 +491,7 @@ class PetaLayerController extends Controller
         $stats = [];
 
         foreach ($rwList as $rw) {
-            $rwLabel = 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+            $rwLabel = 'RW '.str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
             $rtIds = $rw->rts->pluck('id')->toArray();
 
             $totalPenduduk = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->count();

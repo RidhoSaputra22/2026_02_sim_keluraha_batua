@@ -14,6 +14,7 @@ class PetaLayerPolygon extends Model
 
     protected $fillable = [
         'peta_layer_id',
+        'jenis', // point, polygon, multipolygon, dsb
         'nama',
         'deskripsi',
         'warna',
@@ -22,6 +23,18 @@ class PetaLayerPolygon extends Model
         'properties',
         'sort_order',
     ];
+    /**
+     * Jenis geometry: 'point', 'polygon', 'multipolygon', dst.
+     */
+    public function isPoint(): bool
+    {
+        return $this->jenis === 'point';
+    }
+
+    public function isPolygon(): bool
+    {
+        return $this->jenis === 'polygon' || $this->jenis === 'multipolygon';
+    }
 
     protected $casts = [
         'properties' => 'array',
