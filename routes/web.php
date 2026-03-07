@@ -256,6 +256,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/{petaLayer}/polygon', [PetaLayerController::class, 'storePolygon'])->name('polygon.store');
         Route::put('/{petaLayer}/polygon/{polygon}', [PetaLayerController::class, 'updatePolygon'])->name('polygon.update');
         Route::delete('/{petaLayer}/polygon/{polygon}', [PetaLayerController::class, 'destroyPolygon'])->name('polygon.destroy');
+        Route::post('/{petaLayer}/polygon-reorder', [PetaLayerController::class, 'reorderPolygons'])->name('polygon.reorder');
     });
 
     // ╔══════════════════════════════════════════════════════════════╗

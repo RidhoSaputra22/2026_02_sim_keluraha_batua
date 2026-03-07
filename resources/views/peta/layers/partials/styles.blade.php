@@ -37,9 +37,11 @@
 .layer-sidebar::-webkit-scrollbar {
     width: 4px;
 }
+
 .layer-sidebar::-webkit-scrollbar-track {
     background: transparent;
 }
+
 .layer-sidebar::-webkit-scrollbar-thumb {
     background: oklch(var(--bc) / 0.15);
     border-radius: 4px;
@@ -74,6 +76,7 @@
 .polygon-item {
     transition: all 0.15s ease;
 }
+
 .polygon-item:hover {
     background-color: oklch(var(--b2));
 }
@@ -87,6 +90,7 @@
     opacity: 0.5;
     transition: opacity 0.15s;
 }
+
 .tree-toggle-btn:hover {
     opacity: 1;
 }
@@ -100,12 +104,28 @@
     transition: all 0.15s ease;
     position: relative;
 }
+
 .polygon-tree-item:hover {
     background-color: oklch(var(--b2));
 }
+
 .polygon-tree-item.polygon-editing {
     background-color: oklch(var(--p) / 0.12);
     border-left: 2px solid oklch(var(--p));
+}
+
+.polygon-tree-item.polygon-highlighted {
+    background-color: #6366f1;
+    border-left: 2px solid #6366f1;
+}
+
+.polygon-tree-item.polygon-drag-over {
+    border-top: 2px solid oklch(var(--p));
+}
+
+.polygon-tree-item.dragging {
+    opacity: 0.5;
+    background-color: oklch(var(--b3));
 }
 
 .tree-connector {
@@ -115,10 +135,11 @@
 /* ── Zoom controls ── */
 .leaflet-control-zoom {
     border: none !important;
-    box-shadow: 0 1px 5px rgba(0,0,0,0.15) !important;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.15) !important;
     border-radius: 0.5rem !important;
     overflow: hidden;
 }
+
 .leaflet-control-zoom a {
     background-color: oklch(var(--b1)) !important;
     color: oklch(var(--bc)) !important;
@@ -128,6 +149,7 @@
     line-height: 30px !important;
     font-size: 16px !important;
 }
+
 .leaflet-control-zoom a:hover {
     background-color: oklch(var(--b2)) !important;
 }
@@ -154,6 +176,7 @@
 .leaflet-draw .leaflet-control {
     margin-top: 12px;
 }
+
 /* ── RW reference labels ── */
 .rw-label-ref {
     background: none !important;
@@ -173,9 +196,11 @@
     opacity: 0.4;
     transition: opacity 0.15s;
 }
+
 .drag-handle:hover {
     opacity: 0.8;
 }
+
 .drag-handle:active {
     cursor: grabbing;
 }
@@ -186,6 +211,6 @@
     height: 14px;
     border-radius: 3px;
     flex-shrink: 0;
-    border: 1px solid rgba(0,0,0,0.15);
+    border: 1px solid rgba(0, 0, 0, 0.15);
 }
 </style>

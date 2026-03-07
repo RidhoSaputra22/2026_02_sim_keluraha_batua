@@ -59,6 +59,13 @@ function layerManager() {
             is_active: true,
         },
 
+        // ─── Polygon modal state ───────────────────────
+        _editingPolygonMeta: null, // { id, layerId }
+        polygonModalForm: {
+            nama: '',
+            warna: '#6366f1',
+        },
+
         // ─── Toast ─────────────────────────────────────
         toast: {
             show: false,
@@ -66,12 +73,17 @@ function layerManager() {
             type: 'success'
         },
 
+        // ─── Highlighted polygon (via map click) ──────
+        highlightedPolygonId: null,
+
         // ─── Drag ──────────────────────────────────────
         _dragIndex: null,
+        _polyDragIndex: null,
+        _polyDragLayerId: null,
+        _polyDragOver: null, // { layerId, index }
 
         // ─── Engine ────────────────────────────────────
         _editor: null,
-        _displayLayers: {}, // layerId -> L.GeoJSON (read-only display)
         _rwOverlayGroup: null,
 
         // ─── Init ──────────────────────────────────────
@@ -97,8 +109,6 @@ function layerManager() {
                 });
             }
 
-
-
             // Init polygon editor
             this._editor = new SimPeta.PolygonEditor('layer-map', {
                 color: '#6366f1',
@@ -116,7 +126,7 @@ function layerManager() {
 
             // Remove draw control initially (no layer selected)
             if (this._editor.drawControl) {
-                this._editor.map.removeControl(this._editor.drawControl);
+                this._editor.removeDrawControl();
             }
 
             // Render all layers as read-only display
@@ -145,34 +155,45 @@ function layerManager() {
         _renderDisplayLayer(layer) {
             if (!this._editor || !this._editor.map) return;
             const geojson = LAYERS_GEOJSON[layer.id];
-            if (!geojson || !geojson.features || geojson.features.length === 0) return;
-
-            const mapLayer = L.geoJSON(geojson, {
-                pane: 'customLayerPane',
-                style: {
-                    color: layer.warna,
-                    weight: layer.stroke_width,
-                    fillOpacity: layer.fill_opacity,
-                    fillColor: layer.warna,
-                },
-                onEachFeature: (feature, lyr) => {
-                    const nama = feature.properties.nama || layer.nama;
-                    lyr.bindTooltip(nama, {
-                        sticky: true
-                    });
-                },
+            this._editor.renderDisplayLayer(layer, geojson, (polyId, layerId) => {
+                this._onMapPolygonClick(layerId, polyId);
             });
+        },
 
-            mapLayer.addTo(this._editor.map);
-            this._displayLayers[layer.id] = mapLayer;
+        _onMapPolygonClick(layerId, polyId) {
+            // Normalize to numbers to handle PostgreSQL PDO string IDs
+            const lid = Number(layerId);
+            const pid = Number(polyId);
+
+            // Find the parent layer
+            const layer = this.layers.find(l => Number(l.id) === lid);
+            if (!layer) return;
+
+            // Expand tree + highlight
+            layer._expanded = true;
+            this.highlightedPolygonId = pid;
+
+            // Find the polygon entry in the tree list
+            const treeList = this._layerPolygonLists[layer.id] || [];
+            const poly = treeList.find(p => Number(p.id) === pid);
+            if (!poly) return;
+
+            // Enter edit mode (this also selects the layer, zooms, etc.)
+            const idx = treeList.indexOf(poly);
+            this.selectPolygonForEdit(layer, poly, idx);
+
+            // Scroll the subtree item into view after Alpine re-renders
+            this.$nextTick(() => {
+                const el = document.querySelector('[data-poly-id="' + pid + '"]');
+                if (el) el.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            });
         },
 
         _removeDisplayLayer(layerId) {
-            const ml = this._displayLayers[layerId];
-            if (ml && this._editor && this._editor.map) {
-                this._editor.map.removeLayer(ml);
-                delete this._displayLayers[layerId];
-            }
+            this._editor.removeDisplayLayer(layerId);
         },
 
         // ─── Build polygon lists for tree ──────────────
@@ -184,15 +205,7 @@ function layerManager() {
 
         _buildPolygonList(layer) {
             const geojson = LAYERS_GEOJSON[layer.id];
-            if (!geojson || !geojson.features || geojson.features.length === 0) {
-                this._layerPolygonLists[layer.id] = [];
-                return;
-            }
-            this._layerPolygonLists[layer.id] = geojson.features.map((f, idx) => ({
-                id: f.properties?.id,
-                nama: f.properties?.nama || ('Polygon ' + (idx + 1)),
-                _featureIndex: idx,
-            }));
+            this._layerPolygonLists[layer.id] = this._editor.extractPolygonList(geojson);
         },
 
         getLayerPolygons(layer) {
@@ -207,55 +220,29 @@ function layerManager() {
         // ─── Per-polygon edit ──────────────────────────
         selectPolygonForEdit(layer, poly, idx) {
             // If already editing this polygon, do nothing
-            if (this.editingPolygon?.id === poly.id && this.editingPolygon?.layerId === layer.id) return;
+            if (Number(this.editingPolygon?.id) === Number(poly.id) && Number(this.editingPolygon?.layerId) === Number(
+                    layer.id)) return;
 
             // Stop any current single-polygon edit
             this._stopSinglePolygonEdit();
 
             // Make sure this layer is active (loads all polygons into editor)
-            if (this.activeLayer?.id !== layer.id) {
+            if (Number(this.activeLayer?.id) !== Number(layer.id)) {
                 this.selectLayer(layer);
             }
 
             // Find the matching polygon entry in polygonList (which has .layer ref)
-            const polyEntry = this.polygonList.find(p => p.id === poly.id);
+            const polyEntry = this.polygonList.find(p => Number(p.id) === Number(poly.id));
             if (!polyEntry || !polyEntry.layer) return;
 
-            // Remove all layers from drawnItems except the target one
-            // and store them temporarily for later restoration
-            this._stashedLayers = [];
-            this._editor.drawnItems.eachLayer(l => {
-                if (l !== polyEntry.layer) {
-                    this._stashedLayers.push(l);
-                }
-            });
-            this._stashedLayers.forEach(l => this._editor.drawnItems.removeLayer(l));
-
-            // Show stashed polygons as read-only (non-editable) on the map
-            this._stashedDisplayGroup = L.featureGroup([], {
-                pane: 'customLayerPane'
-            }).addTo(this._editor.map);
-            this._stashedLayers.forEach(l => {
-                const cloned = L.geoJSON(l.toGeoJSON(), {
-                    pane: 'customLayerPane',
-                    style: {
-                        color: layer.warna,
-                        weight: layer.stroke_width,
-                        fillOpacity: layer.fill_opacity * 0.5,
-                        fillColor: layer.warna,
-                        dashArray: '4, 4',
-                    },
-                    interactive: false,
-                });
-                this._stashedDisplayGroup.addLayer(cloned);
-            });
-
-            // Re-create draw control with only the single polygon editable
-            this._addDrawControl(layer);
-
-            // Zoom to the polygon
-            this._editor.map.fitBounds(polyEntry.layer.getBounds(), {
-                padding: [80, 80]
+            this._editor.startSinglePolygonEdit(polyEntry.layer, layer, (clickedOriginalLayer) => {
+                // Find the polygon entry matching the clicked stashed layer
+                const clickedPoly = this.polygonList.find(p => p.layer === clickedOriginalLayer);
+                if (!clickedPoly) return;
+                const clickedTreePoly = (this._layerPolygonLists[layer.id] || []).find(p => Number(p.id) === Number(clickedPoly.id));
+                if (!clickedTreePoly) return;
+                // Switch to the clicked polygon (editingPolygon has a different ID, so the guard passes)
+                this.selectPolygonForEdit(layer, clickedTreePoly, (this._layerPolygonLists[layer.id] || []).indexOf(clickedTreePoly));
             });
 
             // Set editing state
@@ -271,25 +258,10 @@ function layerManager() {
             this._stopSinglePolygonEdit();
         },
 
-        _stopSinglePolygonEdit() {
+        _stopSinglePolygonEdit(restoreLayers = true) {
             if (!this.editingPolygon) return;
 
-            // Remove the read-only stashed display
-            if (this._stashedDisplayGroup && this._editor?.map) {
-                this._editor.map.removeLayer(this._stashedDisplayGroup);
-                this._stashedDisplayGroup = null;
-            }
-
-            // Restore all stashed layers back to drawnItems
-            if (this._stashedLayers) {
-                this._stashedLayers.forEach(l => this._editor.drawnItems.addLayer(l));
-                this._stashedLayers = null;
-            }
-
-            // Re-create draw control with all polygons editable
-            if (this.activeLayer) {
-                this._addDrawControl(this.activeLayer);
-            }
+            this._editor.stopSinglePolygonEdit(this.activeLayer, restoreLayers);
 
             this.editingPolygon = null;
         },
@@ -300,12 +272,13 @@ function layerManager() {
             if (this.activeLayer?.id === layer.id) return;
 
             // Stop any single-polygon edit
-            this._stopSinglePolygonEdit();
+            this._stopSinglePolygonEdit(false);
 
             // Deselect current
             this._deactivateCurrentLayer();
 
             this.activeLayer = layer;
+            this.highlightedPolygonId = null;
 
             // Hide the display layer for this one (we'll show editable version)
             this._removeDisplayLayer(layer.id);
@@ -327,11 +300,7 @@ function layerManager() {
             this.activePolygonCount = this.polygonList.length;
 
             // Update the tree polygon list to include layer refs
-            this._layerPolygonLists[layer.id] = this.polygonList.map((p, idx) => ({
-                id: p.id,
-                nama: p.nama || ('Polygon ' + (idx + 1)),
-                _featureIndex: idx,
-            }));
+            this._layerPolygonLists[layer.id] = this._editor.extractPolygonList(LAYERS_GEOJSON[layer.id]);
 
             // Auto-expand tree
             layer._expanded = true;
@@ -341,9 +310,7 @@ function layerManager() {
 
             // Zoom to layer bounds if has polygons
             if (this.polygonList.length > 0 && this._editor.drawnItems.getLayers().length > 0) {
-                this._editor.map.fitBounds(this._editor.drawnItems.getBounds(), {
-                    padding: [50, 50]
-                });
+                this._editor.fitBoundsNoAnim(this._editor.drawnItems.getBounds(), [50, 50]);
             }
         },
 
@@ -352,11 +319,14 @@ function layerManager() {
             if (!this._editor || !this._editor.map) return;
 
             // Stop single-polygon edit if active
-            this._stopSinglePolygonEdit();
+            this._stopSinglePolygonEdit(false);
+
+            // Stop all draw/edit handlers before removing controls/layers.
+            this._editor.disableDrawModes();
 
             // Remove draw control
             if (this._editor.drawControl) {
-                this._editor.map.removeControl(this._editor.drawControl);
+                this._editor.removeDrawControl();
             }
 
             // Clear editor drawn items
@@ -375,63 +345,23 @@ function layerManager() {
 
         _addDrawControl(layer) {
             if (!this._editor || !this._editor.map) return;
-            // Remove existing
-            if (this._editor.drawControl) {
-                this._editor.map.removeControl(this._editor.drawControl);
-            }
-
-            this._editor.drawControl = new L.Control.Draw({
-                position: 'topleft',
-                draw: {
-                    polygon: {
-                        allowIntersection: false,
-                        shapeOptions: {
-                            color: layer.warna,
-                            weight: layer.stroke_width,
-                            fillOpacity: layer.fill_opacity,
-                        },
-                    },
-                    polyline: false,
-                    circle: false,
-                    circlemarker: false,
-                    marker: false,
-                    rectangle: {
-                        shapeOptions: {
-                            color: layer.warna,
-                            weight: layer.stroke_width,
-                            fillOpacity: layer.fill_opacity,
-                        },
-                    },
-
-                },
-                edit: {
-                    featureGroup: this._editor.drawnItems,
-                    remove: true,
-                },
-
-            });
-            this._editor.map.addControl(this._editor.drawControl);
+            this._editor.replaceDrawControl(layer);
         },
 
         // ─── Draw events ───────────────────────────────
         _bindDrawEvents() {
-            if (!this._editor || !this._editor.map) return;
-            this._editor.map.on(L.Draw.Event.CREATED, (e) => {
-                if (!this.activeLayer) return;
-                // Ensure newly drawn polygon renders in editPane (above base/custom layers)
-                if (e.layer.options) e.layer.options.pane = 'editPane';
-                this._editor.drawnItems.addLayer(e.layer);
-                this._saveNewPolygon(e.layer);
-            });
+            if (!this._editor) return;
 
-            this._editor.map.on(L.Draw.Event.EDITED, (e) => {
-                e.layers.eachLayer((layer) => {
+            this._editor.onMultiPolygonChange({
+                onCreated: (layer) => {
+                    if (!this.activeLayer) return;
+                    if (layer.options) layer.options.pane = 'editPane';
+                    this._saveNewPolygon(layer);
+                },
+                onEdited: (layer) => {
                     this._updatePolygonGeometry(layer);
-                });
-            });
-
-            this._editor.map.on(L.Draw.Event.DELETED, (e) => {
-                e.layers.eachLayer((layer) => {
+                },
+                onDeleted: (layer) => {
                     const poly = this.polygonList.find(p => p.layer === layer);
                     if (poly && poly.id) this._deletePolygonFromServer(poly.id);
                     this.polygonList = this.polygonList.filter(p => p.layer !== layer);
@@ -440,32 +370,31 @@ function layerManager() {
 
                     // Sync tree polygon list
                     if (this.activeLayer) {
-                        this._layerPolygonLists[this.activeLayer.id] = this.polygonList.map((p, idx) =>
-                            ({
-                                id: p.id,
-                                nama: p.nama || ('Polygon ' + (idx + 1)),
-                                _featureIndex: idx,
-                            }));
+                        this._layerPolygonLists[this.activeLayer.id] = this._editor.extractPolygonList(
+                            this._editor.toFeatureCollection(this.polygonList)
+                        );
                         this._updateLayerPolygonCount(this.activeLayer.id, this.activePolygonCount);
                     }
-                });
+                },
             });
         },
 
         // ─── Polygon CRUD ──────────────────────────────
         async _saveNewPolygon(layer) {
             const lid = this.activeLayer.id;
-            const url = LAYER_ROUTES.polygonBase + '/' + lid + '/polygon';
             try {
                 const geojson = layer.toGeoJSON().geometry;
-                const data = await SimPeta.apiPost(url, {
+                const data = await this._editor.createLayerPolygon(
+                    LAYER_ROUTES.polygonBase,
+                    lid,
                     geojson,
-                    nama: 'Polygon ' + (this.polygonList.length + 1),
-                });
+                    'Polygon ' + (this.polygonList.length + 1),
+                );
                 if (data.success) {
                     this.polygonList.push({
                         id: data.id,
                         nama: 'Polygon ' + (this.polygonList.length + 1),
+                        warna: '#6366f1',
                         layer,
                     });
                     this.activePolygonCount = this.polygonList.length;
@@ -473,11 +402,9 @@ function layerManager() {
                     this._updateLayerGeojsonCache();
 
                     // Update tree polygon list
-                    this._layerPolygonLists[lid] = this.polygonList.map((p, idx) => ({
-                        id: p.id,
-                        nama: p.nama || ('Polygon ' + (idx + 1)),
-                        _featureIndex: idx,
-                    }));
+                    this._layerPolygonLists[lid] = this._editor.extractPolygonList(
+                        this._editor.toFeatureCollection(this.polygonList)
+                    );
 
                     this._flash('Polygon berhasil disimpan.', 'success');
                 }
@@ -490,9 +417,8 @@ function layerManager() {
             const poly = this.polygonList.find(p => p.layer === layer);
             if (!poly || !poly.id) return;
             const lid = this.activeLayer.id;
-            const url = LAYER_ROUTES.polygonBase + '/' + lid + '/polygon/' + poly.id;
             try {
-                await SimPeta.apiPut(url, {
+                await this._editor.updateLayerPolygon(LAYER_ROUTES.polygonBase, lid, poly.id, {
                     geojson: layer.toGeoJSON().geometry
                 });
                 this._updateLayerGeojsonCache();
@@ -514,14 +440,89 @@ function layerManager() {
             const lid = this.activeLayer?.id;
             if (!lid) return;
 
-            const url = LAYER_ROUTES.polygonBase + '/' + lid + '/polygon/' + poly.id;
             try {
-                await SimPeta.apiPut(url, {
+                await this._editor.updateLayerPolygon(LAYER_ROUTES.polygonBase, lid, poly.id, {
                     nama: newName
                 });
             } catch (e) {
                 console.error('Failed to update polygon name:', e);
             }
+        },
+
+        // ─── Polygon settings modal ────────────────────
+        openEditPolygonModal(layer, poly) {
+            this._editingPolygonMeta = {
+                id: poly.id,
+                layerId: layer.id
+            };
+            this.polygonModalForm = {
+                nama: poly.nama || '',
+                warna: poly.warna || layer.warna || '#6366f1',
+            };
+            document.getElementById('polygon-settings-modal').showModal();
+        },
+
+        async savePolygonSettings() {
+            const meta = this._editingPolygonMeta;
+            if (!meta) return;
+
+            const {
+                nama,
+                warna
+            } = this.polygonModalForm;
+
+            // Update in _layerPolygonLists
+            const treeList = this._layerPolygonLists[meta.layerId];
+            if (treeList) {
+                const treePoly = treeList.find(p => p.id === meta.id);
+                if (treePoly) {
+                    treePoly.nama = nama;
+                    treePoly.warna = warna;
+                }
+            }
+
+            // Update in polygonList (if active layer)
+            const polyEntry = this.polygonList.find(p => p.id === meta.id);
+            if (polyEntry) {
+                polyEntry.nama = nama;
+                polyEntry.warna = warna;
+            }
+
+            // Save to server
+            try {
+                await this._editor.updateLayerPolygon(LAYER_ROUTES.polygonBase, meta.layerId, meta.id, {
+                    nama,
+                    warna,
+                });
+
+                // Always patch LAYERS_GEOJSON for this polygon so re-renders use the new warna
+                const cachedGeojson = LAYERS_GEOJSON[meta.layerId];
+                if (cachedGeojson?.features) {
+                    const f = cachedGeojson.features.find(feat => feat?.properties?.id === meta.id);
+                    if (f?.properties) {
+                        f.properties.nama = nama;
+                        f.properties.warna = warna;
+                    }
+                }
+
+                this._updateLayerGeojsonCache();
+
+                // Re-render display layer if not actively editing this layer
+                if (this.activeLayer?.id !== meta.layerId) {
+                    const layer = this.layers.find(l => l.id === meta.layerId);
+                    if (layer) {
+                        this._removeDisplayLayer(meta.layerId);
+                        this._renderDisplayLayer(layer);
+                    }
+                }
+
+                this._flash('Polygon berhasil diperbarui.', 'success');
+            } catch (e) {
+                this._flash('Gagal menyimpan: ' + e.message, 'error');
+            }
+
+            this._editingPolygonMeta = null;
+            document.getElementById('polygon-settings-modal').close();
         },
 
         async deletePolygon(poly, index) {
@@ -545,11 +546,9 @@ function layerManager() {
                 this._updateLayerPolygonCount(this.activeLayer.id, this.activePolygonCount);
 
                 // Update tree polygon list
-                this._layerPolygonLists[this.activeLayer.id] = this.polygonList.map((p, idx) => ({
-                    id: p.id,
-                    nama: p.nama || ('Polygon ' + (idx + 1)),
-                    _featureIndex: idx,
-                }));
+                this._layerPolygonLists[this.activeLayer.id] = this._editor.extractPolygonList(
+                    this._editor.toFeatureCollection(this.polygonList)
+                );
             }
             this._updateLayerGeojsonCache();
             this._flash('Polygon dihapus.', 'success');
@@ -557,9 +556,8 @@ function layerManager() {
 
         async _deletePolygonFromServer(id) {
             const lid = this.activeLayer.id;
-            const url = LAYER_ROUTES.polygonBase + '/' + lid + '/polygon/' + id;
             try {
-                await SimPeta.apiDelete(url);
+                await this._editor.deleteLayerPolygon(LAYER_ROUTES.polygonBase, lid, id);
             } catch (e) {
                 console.error(e);
             }
@@ -572,36 +570,44 @@ function layerManager() {
 
         _updateLayerGeojsonCache() {
             if (!this.activeLayer) return;
-            // Rebuild the geojson cache from current drawn items
-            const features = [];
-            this.polygonList.forEach(p => {
-                if (p.layer) {
-                    features.push({
-                        type: 'Feature',
-                        properties: {
-                            id: p.id,
-                            nama: p.nama
-                        },
-                        geometry: p.layer.toGeoJSON().geometry,
-                    });
-                }
-            });
-            LAYERS_GEOJSON[this.activeLayer.id] = {
-                type: 'FeatureCollection',
-                features,
-            };
+            LAYERS_GEOJSON[this.activeLayer.id] = this._editor.toFeatureCollection(this.polygonList);
         },
 
-        zoomToPolygon(poly) {
-            // Try from polygonList first (has .layer ref when layer is active)
+        zoomToPolygon(layer, poly) {
+            if (!this._editor) return;
+
+            // Case 1: polygon is in the active layer — use .layer ref from polygonList
             const polyEntry = this.polygonList.find(p => p.id === poly.id);
-            if (polyEntry?.layer && this._editor) {
+            if (polyEntry?.layer) {
                 this._editor.zoomToLayer(polyEntry.layer);
                 return;
             }
-            // Fallback: zoom via display layer
-            if (poly.layer && this._editor) {
-                this._editor.zoomToLayer(poly.layer);
+
+            // Case 2: polygon is in a non-active (display) layer — build bounds from LAYERS_GEOJSON
+            const geojson = LAYERS_GEOJSON[layer.id];
+            if (geojson?.features?.length) {
+                // Find by feature index or by id
+                const featureIdx = poly._featureIndex;
+                const feature = (featureIdx != null && geojson.features[featureIdx]?.properties?.id === poly.id) ?
+                    geojson.features[featureIdx] :
+                    geojson.features.find(f => f?.properties?.id === poly.id);
+
+                if (feature?.geometry) {
+                    try {
+                        const tempLayer = L.geoJSON(feature);
+                        const bounds = tempLayer.getBounds();
+                        if (bounds.isValid()) {
+                            this._editor.fitBoundsNoAnim(bounds, [80, 80]);
+                            return;
+                        }
+                    } catch (_) {}
+                }
+
+                // Fallback: zoom to entire layer display bounds
+                const displayLayer = this._editor.getDisplayLayer(layer.id);
+                if (displayLayer?.getBounds?.().isValid()) {
+                    this._editor.fitBoundsNoAnim(displayLayer.getBounds(), [50, 50]);
+                }
             }
         },
 
@@ -609,7 +615,7 @@ function layerManager() {
         toggleLayerVisibility(layer) {
             if (!this._editor || !this._editor.map) return;
             layer.visible = !layer.visible;
-            const ml = this._displayLayers[layer.id];
+            const ml = this._editor.getDisplayLayer(layer.id);
             if (ml) {
                 if (layer.visible) {
                     this._editor.map.addLayer(ml);
@@ -659,8 +665,9 @@ function layerManager() {
                 this._removeDisplayLayer(layer.id);
                 if (this.activeLayer?.id === layer.id) {
                     if (this._editor) this._editor.clearDrawn();
-                    if (this._editor && this._editor.drawControl && this._editor.map) this._editor.map
-                        .removeControl(this._editor.drawControl);
+                    if (this._editor && this._editor.drawControl) {
+                        this._editor.removeDrawControl();
+                    }
                     this.activeLayer = null;
                     this.polygonList = [];
                     this.activePolygonCount = 0;
@@ -678,19 +685,15 @@ function layerManager() {
 
         zoomToLayer(layer) {
             if (!this._editor || !this._editor.map) return;
-            const ml = this._displayLayers[layer.id];
+            const ml = this._editor.getDisplayLayer(layer.id);
             if (ml && ml.getBounds && ml.getBounds().isValid()) {
-                this._editor.map.fitBounds(ml.getBounds(), {
-                    padding: [50, 50]
-                });
+                this._editor.fitBoundsNoAnim(ml.getBounds(), [50, 50]);
                 return;
             }
             // Check if it's the active editable layer
             if (this.activeLayer?.id === layer.id && this._editor.drawnItems && this._editor.drawnItems.getLayers()
                 .length > 0) {
-                this._editor.map.fitBounds(this._editor.drawnItems.getBounds(), {
-                    padding: [50, 50]
-                });
+                this._editor.fitBoundsNoAnim(this._editor.drawnItems.getBounds(), [50, 50]);
             }
         },
 
@@ -746,13 +749,89 @@ function layerManager() {
                 // Reorder map layers — call bringToFront in reverse so top-of-list (index 0) ends up on top
                 for (let i = this.layers.length - 1; i >= 0; i--) {
                     this.layers[i].sort_order = i;
-                    const ml = this._displayLayers[this.layers[i].id];
+                    const ml = this._editor.getDisplayLayer(this.layers[i].id);
                     if (ml) ml.bringToFront();
                 }
 
                 this._flash('Urutan layer diperbarui.', 'success');
             } catch (e) {
                 this._flash('Gagal menyimpan urutan.', 'error');
+            }
+        },
+
+        // ─── Polygon Drag & Drop reorder ───────────────
+        onPolyDragStart(event, layer, index) {
+            this._polyDragIndex = index;
+            this._polyDragLayerId = layer.id;
+            event.target.classList.add('dragging');
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', 'polygon');
+        },
+
+        onPolyDragOver(event, layer, index) {
+            if (this._polyDragLayerId !== layer.id) return;
+            event.dataTransfer.dropEffect = 'move';
+            this._polyDragOver = {
+                layerId: layer.id,
+                index
+            };
+        },
+
+        onPolyDragLeave(event) {
+            this._polyDragOver = null;
+        },
+
+        onPolyDrop(event, layer, targetIndex) {
+            this._polyDragOver = null;
+
+            if (this._polyDragLayerId !== layer.id) return;
+            if (this._polyDragIndex === null || this._polyDragIndex === targetIndex) return;
+
+            const list = this._layerPolygonLists[layer.id];
+            if (!list) return;
+
+            // Reorder array
+            const moved = list.splice(this._polyDragIndex, 1)[0];
+            list.splice(targetIndex, 0, moved);
+
+            // If this is the active layer, also reorder the polygonList
+            if (this.activeLayer?.id === layer.id) {
+                const activeEntry = this.polygonList.find(p => p.id === moved.id);
+                if (activeEntry) {
+                    const oldIdx = this.polygonList.indexOf(activeEntry);
+                    if (oldIdx !== -1) {
+                        this.polygonList.splice(oldIdx, 1);
+                        // Find the correct target position in polygonList
+                        const targetItem = list[targetIndex];
+                        const targetEntry = this.polygonList.find(p => p.id === targetItem?.id);
+                        const newIdx = targetEntry ? this.polygonList.indexOf(targetEntry) : targetIndex;
+                        this.polygonList.splice(newIdx >= 0 ? newIdx : this.polygonList.length, 0, activeEntry);
+                    }
+                }
+                this._updateLayerGeojsonCache();
+            }
+
+            // Save to server
+            this._savePolygonOrder(layer.id, list);
+            this._polyDragIndex = null;
+            this._polyDragLayerId = null;
+        },
+
+        onPolyDragEnd(event) {
+            event.target.classList.remove('dragging');
+            this._polyDragIndex = null;
+            this._polyDragLayerId = null;
+            this._polyDragOver = null;
+        },
+
+        async _savePolygonOrder(layerId, list) {
+            const order = list.map(p => p.id).filter(Boolean);
+            if (order.length === 0) return;
+            try {
+                await this._editor.reorderPolygons(LAYER_ROUTES.polygonBase, layerId, order);
+                this._flash('Urutan polygon diperbarui.', 'success');
+            } catch (e) {
+                this._flash('Gagal menyimpan urutan polygon.', 'error');
             }
         },
 
@@ -845,17 +924,15 @@ function layerManager() {
             if (!this._editor || !this._editor.map) return;
             // Try to fit to all display layers bounds
             let bounds = null;
-            Object.values(this._displayLayers).forEach(ml => {
+            Object.values(this._editor.displayLayers).forEach(ml => {
                 if (ml && ml.getBounds && ml.getBounds().isValid()) {
                     bounds = bounds ? bounds.extend(ml.getBounds()) : ml.getBounds();
                 }
             });
             if (bounds) {
-                this._editor.map.fitBounds(bounds, {
-                    padding: [30, 30]
-                });
+                this._editor.fitBoundsNoAnim(bounds, [30, 30]);
             } else {
-                this._editor.map.setView([-5.155, 119.466], 15);
+                this._editor.setViewNoAnim([-5.155, 119.466], 15);
             }
         },
 

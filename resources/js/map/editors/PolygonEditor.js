@@ -50,6 +50,18 @@ export default class PolygonEditor {
 
         /** @type {boolean} */
         this.hasChanges = false;
+
+        /** @type {Record<number|string, L.GeoJSON>} */
+        this.displayLayers = {};
+
+        /** @type {boolean} */
+        this._tooltipsSuspended = false;
+
+        /** @type {Array<L.Layer>} */
+        this._stashedLayers = [];
+
+        /** @type {L.FeatureGroup|null} */
+        this._stashedDisplayGroup = null;
     }
 
     // ── Init ────────────────────────────────────────────────
@@ -64,6 +76,8 @@ export default class PolygonEditor {
             console.warn("[PolygonEditor] Leaflet (L) not loaded yet.");
             return this;
         }
+
+        this._patchLeafletTooltipGuards();
 
         const container = document.getElementById(this.containerId);
         if (!container) {
@@ -83,6 +97,10 @@ export default class PolygonEditor {
             center: [-5.155, 119.466],
             zoom: 15,
             zoomControl: true,
+            // Keep transitions deterministic while layer/edit states change rapidly.
+            zoomAnimation: false,
+            fadeAnimation: false,
+            markerZoomAnimation: false,
         });
 
         // Custom panes for z-ordering:
@@ -157,6 +175,38 @@ export default class PolygonEditor {
         this.map.addControl(this.drawControl);
 
         return this;
+    }
+
+    /**
+     * Guard Leaflet tooltip internals from null map references during
+     * rapid layer/control switching.
+     */
+    _patchLeafletTooltipGuards() {
+        if (typeof L === "undefined" || !L.Tooltip || !L.Tooltip.prototype) {
+            return;
+        }
+
+        const proto = L.Tooltip.prototype;
+        if (proto.__simKelurahanPatchedTooltipGuards) return;
+
+        const originalAnimateZoom = proto._animateZoom;
+        const originalUpdatePosition = proto._updatePosition;
+
+        if (typeof originalAnimateZoom === "function") {
+            proto._animateZoom = function (e) {
+                if (!this._map) return;
+                return originalAnimateZoom.call(this, e);
+            };
+        }
+
+        if (typeof originalUpdatePosition === "function") {
+            proto._updatePosition = function () {
+                if (!this._map) return;
+                return originalUpdatePosition.call(this);
+            };
+        }
+
+        proto.__simKelurahanPatchedTooltipGuards = true;
     }
 
     /**
@@ -459,11 +509,14 @@ export default class PolygonEditor {
 
         L.geoJSON(sanitisedCollection, {
             pane: "editPane",
-            style: {
-                color: this.options.color,
-                weight: this.options.strokeWidth,
-                fillOpacity: this.options.fillOpacity,
-                fillColor: this.options.color,
+            style: (feature) => {
+                const c = feature?.properties?.warna || this.options.color;
+                return {
+                    color: c,
+                    weight: this.options.strokeWidth,
+                    fillOpacity: this.options.fillOpacity,
+                    fillColor: c,
+                };
             },
             onEachFeature: (feature, layer) => {
                 try {
@@ -493,6 +546,394 @@ export default class PolygonEditor {
         }
 
         return list;
+    }
+
+    // ── Layer Editor Helpers ──────────────────────────────
+
+    /**
+     * Store a read-only display layer by id.
+     *
+     * @param {number|string} layerId
+     * @param {L.GeoJSON} mapLayer
+     */
+    storeDisplayLayer(layerId, mapLayer) {
+        this.displayLayers[layerId] = mapLayer;
+    }
+
+    /**
+     * Get a read-only display layer.
+     *
+     * @param {number|string} layerId
+     * @returns {L.GeoJSON|null}
+     */
+    getDisplayLayer(layerId) {
+        return this.displayLayers[layerId] || null;
+    }
+
+    /**
+     * Remove a read-only display layer safely.
+     *
+     * @param {number|string} layerId
+     */
+    removeDisplayLayer(layerId) {
+        const ml = this.displayLayers[layerId];
+        if (ml && this.map) {
+            if (typeof ml.eachLayer === "function") {
+                ml.eachLayer((child) => {
+                    if (child && typeof child.closeTooltip === "function")
+                        child.closeTooltip();
+                    if (child && typeof child.unbindTooltip === "function")
+                        child.unbindTooltip();
+                });
+            }
+            this.map.removeLayer(ml);
+        }
+        delete this.displayLayers[layerId];
+    }
+
+    /**
+     * Temporarily unbind tooltips on all read-only display layers.
+     */
+    suspendDisplayTooltips() {
+        if (this._tooltipsSuspended) return;
+
+        Object.values(this.displayLayers).forEach((group) => {
+            if (!group || typeof group.eachLayer !== "function") return;
+            group.eachLayer((child) => {
+                if (!child) return;
+                const tooltip =
+                    typeof child.getTooltip === "function"
+                        ? child.getTooltip()
+                        : null;
+                if (tooltip && typeof tooltip.getContent === "function") {
+                    child._simTooltipText = tooltip.getContent();
+                }
+                if (typeof child.closeTooltip === "function") child.closeTooltip();
+                if (typeof child.unbindTooltip === "function")
+                    child.unbindTooltip();
+            });
+        });
+
+        this._tooltipsSuspended = true;
+    }
+
+    /**
+     * Restore previously suspended tooltips.
+     */
+    restoreDisplayTooltips() {
+        if (!this._tooltipsSuspended) return;
+
+        Object.values(this.displayLayers).forEach((group) => {
+            if (!group || typeof group.eachLayer !== "function") return;
+            group.eachLayer((child) => {
+                if (!child) return;
+                if (typeof child.getTooltip === "function" && child.getTooltip())
+                    return;
+                if (!child._simTooltipText) return;
+                if (typeof child.bindTooltip === "function") {
+                    child.bindTooltip(child._simTooltipText, { sticky: true });
+                }
+            });
+        });
+
+        this._tooltipsSuspended = false;
+    }
+
+    /**
+     * Disable all active Leaflet.Draw handlers.
+     */
+    disableDrawModes() {
+        if (!this.drawControl) return;
+
+        const toolbars = this.drawControl._toolbars || {};
+        Object.values(toolbars).forEach((toolbar) => {
+            if (!toolbar || !toolbar._modes) return;
+            Object.values(toolbar._modes).forEach((mode) => {
+                const handler = mode?.handler;
+                if (!handler || typeof handler.disable !== "function") return;
+                if (typeof handler.enabled === "function") {
+                    if (handler.enabled()) handler.disable();
+                } else {
+                    handler.disable();
+                }
+            });
+        });
+    }
+
+    /**
+     * Rebuild draw control based on selected layer style.
+     *
+     * @param {{warna:string, stroke_width:number, fill_opacity:number}} layer
+     */
+    replaceDrawControl(layer) {
+        if (!this.map || !layer) return;
+
+        this.removeDrawControl();
+
+        this.drawControl = new L.Control.Draw({
+            position: "topleft",
+            draw: {
+                polygon: {
+                    allowIntersection: false,
+                    shapeOptions: {
+                        color: layer.warna,
+                        weight: layer.stroke_width,
+                        fillOpacity: layer.fill_opacity,
+                    },
+                },
+                polyline: false,
+                circle: false,
+                circlemarker: false,
+                marker: false,
+                rectangle: {
+                    shapeOptions: {
+                        color: layer.warna,
+                        weight: layer.stroke_width,
+                        fillOpacity: layer.fill_opacity,
+                    },
+                },
+            },
+            edit: {
+                featureGroup: this.drawnItems,
+                remove: true,
+            },
+        });
+
+        this.map.addControl(this.drawControl);
+    }
+
+    /**
+     * Remove current draw control safely.
+     */
+    removeDrawControl() {
+        if (!this.map || !this.drawControl) return;
+        this.disableDrawModes();
+        this.map.removeControl(this.drawControl);
+        this.drawControl = null;
+    }
+
+    /**
+     * Start editing only one polygon while showing others as read-only references.
+     *
+     * @param {L.Layer} targetLayer
+     * @param {{warna:string, stroke_width:number, fill_opacity:number}} layerStyle
+     * @param {((originalLayer: L.Layer) => void)|null} [onStashedClick] - Called when a stashed polygon is clicked
+     */
+    startSinglePolygonEdit(targetLayer, layerStyle, onStashedClick = null) {
+        if (!this.map || !this.drawnItems || !targetLayer) return;
+
+        this.suspendDisplayTooltips();
+
+        this._stashedLayers = [];
+        this.drawnItems.eachLayer((layer) => {
+            if (layer !== targetLayer) this._stashedLayers.push(layer);
+        });
+        this._stashedLayers.forEach((layer) => this.drawnItems.removeLayer(layer));
+
+        this._stashedDisplayGroup = L.featureGroup([], {
+            pane: "customLayerPane",
+        }).addTo(this.map);
+
+        this._stashedLayers.forEach((layer) => {
+            const geojsonFeature = layer.toGeoJSON();
+            const c = geojsonFeature?.properties?.warna || layerStyle.warna;
+            const isInteractive = typeof onStashedClick === "function";
+            const cloned = L.geoJSON(geojsonFeature, {
+                pane: "customLayerPane",
+                style: {
+                    color: c,
+                    weight: layerStyle.stroke_width,
+                    fillOpacity: layerStyle.fill_opacity * 0.5,
+                    fillColor: c,
+                    dashArray: "4, 4",
+                },
+                interactive: isInteractive,
+                onEachFeature: isInteractive
+                    ? (feature, lyr) => {
+                          lyr.on("click", (e) => {
+                              L.DomEvent.stopPropagation(e);
+                              onStashedClick(layer);
+                          });
+                      }
+                    : undefined,
+            });
+            this._stashedDisplayGroup.addLayer(cloned);
+        });
+
+        this.replaceDrawControl(layerStyle);
+        this.fitBoundsNoAnim(targetLayer.getBounds(), [80, 80]);
+    }
+
+    /**
+     * Stop single polygon edit and restore normal edit mode.
+     *
+     * @param {{warna:string, stroke_width:number, fill_opacity:number}|null} layerStyle
+     * @param {boolean} [restoreLayers=true]
+     */
+    stopSinglePolygonEdit(layerStyle = null, restoreLayers = true) {
+        this.disableDrawModes();
+
+        if (this._stashedDisplayGroup && this.map) {
+            this.map.removeLayer(this._stashedDisplayGroup);
+            this._stashedDisplayGroup = null;
+        }
+
+        if (restoreLayers && this.drawnItems && this._stashedLayers?.length) {
+            this._stashedLayers.forEach((layer) => this.drawnItems.addLayer(layer));
+        }
+        this._stashedLayers = [];
+
+        if (layerStyle) {
+            this.replaceDrawControl(layerStyle);
+        }
+
+        this.restoreDisplayTooltips();
+    }
+
+    /**
+     * Fit bounds without animation.
+     *
+     * @param {L.LatLngBounds} bounds
+     * @param {[number, number]} [padding=[50,50]]
+     */
+    fitBoundsNoAnim(bounds, padding = [50, 50]) {
+        if (!this.map || !bounds) return;
+        this.map.stop();
+        this.map.fitBounds(bounds, {
+            padding,
+            animate: false,
+        });
+    }
+
+    /**
+     * Set map view without animation.
+     *
+     * @param {[number, number]} center
+     * @param {number} zoom
+     */
+    setViewNoAnim(center, zoom) {
+        if (!this.map) return;
+        this.map.stop();
+        this.map.setView(center, zoom, { animate: false });
+    }
+
+    /**
+     * Render a read-only display layer and register it internally.
+     *
+     * @param {{id:number|string,nama:string,warna:string,stroke_width:number,fill_opacity:number}} layer
+     * @param {object} geojson
+     * @returns {L.GeoJSON|null}
+     */
+    renderDisplayLayer(layer, geojson, onPolygonClick = null) {
+        if (!this.map || !layer || !geojson?.features?.length) return null;
+
+        const mapLayer = L.geoJSON(geojson, {
+            pane: "customLayerPane",
+            style: (feature) => ({
+                color: feature?.properties?.warna || layer.warna,
+                weight: layer.stroke_width,
+                fillOpacity: layer.fill_opacity,
+                fillColor: feature?.properties?.warna || layer.warna,
+            }),
+            onEachFeature: (feature, lyr) => {
+                const nama = feature?.properties?.nama || layer.nama;
+                lyr._simTooltipText = nama;
+                lyr.bindTooltip(nama, { sticky: true });
+                if (onPolygonClick) {
+                    lyr.on("click", (e) => {
+                        L.DomEvent.stopPropagation(e);
+                        onPolygonClick(feature?.properties?.id, layer.id);
+                    });
+                }
+            },
+        });
+
+        mapLayer.addTo(this.map);
+        this.storeDisplayLayer(layer.id, mapLayer);
+        return mapLayer;
+    }
+
+    /**
+     * Build UI polygon list from a GeoJSON FeatureCollection.
+     *
+     * @param {object} geojson
+     * @returns {Array<{id:number|string,nama:string,_featureIndex:number}>}
+     */
+    extractPolygonList(geojson) {
+        if (!geojson?.features?.length) return [];
+        return geojson.features.map((feature, idx) => ({
+            id: feature?.properties?.id,
+            nama: feature?.properties?.nama || `Polygon ${idx + 1}`,
+            warna: feature?.properties?.warna || null,
+            _featureIndex: idx,
+        }));
+    }
+
+    /**
+     * Convert editor polygon list into GeoJSON FeatureCollection.
+     *
+     * @param {Array<{id:number|string,nama:string,layer:L.Layer}>} polygonList
+     * @returns {{type:'FeatureCollection',features:Array}}
+     */
+    toFeatureCollection(polygonList) {
+        const features = [];
+        (polygonList || []).forEach((poly) => {
+            if (!poly?.layer) return;
+            features.push({
+                type: "Feature",
+                properties: {
+                    id: poly.id,
+                    nama: poly.nama,
+                    warna: poly.warna || null,
+                },
+                geometry: poly.layer.toGeoJSON().geometry,
+            });
+        });
+
+        return {
+            type: "FeatureCollection",
+            features,
+        };
+    }
+
+    // ── API helpers (Layer Polygon CRUD) ─────────────────
+
+    /**
+     * Create polygon under a layer.
+     *
+     * @param {string} polygonBaseUrl
+     * @param {number|string} layerId
+     * @param {object} geometry
+     * @param {string} nama
+     */
+    async createLayerPolygon(polygonBaseUrl, layerId, geometry, nama) {
+        return apiPost(`${polygonBaseUrl}/${layerId}/polygon`, {
+            geojson: geometry,
+            nama,
+        });
+    }
+
+    /**
+     * Update polygon geometry or metadata.
+     *
+     * @param {string} polygonBaseUrl
+     * @param {number|string} layerId
+     * @param {number|string} polygonId
+     * @param {object} payload
+     */
+    async updateLayerPolygon(polygonBaseUrl, layerId, polygonId, payload) {
+        return apiPut(`${polygonBaseUrl}/${layerId}/polygon/${polygonId}`, payload);
+    }
+
+    /**
+     * Delete polygon by id.
+     *
+     * @param {string} polygonBaseUrl
+     * @param {number|string} layerId
+     * @param {number|string} polygonId
+     */
+    async deleteLayerPolygon(polygonBaseUrl, layerId, polygonId) {
+        return apiDelete(`${polygonBaseUrl}/${layerId}/polygon/${polygonId}`);
     }
 
     // ── Event binding ───────────────────────────────────────
@@ -610,7 +1051,18 @@ export default class PolygonEditor {
      */
     zoomToLayer(layer) {
         if (this.map && layer && layer.getBounds) {
-            this.map.fitBounds(layer.getBounds(), { padding: [50, 50] });
+            this.fitBoundsNoAnim(layer.getBounds(), [50, 50]);
         }
+    }
+
+    /**
+     * Reorder polygons within a layer on the server.
+     *
+     * @param {string} polygonBaseUrl
+     * @param {number|string} layerId
+     * @param {Array<number>} order - Array of polygon IDs in desired order
+     */
+    async reorderPolygons(polygonBaseUrl, layerId, order) {
+        return apiPost(`${polygonBaseUrl}/${layerId}/polygon-reorder`, { order });
     }
 }

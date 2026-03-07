@@ -32,7 +32,7 @@ class PetaLayerController extends Controller
 
             $polygons = DB::select(
                 'SELECT id, nama, deskripsi, warna, ST_AsGeoJSON(polygon) as geojson
-                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
+                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY sort_order, id',
                 [$layer->id]
             );
 
@@ -105,7 +105,7 @@ class PetaLayerController extends Controller
         // Get existing polygons as GeoJSON FeatureCollection
         $polygons = DB::select(
             'SELECT id, nama, deskripsi, warna, properties, ST_AsGeoJSON(polygon) as geojson
-             FROM peta_layer_polygons WHERE peta_layer_id = ? ORDER BY id',
+             FROM peta_layer_polygons WHERE peta_layer_id = ? ORDER BY sort_order, id',
             [$petaLayer->id]
         );
 
@@ -288,11 +288,15 @@ class PetaLayerController extends Controller
             'geojson.coordinates' => ['required', 'array'],
         ]);
 
+        // Set sort_order to append at end
+        $maxSort = PetaLayerPolygon::where('peta_layer_id', $petaLayer->id)->max('sort_order') ?? -1;
+
         $polygon = PetaLayerPolygon::create([
             'peta_layer_id' => $petaLayer->id,
             'nama' => $request->input('nama'),
             'deskripsi' => $request->input('deskripsi'),
-            'warna' => $request->input('warna'),
+            'warna' => $request->input('warna', '#6366f1'),
+            'sort_order' => $maxSort + 1,
         ]);
 
         // Convert Polygon to MultiPolygon if needed
@@ -361,6 +365,25 @@ class PetaLayerController extends Controller
         ]);
     }
 
+    /**
+     * API: Reorder polygons within a layer.
+     */
+    public function reorderPolygons(Request $request, PetaLayer $petaLayer): JsonResponse
+    {
+        $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['integer'],
+        ]);
+
+        foreach ($request->input('order') as $index => $id) {
+            PetaLayerPolygon::where('id', $id)
+                ->where('peta_layer_id', $petaLayer->id)
+                ->update(['sort_order' => $index]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Urutan polygon berhasil diperbarui.']);
+    }
+
     // ═══════════════════════════════════════════════════════════
     //  API: GeoJSON endpoint untuk peta utama
     // ═══════════════════════════════════════════════════════════
@@ -393,7 +416,7 @@ class PetaLayerController extends Controller
 
             $polygons = DB::select(
                 'SELECT id, nama, deskripsi, warna, rw_id, kelurahan_id, ST_AsGeoJSON(polygon) as geojson
-                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY id',
+                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY sort_order, id',
                 [$layer->id]
             );
 

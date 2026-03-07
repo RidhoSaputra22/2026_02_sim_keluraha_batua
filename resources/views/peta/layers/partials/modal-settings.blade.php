@@ -101,3 +101,49 @@
     </div>
     <form method="dialog" class="modal-backdrop"><button>close</button></form>
 </dialog>
+
+{{-- Modal for editing polygon settings (name + color) --}}
+<dialog id="polygon-settings-modal" class="modal modal-bottom sm:modal-middle">
+    <div class="modal-box max-w-sm">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Pengaturan Polygon</h3>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+            </form>
+        </div>
+
+        <div class="space-y-4">
+            {{-- Nama --}}
+            <div class="form-control w-full">
+                <label class="label"><span class="label-text">Nama Polygon</span></label>
+                <input type="text" class="input input-bordered w-full" x-model="polygonModalForm.nama"
+                    placeholder="Contoh: RW 01">
+            </div>
+
+            {{-- Warna --}}
+            <div class="form-control w-full">
+                <label class="label"><span class="label-text">Warna</span></label>
+                <div class="flex items-center gap-3">
+                    <input type="color" x-model="polygonModalForm.warna" class="w-10 h-9 rounded cursor-pointer border border-base-300">
+                    <input type="text" class="input input-bordered input-sm w-28 font-mono" x-model="polygonModalForm.warna" readonly>
+                    {{-- Preview --}}
+                    <div class="w-8 h-8 rounded border border-base-300 shadow-inner"
+                        :style="'background-color:' + polygonModalForm.warna"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn btn-ghost btn-sm">Batal</button>
+            </form>
+            <button class="btn btn-primary btn-sm" @click="savePolygonSettings()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Simpan
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>

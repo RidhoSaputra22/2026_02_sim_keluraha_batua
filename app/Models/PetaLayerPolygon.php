@@ -20,6 +20,7 @@ class PetaLayerPolygon extends Model
         'rw_id',
         'kelurahan_id',
         'properties',
+        'sort_order',
     ];
 
     protected $casts = [
