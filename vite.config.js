@@ -8,7 +8,13 @@ export default defineConfig({
             input: [
                 "resources/css/app.css",
                 "resources/js/app.js",
+                "resources/css/peta.css",
                 "resources/js/map/index.js",
+                "resources/js/peta/app.js",
+                "resources/js/peta/layer-form.js",
+                "resources/js/peta/layer-polygon-editor.js",
+                "resources/js/peta/rw-polygon-editor.js",
+                "resources/js/peta/layer-manager.js",
             ],
             refresh: true,
         }),

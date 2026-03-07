@@ -134,169 +134,19 @@
     @vite('resources/js/map/index.js')
 
     <script>
-    const LAYER_ROUTES = @json($layerRoutes);
-    const LAYER_CONFIG = {
-
+    window.LAYER_ROUTES = @json($layerRoutes);
+    window.LAYER_CONFIG = {
         color: @json($layerConfig['color']),
         opacity: @json($layerConfig['opacity']),
         strokeWidth: @json($layerConfig['strokeWidth']),
-        existingData: {
-            !!$geojsonCollection!!
-        },
+        existingData: {!! $geojsonCollection !!},
     };
-
-    function layerPolygonEditor() {
-        return {
-            _editor: null,
-            polygonList: [],
-            polygonCount: 0,
-            message: '',
-            messageType: 'success',
-
-            init() {
-                this._waitForDeps();
-            },
-
-            _waitForDeps() {
-                if (window.SimPeta && window.L && window.L.Draw) {
-                    this._bootstrap();
-                } else {
-                    requestAnimationFrame(() => this._waitForDeps());
-                }
-            },
-
-            _bootstrap() {
-                this._editor = new SimPeta.PolygonEditor('layer-polygon-map', {
-                    color: LAYER_CONFIG.color,
-                    fillOpacity: LAYER_CONFIG.opacity,
-                    strokeWidth: LAYER_CONFIG.strokeWidth,
-                    rectangle: true,
-                }).init();
-
-                // Load existing polygons
-                this.polygonList = this._editor.loadExistingCollection(LAYER_CONFIG.existingData);
-                this.polygonCount = this.polygonList.length;
-
-                // Draw events (multi-polygon mode)
-                this._editor.onMultiPolygonChange({
-                    onCreated: (layer) => this._saveNewPolygon(layer),
-                    onEdited: (layer) => this._updateGeometry(layer),
-                    onDeleted: (layer) => {
-                        const poly = this.polygonList.find(p => p.layer === layer);
-                        if (poly && poly.id) this._deleteFromServer(poly.id);
-                        this.polygonList = this.polygonList.filter(p => p.layer !== layer);
-                        this.polygonCount = this.polygonList.length;
-                    },
-                });
-            },
-
-            zoomToPolygon(poly) {
-                this._editor.zoomToLayer(poly.layer);
-            },
-
-            async _saveNewPolygon(layer) {
-                try {
-                    const geojson = layer.toGeoJSON().geometry;
-                    const data = await SimPeta.apiPost(LAYER_ROUTES.polygonStore, {
-                        geojson,
-                        nama: 'Polygon ' + (this.polygonList.length + 1),
-                    });
-                    if (data.success) {
-                        this.polygonList.push({
-                            id: data.id,
-                            nama: 'Polygon ' + this.polygonList.length,
-                            layer
-                        });
-                        this.polygonCount = this.polygonList.length;
-                        this._flash('Polygon berhasil disimpan.', 'success');
-                    }
-                } catch (e) {
-                    this._flash('Gagal menyimpan polygon: ' + e.message, 'error');
-                }
-            },
-
-            async _updateGeometry(layer) {
-                const poly = this.polygonList.find(p => p.layer === layer);
-                if (!poly || !poly.id) return;
-                try {
-                    await SimPeta.apiPut(LAYER_ROUTES.polygonBase + '/' + poly.id, {
-                        geojson: layer.toGeoJSON().geometry,
-                    });
-                    this._flash('Polygon berhasil diperbarui.', 'success');
-                } catch (e) {
-                    this._flash('Gagal memperbarui polygon.', 'error');
-                }
-            },
-
-            async updatePolygonName(poly, newName) {
-                if (!poly.id) return;
-                poly.nama = newName;
-                try {
-                    await SimPeta.apiPut(LAYER_ROUTES.polygonBase + '/' + poly.id, {
-                        nama: newName
-                    });
-                } catch (e) {
-                    console.error('Failed to update polygon name:', e);
-                }
-            },
-
-            async deletePolygon(poly, index) {
-                if (!await confirmAction('Hapus polygon ini?')) return;
-                if (poly.id) await this._deleteFromServer(poly.id);
-                if (poly.layer) this._editor.drawnItems.removeLayer(poly.layer);
-                this.polygonList.splice(index, 1);
-                this.polygonCount = this.polygonList.length;
-                this._flash('Polygon berhasil dihapus.', 'success');
-            },
-
-            async _deleteFromServer(id) {
-                try {
-                    await SimPeta.apiDelete(LAYER_ROUTES.polygonBase + '/' + id);
-                } catch (e) {
-                    console.error('Failed to delete polygon:', e);
-                }
-            },
-
-            _flash(msg, type = 'success') {
-                this.message = msg;
-                this.messageType = type;
-                setTimeout(() => {
-                    this.message = '';
-                }, 4000);
-            },
-        };
-    }
     </script>
+    @vite('resources/js/peta/layer-polygon-editor.js')
     @endpush
 
     @push('styles')
-    <style>
-    .rw-label-ref {
-        background: none !important;
-        border: none !important;
-        box-shadow: none !important;
-        font-weight: 600;
-        font-size: 10px;
-        color: #64748b;
-        text-shadow: 1px 1px 2px white, -1px -1px 2px white;
-        white-space: nowrap;
-        pointer-events: none !important;
-    }
-
-    /* Keep Leaflet.Draw tooltip away from top-left toolbar
-    #layer-polygon-map {
-        position: relative;
-    }
-
-    #layer-polygon-map .leaflet-draw-tooltip {
-        margin-left: 12px;
-        margin-top: 0;
-    }
-
-    #layer-polygon-map .leaflet-draw-tooltip:before {
-        left: -7px;
-    } */
-    </style>
+    @vite('resources/css/peta.css')
     @endpush
 
 </x-layouts.app>
