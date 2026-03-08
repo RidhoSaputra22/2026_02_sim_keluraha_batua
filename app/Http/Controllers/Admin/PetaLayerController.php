@@ -488,15 +488,26 @@ class PetaLayerController extends Controller
      */
     private function getRwStats(): array
     {
-       return Cache::remember('rw_stats', 300, function () {
+        return Cache::remember('rw_stats', 300, function () {
+            // Subquery untuk penduduk per RW agar tidak duplikat karena join
+            $pendudukSub = DB::table('penduduks')
+                ->select(
+                    'rts.rw_id',
+                    DB::raw('COUNT(DISTINCT penduduks.id) as total_penduduk'),
+                    DB::raw("COUNT(DISTINCT CASE WHEN penduduks.jenis_kelamin = 'L' THEN penduduks.id END) as laki_laki"),
+                    DB::raw("COUNT(DISTINCT CASE WHEN penduduks.jenis_kelamin = 'P' THEN penduduks.id END) as perempuan")
+                )
+                ->leftJoin('rts', 'penduduks.rt_id', '=', 'rts.id')
+                ->groupBy('rts.rw_id');
 
             $rows = DB::table('rws')
                 ->leftJoin('rts', 'rts.rw_id', '=', 'rws.id')
-                ->leftJoin('penduduks', 'penduduks.rt_id', '=', 'rts.id')
                 ->leftJoin('keluargas', 'keluargas.rt_id', '=', 'rts.id')
                 ->leftJoin('umkms', 'umkms.rt_id', '=', 'rts.id')
-
-                ->selectRaw("
+                ->leftJoinSub($pendudukSub, 'penduduk_stats', function ($join) {
+                    $join->on('penduduk_stats.rw_id', '=', 'rws.id');
+                })
+                ->selectRaw('
                     rws.id,
                     rws.nomor,
                     rws.foto,
@@ -506,14 +517,12 @@ class PetaLayerController extends Controller
                     rws.deskripsi,
 
                     COUNT(DISTINCT rts.id) as total_rt,
-                    COUNT(DISTINCT penduduks.id) as total_penduduk,
+                    COALESCE(MAX(penduduk_stats.total_penduduk),0) as total_penduduk,
                     COUNT(DISTINCT keluargas.id) as total_kk,
                     COUNT(DISTINCT umkms.id) as total_umkm,
-
-                    SUM(CASE WHEN penduduks.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as laki_laki,
-                    SUM(CASE WHEN penduduks.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as perempuan
-                ")
-
+                    COALESCE(MAX(penduduk_stats.laki_laki),0) as laki_laki,
+                    COALESCE(MAX(penduduk_stats.perempuan),0) as perempuan
+                ')
                 ->groupBy(
                     'rws.id',
                     'rws.nomor',
@@ -523,14 +532,26 @@ class PetaLayerController extends Controller
                     'rws.alamat_sekretariat',
                     'rws.deskripsi'
                 )
-
                 ->get();
+
+            // Ambil ketua RW via Eloquent
+            $ketuaRw = \App\Models\Rw::with([
+                'pengurus' => function ($q) {
+                    $q->whereHas('jabatan', function ($q2) {
+                        $q2->where('nama', 'Ketua RW');
+                    })->with('penduduk');
+                }
+            ])->get()->keyBy('id');
+
+            // dd($ketuaRw);
 
             $stats = [];
 
             foreach ($rows as $rw) {
-
-                $rwLabel = 'RW '.str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+                $rwLabel = 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+                $ketua = $ketuaRw[$rw->id]
+                    ->pengurus
+                    ->first()?->penduduk?->nama ?? '-';
 
                 $stats[$rwLabel] = [
                     'total_penduduk' => (int) $rw->total_penduduk,
@@ -539,18 +560,16 @@ class PetaLayerController extends Controller
                     'total_umkm' => (int) $rw->total_umkm,
                     'laki_laki' => (int) $rw->laki_laki,
                     'perempuan' => (int) $rw->perempuan,
-
                     'profil_rw' => [
                         'foto' => $rw->foto,
                         'luas_area' => $rw->luas_area,
                         'no_telp' => $rw->no_telp,
                         'alamat_sekretariat' => $rw->alamat_sekretariat,
                         'deskripsi' => $rw->deskripsi,
-                        'ketua' => $rw->ketua->nama ?? '-',
+                        'ketua' => $ketua,
                     ]
                 ];
             }
-
             return $stats;
         });
     }

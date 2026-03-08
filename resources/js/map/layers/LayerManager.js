@@ -471,6 +471,8 @@ export default class LayerManager {
     _onEachRwFeature(feature, layer) {
         const props = feature.properties;
         const nama = props.RW || "RW tak dikenal";
+        const luas = props.profil_rw?.luas_area ?? "-";
+
         const desc = props.deskripsi || "";
         if (!props.RW) return;
 
@@ -490,6 +492,7 @@ export default class LayerManager {
 
         const tooltipContent =
             `<strong>${nama}</strong>` +
+            `<p>Area: ${luas} km²</p>` +
             (desc ? `<br>${desc}` : "") +
             (stats.length
                 ? `<hr style="margin:4px 0;border-color:rgba(0,0,0,.15)">` +
@@ -506,7 +509,6 @@ export default class LayerManager {
         ? `/storage/${props.profil_rw.foto}`
         : `/logo.png`;
 
-        const luas = props.profil_rw?.luas_area ?? "-";
 
         const totalPenduduk = props.total_penduduk ?? 0;
         const laki = props.laki_laki ?? 0;
