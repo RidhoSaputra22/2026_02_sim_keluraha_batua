@@ -6,6 +6,7 @@
  */
 
 import { apiGet, apiPut, apiPost, apiDelete } from "../utils/ApiClient";
+import { diffPolygon, layerToGeometry, geometryToLayer, polygonsIntersect } from "../utils/GeoUtils";
 
 /**
  * @typedef {Object} PolygonEditorOptions
@@ -62,6 +63,15 @@ export default class PolygonEditor {
 
         /** @type {L.FeatureGroup|null} */
         this._stashedDisplayGroup = null;
+
+        /** @type {'diff'|'cut'|null} */
+        this._specialMode = null;
+
+        /** @type {L.Layer|null} */
+        this._specialModeTarget = null;
+
+        /** @type {Function|null} */
+        this._specialModeCallback = null;
     }
 
     // ── Init ────────────────────────────────────────────────
@@ -476,17 +486,15 @@ export default class PolygonEditor {
     }
 
     /**
-     * Load multiple existing polygons into the drawable layer
-     * (for custom layer editor — multi polygon mode).
-     * Returns metadata about each polygon.
+     * Load existing GeoJSON collection into the editor.
      *
-     * @param {object} geojsonCollection - GeoJSON FeatureCollection
-     * @returns {Array<{id: number, nama: string, layer: L.Layer}>}
+     * @param {object} geojsonCollection
+     * @param {function} [onPolygonClick] - Callback when an existing polygon is clicked
+     * @returns {Array<{id:number|string, nama:string, layer:L.Layer}>}
      */
-    loadExistingCollection(geojsonCollection) {
+    loadExistingCollection(geojsonCollection, onPolygonClick = null) {
         const list = [];
-        if (!geojsonCollection?.features?.length || !this.drawnItems || !this.map)
-            return list;
+        if (!geojsonCollection || !geojsonCollection.features) return list;
 
         const sanitisedCollection = {
             ...geojsonCollection,
@@ -526,6 +534,14 @@ export default class PolygonEditor {
 
                     const lls = layer.getLatLngs();
                     if (!lls || !this._hasValidLatLngs(lls)) return;
+
+                    if (onPolygonClick) {
+                        layer.on("click", (e) => {
+                            if (e.originalEvent) e.originalEvent.stopPropagation();
+                            L.DomEvent.stopPropagation(e);
+                            onPolygonClick(feature?.properties?.id, layer);
+                        });
+                    }
 
                     this.drawnItems.addLayer(layer);
                     list.push({
@@ -1064,5 +1080,163 @@ export default class PolygonEditor {
      */
     async reorderPolygons(polygonBaseUrl, layerId, order) {
         return apiPost(`${polygonBaseUrl}/${layerId}/polygon-reorder`, { order });
+    }
+
+    // ── Special Modes (Global Diff / Enclave) ─────────────────
+
+    /**
+     * Get the current special mode.
+     * @returns {'diff'|null}
+     */
+    getSpecialMode() {
+        return this._specialMode;
+    }
+
+    /**
+     * Enter global diff mode (enclave creation).
+     * Draw a polygon that will be subtracted from ALL overlapping sub-polygons.
+     *
+     * @param {Array<{id:number, layer:L.Layer}>} polygonEntries - All polygon entries in the active layer
+     * @param {{warna:string, stroke_width:number, fill_opacity:number}} layerStyle
+     * @param {(results: Array<{id:number, resultGeom:object|null, newLayer:L.Layer|null, oldLayer:L.Layer}>) => void} onComplete
+     */
+    startGlobalDiffMode(polygonEntries, layerStyle, onComplete) {
+        if (!this.map || !polygonEntries || polygonEntries.length === 0) return;
+
+        // Stop any existing special mode
+        this.stopSpecialMode();
+
+        this._specialMode = 'diff';
+        this._specialModeTargets = polygonEntries; // all polygon entries
+        this._specialModeCallback = onComplete;
+
+        // Highlight all polygons with dashed amber style
+        polygonEntries.forEach(entry => {
+            if (entry.layer && entry.layer.setStyle) {
+                entry.layer.setStyle({
+                    color: '#f59e0b',
+                    weight: 3,
+                    fillOpacity: 0.2,
+                    dashArray: '8, 4',
+                });
+            }
+        });
+
+        // Listen for new polygon creation
+        this._specialModeDrawHandler = (e) => {
+            this._handleGlobalDiffDraw(e.layer, layerStyle);
+        };
+        this.map.on(L.Draw.Event.CREATED, this._specialModeDrawHandler);
+    }
+
+    /**
+     * Exit diff mode and restore normal editing.
+     */
+    stopSpecialMode() {
+        if (!this._specialMode) return;
+
+        // Remove the special mode draw event listener
+        if (this.map && this._specialModeDrawHandler) {
+            this.map.off(L.Draw.Event.CREATED, this._specialModeDrawHandler);
+            this._specialModeDrawHandler = null;
+        }
+
+        this._specialMode = null;
+        this._specialModeTargets = null;
+        this._specialModeCallback = null;
+    }
+
+    /**
+     * Handle a polygon drawn in global diff mode.
+     * Diffs the cutter against ALL polygons and returns results for each affected one.
+     *
+     * @param {L.Layer} cutterLayer - The drawn polygon used as cutter
+     * @param {object} layerStyle - The active layer's style config
+     * @private
+     */
+    _handleGlobalDiffDraw(cutterLayer, layerStyle) {
+        if (!this._specialMode || !this._specialModeTargets) return;
+
+        const cutterGeom = layerToGeometry(cutterLayer);
+        if (!cutterGeom) {
+            console.warn('[PolygonEditor] Invalid cutter geometry.');
+            return;
+        }
+
+        const results = [];
+
+        for (const entry of this._specialModeTargets) {
+            if (!entry.layer) continue;
+
+            const targetGeom = layerToGeometry(entry.layer);
+            if (!targetGeom) continue;
+
+            // Skip if the target polygon does not intersect with the cutter
+            if (!polygonsIntersect(targetGeom, cutterGeom)) {
+                continue;
+            }
+
+            const resultGeom = diffPolygon(targetGeom, cutterGeom);
+
+            // If null → polygon was fully consumed
+            if (!resultGeom) {
+                results.push({
+                    id: entry.id,
+                    resultGeom: null,
+                    newLayer: null,
+                    oldLayer: entry.layer,
+                });
+                continue;
+            }
+
+            // Get the polygon's own style
+            const polyColor = entry.layer.options?.color || layerStyle.warna;
+            const targetStyle = {
+                color: polyColor,
+                weight: entry.layer.options?.weight || layerStyle.stroke_width || this.options.weight,
+                fillOpacity: entry.layer.options?.fillOpacity || layerStyle.fill_opacity || this.options.fillOpacity,
+                fillColor: entry.layer.options?.fillColor || polyColor,
+            };
+
+            // Create new layer from result geometry
+            const newLayer = geometryToLayer(resultGeom, targetStyle, 'editPane');
+            if (!newLayer) continue;
+
+            // Copy feature properties
+            const origFeature = entry.layer.feature;
+            if (origFeature) {
+                newLayer.feature = { ...origFeature, geometry: resultGeom };
+            }
+
+            // Replace the target layer in drawnItems
+            if (this.drawnItems) {
+                this.drawnItems.removeLayer(entry.layer);
+                this.drawnItems.addLayer(newLayer);
+            }
+
+            results.push({
+                id: entry.id,
+                resultGeom,
+                newLayer,
+                oldLayer: entry.layer,
+            });
+        }
+
+        // Update targets for next draw operation
+        this._specialModeTargets = this._specialModeTargets.map(entry => {
+            const result = results.find(r => r.id === entry.id && r.newLayer);
+            return result ? { ...entry, layer: result.newLayer } : entry;
+        }).filter(entry => {
+            // Remove fully consumed polygons
+            const consumed = results.find(r => r.id === entry.id && r.resultGeom === null);
+            return !consumed;
+        });
+
+        // Notify callback with results
+        if (this._specialModeCallback && results.length > 0) {
+            this._specialModeCallback(results);
+        } else if (results.length === 0) {
+            console.info('[PolygonEditor] Enclave did not overlap any polygon.');
+        }
     }
 }

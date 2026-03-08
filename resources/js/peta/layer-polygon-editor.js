@@ -62,6 +62,9 @@ window.layerPolygonEditor = function layerPolygonEditor() {
                     });
                     this.polygonCount = this.polygonList.length;
                     this._flash('Polygon berhasil disimpan.', 'success');
+
+                    // masuk mode edit
+                    
                 }
             } catch (e) {
                 this._flash('Gagal menyimpan polygon: ' + e.message, 'error');

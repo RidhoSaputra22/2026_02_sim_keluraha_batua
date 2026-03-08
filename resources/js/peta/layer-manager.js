@@ -53,6 +53,9 @@ window.layerManager = function layerManager() {
         _editor: null,
         _rwOverlayGroup: null,
 
+        // ─── Special Mode (Diff / Cut) ─────────────────
+        specialMode: null, // 'diff' | 'cut' | null
+
         // ─── Init ──────────────────────────────────────
         init() {
             this.layers = JSON.parse(JSON.stringify(INITIAL_LAYERS));
@@ -263,7 +266,16 @@ window.layerManager = function layerManager() {
                 type: 'FeatureCollection',
                 features: []
             };
-            this.polygonList = this._editor.loadExistingCollection(geojson);
+            this.polygonList = this._editor.loadExistingCollection(geojson, (featureId, layerObj) => {
+                if (this.specialMode) return;
+                
+                // Find the entry in the tree list
+                const treeList = this._layerPolygonLists[this.activeLayer.id] || [];
+                const treePoly = treeList.find(p => Number(p.id) === Number(featureId));
+                if (treePoly && this.activeLayer) {
+                    this.selectPolygonForEdit(this.activeLayer, treePoly, treeList.indexOf(treePoly));
+                }
+            });
             this.activePolygonCount = this.polygonList.length;
 
             // Update the tree polygon list to include layer refs
@@ -323,6 +335,25 @@ window.layerManager = function layerManager() {
                 onCreated: (layer) => {
                     if (!this.activeLayer) return;
                     if (layer.options) layer.options.pane = 'editPane';
+
+                    // Make the new polygon selectable via map click
+                    layer.on('click', (e) => {
+                        if (e.originalEvent) e.originalEvent.stopPropagation();
+                        L.DomEvent.stopPropagation(e);
+                        
+                        if (this.specialMode) return;
+                        
+                        // Find this polygon in our lists
+                        const polyEntry = this.polygonList.find(p => p.layer === layer);
+                        if (polyEntry && polyEntry.id) {
+                            const treeList = this._layerPolygonLists[this.activeLayer.id] || [];
+                            const treePoly = treeList.find(p => Number(p.id) === Number(polyEntry.id));
+                            if (treePoly) {
+                                this.selectPolygonForEdit(this.activeLayer, treePoly, treeList.indexOf(treePoly));
+                            }
+                        }
+                    });
+
                     this._saveNewPolygon(layer);
                 },
                 onEdited: (layer) => {
@@ -913,6 +944,107 @@ window.layerManager = function layerManager() {
             setTimeout(() => {
                 this.toast.show = false;
             }, 3500);
+        },
+
+        // ─── Special Mode (Global Enclave) ─────────────
+        startEnclaveMode() {
+            if (!this.activeLayer || !this._editor || this.specialMode) return;
+            if (this.polygonList.length === 0) {
+                this._flash('Layer tidak memiliki polygon.', 'error');
+                return;
+            }
+
+            // Stop any single-polygon edit first
+            this._stopSinglePolygonEdit();
+
+            this.specialMode = 'diff';
+
+            // Pass ALL polygon entries to the editor
+            this._editor.startGlobalDiffMode(
+                this.polygonList.map(p => ({ id: p.id, layer: p.layer })),
+                this.activeLayer,
+                (results) => {
+                    this._handleEnclaveResults(results);
+                },
+            );
+            this._flash('Mode Enclave aktif — gambar polygon untuk membuat lubang.', 'success');
+        },
+
+        stopSpecialMode() {
+            if (!this.specialMode || !this._editor) return;
+            this._editor.stopSpecialMode();
+
+            // Restore all polygon styles
+            if (this.activeLayer) {
+                this.polygonList.forEach(p => {
+                    if (p.layer && p.layer.setStyle) {
+                        const c = p.layer.feature?.properties?.warna || this.activeLayer.warna;
+                        p.layer.setStyle({
+                            color: c,
+                            weight: this.activeLayer.stroke_width,
+                            fillOpacity: this.activeLayer.fill_opacity,
+                            fillColor: c,
+                            dashArray: null,
+                        });
+                    }
+                });
+            }
+
+            this.specialMode = null;
+            this._flash('Mode enclave dinonaktifkan.', 'success');
+        },
+
+        async _handleEnclaveResults(results) {
+            if (!results || results.length === 0) return;
+
+            let successCount = 0;
+            let consumedCount = 0;
+
+            for (const result of results) {
+                if (result.resultGeom === null) {
+                    // Polygon fully consumed
+                    consumedCount++;
+                    continue;
+                }
+
+                // Update polygonList layer reference
+                const polyEntry = this.polygonList.find(p => p.id === result.id);
+                if (polyEntry) {
+                    polyEntry.layer = result.newLayer;
+                }
+
+                // Also update editingPolygon if it matches
+                if (this.editingPolygon && Number(this.editingPolygon.id) === Number(result.id)) {
+                    this.editingPolygon.layer = result.newLayer;
+                }
+
+                // Save to server
+                const lid = this.activeLayer?.id;
+                if (result.id && lid) {
+                    try {
+                        await this._editor.updateLayerPolygon(LAYER_ROUTES.polygonBase, lid, result.id, {
+                            geojson: result.resultGeom,
+                        });
+                        successCount++;
+                    } catch (e) {
+                        this._flash('Gagal menyimpan polygon #' + result.id + ': ' + e.message, 'error');
+                    }
+                }
+            }
+
+            // Update caches
+            this._updateLayerGeojsonCache();
+            this._layerPolygonLists[this.activeLayer.id] = this._editor.extractPolygonList(
+                this._editor.toFeatureCollection(this.polygonList),
+            );
+            this.activePolygonCount = this.polygonList.length;
+
+            if (successCount > 0) {
+                this._flash(`Enclave berhasil diterapkan ke ${successCount} polygon.`, 'success');
+            }
+            if (consumedCount > 0) {
+                this._flash(`${consumedCount} polygon sepenuhnya terhapus.`, 'error');
+            }
         },
     };
 }

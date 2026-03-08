@@ -14,13 +14,38 @@
                 Layer
                 <span class="badge badge-ghost badge-xs" x-text="layers.length + ' layer'"></span>
             </h3>
-            <button class="btn btn-primary btn-xs" @click="openNewLayerModal()" title="Tambah Layer Baru">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah
-            </button>
+            <div class="flex items-center gap-1">
+                {{-- Buat Enclave button (only when a layer is active and not in enclave mode) --}}
+                <template x-if="activeLayer && !specialMode">
+                    <button class="btn btn-warning btn-xs gap-1" @click="startEnclaveMode()"
+                        title="Buat Enclave — Buat lubang pada semua polygon yang terkena">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Buat Enclave
+                    </button>
+                </template>
+                {{-- Cancel enclave mode --}}
+                <template x-if="specialMode">
+                    <button class="btn btn-ghost btn-xs gap-1" @click="stopSpecialMode()" title="Batalkan mode enclave">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Selesai Buat Enclave
+                    </button>
+                </template>
+                <button class="btn btn-primary btn-xs" @click="openNewLayerModal()" title="Tambah Layer Baru">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Tambah
+                </button>
+            </div>
         </div>
     </div>
 
@@ -181,7 +206,7 @@
 
                                 {{-- Polygon color swatch (per-polygon warna) --}}
                                 <div class="w-3 h-3 rounded-sm flex-shrink-0 border border-black/10"
-                                    :style="'background-color:' + (poly.warna || layer.warna || '#6366f1')"></div>
+                                    :style="'background-color:' + (layer.warna )"></div>
 
                                 {{-- Polygon name (read-only) --}}
                                 <span class="text-xs flex-1 min-w-0 truncate"
@@ -279,6 +304,21 @@
                     </svg>
                     Selesai
                 </button>
+            </div>
+        </div>
+    </template>
+
+    {{-- Enclave mode indicator --}}
+    <template x-if="specialMode && !editingPolygon">
+        <div class="px-3 py-2 border-t border-base-200 flex-shrink-0 bg-warning/10">
+            <div class="flex items-center gap-2 text-xs">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 text-warning animate-pulse" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="font-medium text-warning">Mode Enclave</span>
+                <span class="text-base-content/50">— Gambar polygon untuk membuat lubang</span>
             </div>
         </div>
     </template>

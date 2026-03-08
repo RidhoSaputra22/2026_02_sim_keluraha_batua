@@ -397,6 +397,29 @@
     border: 1px solid rgba(0, 0, 0, 0.15);
 }
 
+/* ── Special mode overlay (Diff / Cut) ── */
+.special-mode-overlay {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: special-mode-pulse 2s ease-in-out infinite;
+}
+
+.special-mode-diff {
+    background-color: rgba(245, 158, 11, 0.9);
+    color: #451a03;
+}
+
+.special-mode-cut {
+    background-color: rgba(239, 68, 68, 0.9);
+    color: #fff;
+}
+
+@keyframes special-mode-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.1); }
+    50% { box-shadow: 0 0 12px 4px rgba(0, 0, 0, 0.12); }
+}
+
 /* Source: resources/views/peta/rw-polygon.blade.php */
 .rw-label {
         background: none !important;

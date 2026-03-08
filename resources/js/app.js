@@ -9,10 +9,10 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             window.Alpine.start();
-        }, 10); // small tick to allow vite module execution
+        }, 250); // increased tick to allow heavy vite modules (like Turf.js) to execute
     });
 } else {
     setTimeout(() => {
         window.Alpine.start();
-    }, 10);
+    }, 250);
 }

@@ -32,6 +32,7 @@ import PatternRenderer from "./renderers/PatternRenderer";
 import PolygonEditor from "./editors/PolygonEditor";
 import { formatNumber, sortRwList, getCsrfToken } from "./utils/helpers";
 import { apiGet, apiPut, apiPost, apiDelete } from "./utils/ApiClient";
+import * as GeoUtils from "./utils/GeoUtils";
 
 // Named exports for ES module consumers
 export {
@@ -39,6 +40,7 @@ export {
     LayerManager,
     PatternRenderer,
     PolygonEditor,
+    GeoUtils,
     formatNumber,
     sortRwList,
     getCsrfToken,
@@ -54,6 +56,7 @@ window.SimPeta = {
     LayerManager,
     PatternRenderer,
     PolygonEditor,
+    GeoUtils,
     formatNumber,
     sortRwList,
     getCsrfToken,
