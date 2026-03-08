@@ -460,16 +460,11 @@
         pointer-events: none !important;
     }
 
-    /* Keep Leaflet.Draw tooltip away from top-left toolbar
-    #layer-polygon-map {
-        position: relative;
-    }
 
-    #layer-polygon-map .leaflet-draw-tooltip {
-        margin-left: 12px;
-        margin-top: 0;
-    }
+.leaflet-popup-content {
+    margin: 0;
+}
 
-    #layer-polygon-map .leaflet-draw-tooltip:before {
-        left: -7px;
-    } */
+.leaflet-popup-content-wrapper {
+    padding: 0;
+}

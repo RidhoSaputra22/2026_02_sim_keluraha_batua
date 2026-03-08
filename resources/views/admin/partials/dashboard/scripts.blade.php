@@ -1,10 +1,6 @@
-@push('styles')
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-@endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 @vite('resources/js/map/index.js')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
@@ -231,91 +227,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ══════════════════════════════════════════════════════
-    // MAP ENGINE: SimPeta
-    // ══════════════════════════════════════════════════════
-    const waitForSimPeta = () => new Promise(resolve => {
-        if (typeof SimPeta !== 'undefined') {
-            resolve();
-            return;
-        }
-        const timer = setInterval(() => {
-            if (typeof SimPeta !== 'undefined') {
-                clearInterval(timer);
-                resolve();
-            }
-        }, 20);
-    });
 
-    const renderCustomLayerToggles = (layers, clm) => {
-        const container = document.getElementById('dashboard-custom-layer-toggles');
-        if (!container) return;
-
-        container.innerHTML = '';
-
-        if (!layers || !layers.length) {
-            container.innerHTML = '<span class="text-xs text-base-content/50">Belum ada custom layer aktif.</span>';
-            return;
-        }
-
-        layers.forEach(layer => {
-            const label = document.createElement('label');
-            label.className = 'label cursor-pointer gap-2 px-2 py-1 rounded-md border border-base-300 bg-base-100';
-
-            const input = document.createElement('input');
-            input.type = 'checkbox';
-            input.className = 'checkbox checkbox-xs';
-            input.checked = !!layer.visible;
-
-            const dot = document.createElement('span');
-            dot.className = 'w-3 h-3 rounded-sm border border-base-300 inline-block';
-            dot.style.backgroundColor = layer.warna;
-
-            const text = document.createElement('span');
-            text.className = 'label-text text-xs';
-            text.textContent = layer.nama;
-
-            input.addEventListener('change', () => {
-                clm.toggleCustomLayer(layer.id);
-            });
-
-            label.appendChild(input);
-            label.appendChild(dot);
-            label.appendChild(text);
-            container.appendChild(label);
-        });
-    };
-
-    (async () => {
-        try {
-            await waitForSimPeta();
-
-            const engine = new SimPeta.MapEngine('dashboard-map', {
-                center: [-5.1532008, 119.4682932],
-                zoom: 16,
-                maxZoom:25,
-                zoomPosition: 'bottomleft',
-                useSvgRenderer: true,
-            }).init();
-
-            // Unified layer manager
-            const layerManager = new SimPeta.LayerManager(engine);
-            const allLayers = await SimPeta.apiGet('{{ route("peta.geojson.layers") }}');
-            layerManager.renderAll(allLayers);
-            renderCustomLayerToggles(layerManager.customLayers, layerManager);
-
-            if (layerManager.rwLayerMap[userRwName]) {
-                layerManager.selectRw(userRwName);
-                layerManager.bringCustomToFront();
-            } else {
-                console.warn('RW polygon not found for current user:', userRwName);
-            }
-
-            setTimeout(() => engine.invalidateSize(), 300);
-        } catch (err) {
-            console.warn('Could not initialize map engine:', err);
-        }
-    })();
 });
 </script>
 @endpush

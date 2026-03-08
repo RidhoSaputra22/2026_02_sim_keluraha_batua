@@ -23,6 +23,19 @@ class PetaLayerPolygon extends Model
         'properties',
         'sort_order',
     ];
+
+    // ── Boot ────────────────────────────────────────────────
+    protected static function booted(): void
+    {
+        static::creating(function (self $layer) {
+            if (empty($layer->sort_order)) {
+                $maxSort = self::max('sort_order');
+                $layer->sort_order = $maxSort + 10; // Tambahkan gap 10 untuk memudahkan penyisipan
+            }
+        });
+    }
+
+
     /**
      * Jenis geometry: 'point', 'polygon', 'multipolygon', dst.
      */

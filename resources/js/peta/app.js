@@ -73,6 +73,7 @@ window.petaApp = function petaApp() {
             this._engine = new window.SimPeta.MapEngine('map', {
                 useSvgRenderer: true,
                 zoomPosition: 'bottomleft',
+
             }).init();
 
             // 2. Unified layer manager
@@ -117,8 +118,8 @@ window.petaApp = function petaApp() {
 
                 // Fit to kelurahan bounds & constrain
                 if (this._layers.kelurahanBounds) {
-                    this._engine.fitBounds(this._layers.kelurahanBounds);
-                    this._engine.constrainToBounds(this._layers.kelurahanBounds);
+                    // this._engine.fitBounds(this._layers.kelurahanBounds);
+                    // this._engine.constrainToBounds(this._layers.kelurahanBounds);
                 }
 
             } catch (err) {

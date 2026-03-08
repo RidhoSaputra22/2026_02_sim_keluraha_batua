@@ -7,6 +7,7 @@ use App\Models\PetaLayer;
 use App\Models\PetaLayerPolygon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -447,7 +448,7 @@ class PetaLayerController extends Controller
                 ];
 
                 // Enrich RW features with stats
-                if ($layerType === 'rw' && $p->nama) {
+                if ($layerType === 'rw') {
                     $properties['RW'] = $p->nama;
                     $properties['polygon_id'] = $p->id;
                     $properties['rw_id'] = $p->rw_id;
@@ -487,29 +488,70 @@ class PetaLayerController extends Controller
      */
     private function getRwStats(): array
     {
-        $rwList = \App\Models\Rw::with(['rts'])->get();
-        $stats = [];
+       return Cache::remember('rw_stats', 300, function () {
 
-        foreach ($rwList as $rw) {
-            $rwLabel = 'RW '.str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
-            $rtIds = $rw->rts->pluck('id')->toArray();
+            $rows = DB::table('rws')
+                ->leftJoin('rts', 'rts.rw_id', '=', 'rws.id')
+                ->leftJoin('penduduks', 'penduduks.rt_id', '=', 'rts.id')
+                ->leftJoin('keluargas', 'keluargas.rt_id', '=', 'rts.id')
+                ->leftJoin('umkms', 'umkms.rt_id', '=', 'rts.id')
 
-            $totalPenduduk = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->count();
-            $totalKK = \App\Models\Keluarga::whereIn('rt_id', $rtIds)->count();
-            $totalUmkm = \App\Models\Umkm::whereIn('rt_id', $rtIds)->count();
-            $lakiLaki = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->where('jenis_kelamin', 'L')->count();
-            $perempuan = \App\Models\Penduduk::whereIn('rt_id', $rtIds)->where('jenis_kelamin', 'P')->count();
+                ->selectRaw("
+                    rws.id,
+                    rws.nomor,
+                    rws.foto,
+                    rws.luas_area,
+                    rws.no_telp,
+                    rws.alamat_sekretariat,
+                    rws.deskripsi,
 
-            $stats[$rwLabel] = [
-                'total_penduduk' => $totalPenduduk,
-                'total_kk' => $totalKK,
-                'total_rt' => count($rtIds),
-                'total_umkm' => $totalUmkm,
-                'laki_laki' => $lakiLaki,
-                'perempuan' => $perempuan,
-            ];
-        }
+                    COUNT(DISTINCT rts.id) as total_rt,
+                    COUNT(DISTINCT penduduks.id) as total_penduduk,
+                    COUNT(DISTINCT keluargas.id) as total_kk,
+                    COUNT(DISTINCT umkms.id) as total_umkm,
 
-        return $stats;
+                    SUM(CASE WHEN penduduks.jenis_kelamin = 'L' THEN 1 ELSE 0 END) as laki_laki,
+                    SUM(CASE WHEN penduduks.jenis_kelamin = 'P' THEN 1 ELSE 0 END) as perempuan
+                ")
+
+                ->groupBy(
+                    'rws.id',
+                    'rws.nomor',
+                    'rws.foto',
+                    'rws.luas_area',
+                    'rws.no_telp',
+                    'rws.alamat_sekretariat',
+                    'rws.deskripsi'
+                )
+
+                ->get();
+
+            $stats = [];
+
+            foreach ($rows as $rw) {
+
+                $rwLabel = 'RW '.str_pad($rw->nomor, 2, '0', STR_PAD_LEFT);
+
+                $stats[$rwLabel] = [
+                    'total_penduduk' => (int) $rw->total_penduduk,
+                    'total_kk' => (int) $rw->total_kk,
+                    'total_rt' => (int) $rw->total_rt,
+                    'total_umkm' => (int) $rw->total_umkm,
+                    'laki_laki' => (int) $rw->laki_laki,
+                    'perempuan' => (int) $rw->perempuan,
+
+                    'profil_rw' => [
+                        'foto' => $rw->foto,
+                        'luas_area' => $rw->luas_area,
+                        'no_telp' => $rw->no_telp,
+                        'alamat_sekretariat' => $rw->alamat_sekretariat,
+                        'deskripsi' => $rw->deskripsi,
+                        'ketua' => $rw->ketua->nama ?? '-',
+                    ]
+                ];
+            }
+
+            return $stats;
+        });
     }
 }

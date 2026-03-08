@@ -54,5 +54,11 @@ class Rw extends Model {
     {
         return $this->hasMany(RtRwPengurus::class);
     }
+
+    public function ketua()
+{
+    return $this->hasOne(RtRwPengurus::class)
+        ->whereHas('jabatan', fn($q) => $q->where('nama', 'Ketua RW'));
+}
 }
 

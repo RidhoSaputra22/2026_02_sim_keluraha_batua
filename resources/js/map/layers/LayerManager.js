@@ -183,19 +183,25 @@ export default class LayerManager {
         if (this.engine?.map) {
             const boundsOpts = {
                 padding: [60, 60],
-                maxZoom: (this.engine.map.getZoom() || 15) + 2,
+
+
             };
             if (typeof this.engine.fitBounds === "function") {
                 this.engine.fitBounds(layer.getBounds(), boundsOpts);
             } else if (typeof this.engine.map.fitBounds === "function") {
                 this.engine.map.fitBounds(layer.getBounds(), boundsOpts);
             }
+
         }
 
         const rwData = this.rwDataList.find((r) => r.name === rwName);
         if (this.callbacks.onRwSelect) {
             this.callbacks.onRwSelect(rwName, rwData ? { ...rwData } : {});
         }
+
+            layer.openPopup();
+
+
     }
 
     /**
@@ -496,29 +502,89 @@ export default class LayerManager {
             opacity: 0.95,
         });
 
-        const popupContent =
-            `<div class="text-sm">` +
-            `<strong class="text-base">${nama}</strong>` +
-            `<hr class="my-1 border-base-300">` +
-            `<div class="space-y-1">` +
-            (props.total_penduduk != null
-                ? `<div>Penduduk: <strong>${formatNumber(props.total_penduduk)}</strong> jiwa</div>`
-                : "") +
-            (props.total_kk != null
-                ? `<div>KK: <strong>${formatNumber(props.total_kk)}</strong></div>`
-                : "") +
-            (props.total_umkm != null
-                ? `<div>UMKM: <strong>${formatNumber(props.total_umkm)}</strong></div>`
-                : "") +
-            (props.laki_laki != null && props.perempuan != null
-                ? `<div>L/P: <strong>${formatNumber(props.laki_laki)}</strong> / <strong>${formatNumber(props.perempuan)}</strong></div>`
-                : "") +
-            (props.total_rt != null
-                ? `<div>Jumlah RT: <strong>${formatNumber(props.total_rt)}</strong></div>`
-                : "") +
-            `</div></div>`;
+        const foto = props.profil_rw?.foto
+        ? `/storage/${props.profil_rw.foto}`
+        : `/logo.png`;
 
-        layer.bindPopup(popupContent);
+        const luas = props.profil_rw?.luas_area ?? "-";
+
+        const totalPenduduk = props.total_penduduk ?? 0;
+        const laki = props.laki_laki ?? 0;
+        const perempuan = props.perempuan ?? 0;
+        const ketua = props.profil_rw.ketua ?? '-'
+
+        const persenL = totalPenduduk > 0 ? Math.round((laki / totalPenduduk) * 100) : 0;
+        const persenP = totalPenduduk > 0 ? Math.round((perempuan / totalPenduduk) * 100) : 0;
+
+        const popupContent = `
+        <div class="card bg-base-100 shadow-xl w-80">
+
+            <div class="card-body p-4 space-y-3">
+
+                <div class="flex items-center gap-3 border-b pb-3">
+                    <div class="avatar">
+                        <div class="w-14 rounded-lg">
+                            <img src="${foto}" alt="${nama}">
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="font-bold text-lg leading-tight">${nama}</h3>
+                        <div class="text-xs opacity-70">Ketua RW: ${ketua}</div>
+                        <div class="text-xs mt-1">Luas: <strong>${luas} km²</strong></div>
+                    </div>
+                </div>
+
+                <div class="stats stats-horizontal bg-base-200">
+
+                    <div class="stat px-2">
+                        <div class="stat-title text-xs">Penduduk</div>
+                        <div class="stat-value text-lg">${formatNumber(totalPenduduk)} Jiwa</div>
+
+                    </div>
+
+                    <div class="stat px-2">
+                        <div class="stat-title text-xs">Kartu Keluarga</div>
+                        <div class="stat-value text-lg">${formatNumber(props.total_kk ?? 0)}</div>
+                    </div>
+
+                </div>
+
+                <div class="flex gap-2">
+                    <div class="badge badge-primary gap-1">
+                        RT ${formatNumber(props.total_rt ?? 0)}
+                    </div>
+
+                    <div class="badge badge-secondary gap-1">
+                        UMKM ${formatNumber(props.total_umkm ?? 0)}
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-xs">
+                        <span>Laki-laki (${formatNumber(laki)})</span>
+                        <span>${persenL}%</span>
+                    </div>
+                    <progress class="progress progress-primary w-full" value="${persenL}" max="100"></progress>
+
+                    <div class="flex justify-between text-xs mt-1">
+                        <span>Perempuan (${formatNumber(perempuan)})</span>
+                        <span>${persenP}%</span>
+                    </div>
+                    <progress class="progress progress-secondary w-full" value="${persenP}" max="100"></progress>
+                </div>
+
+            </div>
+
+        </div>
+        `;
+
+        layer.bindPopup(popupContent, {
+            maxWidth: 320,
+            autoPan: true
+        });
+
+
 
         this.rwDataList.push({
             name: props.RW,
