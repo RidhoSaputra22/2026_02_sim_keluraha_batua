@@ -233,14 +233,22 @@ return [
         'date_column' => 'created_at',
         'back_route'  => 'data-umum.retribusi-sampah.index',
         'with'        => ['kelurahan', 'rw', 'rt'],
-        'columns'     => ['nama_nasabah', 'alamat', 'no_skrd', 'beban', 'rt_rw', 'status', 'tahun', 'keterangan'],
-        'headers'     => ['Nama Nasabah', 'Alamat', 'No SKRD', 'Beban', 'RT/RW', 'Status', 'Tahun', 'Keterangan'],
-        'required'    => ['nama_nasabah'],
+        'columns'     => ['npwr', 'nama_nasabah', 'no_skrd', 'alamat', 'rw', 'rt', 'beban', 'status', 'tahun', 'kelurahan', 'keterangan'],
+        'headers'     => ['NPWR', 'Nama', 'No SKRD', 'Alamat', 'RW', 'RT', 'Tagihan', 'Status', 'Tahun', 'Kelurahan', 'Keterangan'],
+        'required'    => ['npwr', 'nama_nasabah', 'rw_id', 'rt_id'],
         'resolvers'   => [
-            'rt_rw' => 'rt_rw_label',
+            'rt' => 'rt',
+            'rw' => 'rw',
+            'kelurahan' => 'kelurahan'
         ],
-        'import_columns' => ['nama_nasabah', 'alamat', 'no_skrd', 'beban', 'status', 'tahun', 'keterangan'],
-        'import_headers' => ['Nama Nasabah', 'Alamat', 'No SKRD', 'Beban', 'Status', 'Tahun', 'Keterangan'],
+        'import_columns' => ['npwr', 'nama_nasabah', 'no_skrd', 'alamat', 'rw', 'rt', 'beban', 'status', 'tahun', 'kelurahan', 'keterangan'],
+        'import_headers' => ['NPWR', 'Nama', 'No SKRD', 'Alamat', 'RW', 'RT', 'Tagihan', 'Status', 'Tahun', 'Kelurahan', 'Keterangan'],
+        'importers' => [
+            'kelurahan_id' => 'lookup_kelurahan_id',
+            'rw_id'        => 'lookup_rw_id',
+            'rt_id'        => 'lookup_rt_id',
+        ],
+        'unique_by' => ['npwr'],
     ],
 
     // ── USAHA ────────────────────────────────────────────────────

@@ -27,6 +27,8 @@
                     selected="{{ old('kelurahan_id', $retribusiSampah->kelurahan_id) }}" required />
                 <x-ui.input label="Nama Nasabah" name="nama_nasabah" placeholder="Nama lengkap nasabah"
                     value="{{ old('nama_nasabah', $retribusiSampah->nama_nasabah) }}" required />
+                <x-ui.input label="NPWR" name="npwr" placeholder="Nomor NPWR (opsional)"
+                    value="{{ old('npwr', $retribusiSampah->npwr) }}" />
                 @php $rtOptions = $rtList->mapWithKeys(fn($rt) => [$rt->id => 'RT ' . $rt->nomor . ' / RW ' . ($rt->rw->nomor ?? '-')])->toArray(); @endphp
                 <x-ui.select label="RT" name="rt_id" placeholder="Pilih RT" :options="$rtOptions"
                     selected="{{ old('rt_id', $retribusiSampah->rt_id) }}" />

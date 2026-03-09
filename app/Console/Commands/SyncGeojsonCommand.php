@@ -23,6 +23,11 @@ class SyncGeojsonCommand extends Command
     {
         $only = $this->option('only');
 
+        // delete existing polygons for RW and Kelurahan layers
+        PetaLayerPolygon::whereHas('layer', function ($query) {
+            $query->whereIn('slug', [PetaLayer::LAYER_WILAYAH_RW, PetaLayer::LAYER_BATAS_KELURAHAN]);
+        })->delete();
+
         if (! $only || $only === 'rw') {
             $this->syncRwPolygons();
         }
@@ -129,7 +134,7 @@ class SyncGeojsonCommand extends Command
             // Find or create polygon record in peta_layer_polygons
             $polygon = PetaLayerPolygon::firstOrCreate(
                 ['peta_layer_id' => $rwLayer->id, 'rw_id' => $rw->id],
-                ['nama' => $nama, 'warna' => $warna, 'jenis' => $jenis]
+                ['nama' => $nama, 'warna' => $warna, 'jenis' => $jenis, 'sort_order' => $nomorRw]
             );
 
             $polygon->update(['nama' => $nama, 'warna' => $warna, 'jenis' => $jenis]);

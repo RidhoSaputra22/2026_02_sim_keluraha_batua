@@ -22,6 +22,7 @@ class RetribusiSampahController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('nama_nasabah', 'like', "%{$search}%")
                     ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('npwr', 'like', "%{$search}%")
                     ->orWhere('no_skrd', 'like', "%{$search}%");
             });
         }
@@ -59,11 +60,13 @@ class RetribusiSampahController extends Controller
 
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'rt_id'        => $this->rtIdRules(),
-            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rt_id'        => ['required', 'exists:rts,id'],
+            'rw_id'        => ['required', 'exists:rws,id'],
             'nama_nasabah' => ['required', 'string', 'max:255'],
+            'npwr'         => ['nullable', 'string', 'max:100'],
             'alamat'       => ['nullable', 'string', 'max:500'],
             'no_skrd'      => ['nullable', 'string', 'max:100'],
             'beban'        => ['nullable', 'numeric', 'min:0'],
@@ -95,9 +98,10 @@ class RetribusiSampahController extends Controller
 
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'rt_id'        => $this->rtIdRules(),
-            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rt_id'        => ['required', 'exists:rts,id'],
+            'rw_id'        => ['required', 'exists:rws,id'],
             'nama_nasabah' => ['required', 'string', 'max:255'],
+            'npwr'         => ['nullable', 'string', 'max:100'],
             'alamat'       => ['nullable', 'string', 'max:500'],
             'no_skrd'      => ['nullable', 'string', 'max:100'],
             'beban'        => ['nullable', 'numeric', 'min:0'],

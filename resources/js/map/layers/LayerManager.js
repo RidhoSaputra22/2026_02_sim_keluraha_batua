@@ -492,7 +492,7 @@ export default class LayerManager {
 
         const tooltipContent =
             `<strong>${nama}</strong>` +
-            `<p>Area: ${luas} km²</p>` +
+            `<p>Area: ${luas}</p>` +
             (desc ? `<br>${desc}` : "") +
             (stats.length
                 ? `<hr style="margin:4px 0;border-color:rgba(0,0,0,.15)">` +
@@ -533,7 +533,7 @@ export default class LayerManager {
                     <div>
                         <h3 class="font-bold text-lg leading-tight">${nama}</h3>
                         <div class="text-xs opacity-70">Ketua RW: ${ketua}</div>
-                        <div class="text-xs mt-1">Luas: <strong>${luas} km²</strong></div>
+                        <div class="text-xs mt-1">Luas: <strong>${luas}</strong></div>
                     </div>
                 </div>
 

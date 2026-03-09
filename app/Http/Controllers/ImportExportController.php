@@ -13,6 +13,39 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class ImportExportController extends Controller
 {
     /**
+     * Lookup kelurahan_id dari nama kelurahan
+     */
+    protected function lookup_kelurahan_id($nama)
+    {
+        if (!$nama) return null;
+        $kel = \App\Models\Kelurahan::where('nama', $nama)->first();
+        // dd($kel);
+        return $kel ? $kel->id : null;
+    }
+
+    /**
+     * Lookup rw_id dari nomor RW dan kelurahan (harus sudah resolve kelurahan_id di $row)
+     */
+    protected function lookup_rw_id($nomor, $row)
+    {
+        if (!$nomor || empty($row['kelurahan_id'])) return null;
+        $rw = \App\Models\Rw::where('nomor', $nomor)->where('kelurahan_id', $row['kelurahan_id'])->first();
+        return $rw ? $rw->id : null;
+    }
+
+    /**
+     * Lookup rt_id dari nomor RT dan rw (harus sudah resolve rw_id di $row)
+     */
+    protected function lookup_rt_id($nomor, $row)
+    {
+        if (!$nomor || empty($row['rw_id'])) return null;
+        $rt = \App\Models\Rt::where('nomor', $nomor)->where('rw_id', $row['rw_id'])->first();
+
+        // dd($rt);
+        return $rt ? $rt->id : null;
+    }
+
+    /**
      * Ambil konfigurasi modul dari config/import-export.php
      */
     protected function getModuleConfig(string $module): array
@@ -32,35 +65,75 @@ class ImportExportController extends Controller
     protected function resolveValue($model, string $column, array $resolvers): mixed
     {
         // Cek apakah ada resolver khusus untuk kolom ini
+        // if($column === 'rt') dd($column, isset($resolvers[$column]), $resolvers);
+
         if (isset($resolvers[$column])) {
             $path = $resolvers[$column];
+            // dd($path);
 
-            // Handle special rt_rw_label
-            if ($path === 'rt_rw_label') {
-                return $this->getRtRwLabel($model);
+            // Handle special rt
+            if ($path === 'rt') {
+                return $this->getRtLabel($model);
+            }
+
+            // Handle special rw
+            if ($path === 'rw') {
+                return $this->getRwLabel($model);
+            }
+
+            // Handle special kelurahan
+            if ($path === 'kelurahan') {
+                return $this->getKelurahanLabel($model);
             }
 
             // Dot-notation resolver (e.g., 'keluarga.no_kk')
             return data_get($model, $path, '-');
         }
-
+        // dd($model, $column, $resolvers, $model->{$column});
         // Ambil langsung dari atribut model
         return $model->{$column} ?? '-';
     }
 
     /**
-     * Generate label RT/RW dari model yang memiliki relasi rt.rw
+     * Generate label RT
      */
-    protected function getRtRwLabel($model): string
+    protected function getRtLabel($model): string
     {
         $rt = $model->rt ?? null;
         if (! $rt) {
             return '-';
         }
         $rtNomor = $rt->nomor ?? '-';
-        $rwNomor = $rt->rw->nomor ?? '-';
 
-        return "RT {$rtNomor} / RW {$rwNomor}";
+        return '0' . $rtNomor;
+    }
+
+    /**
+     * Generate label RW
+     */
+    protected function getRwLabel($model): string
+    {
+        $rw = $model->rw ?? null;
+        if (! $rw) {
+            return '-';
+        }
+        $rwNomor = $rw->nomor ?? '-';
+
+        return '0' . $rwNomor;
+    }
+
+    /**
+     * Generate label Kelurahan
+     */
+    protected function getKelurahanLabel($model): string
+    {
+        $kelurahan = $model->kelurahan ?? null;
+        if (! $kelurahan) {
+            return '-';
+        }
+        $kelurahanNama = $kelurahan->nama ?? '-';
+
+        return $kelurahanNama;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -128,12 +201,16 @@ class ImportExportController extends Controller
         $writer->addRow(Row::fromValuesWithStyle($headers, $headerStyle));
 
         // Data rows
+        // dd($records);
         foreach ($records as $record) {
             $row = [];
             foreach ($columns as $col) {
+                // dd($col, $resolvers);
                 $value = $this->resolveValue($record, $col, $resolvers);
                 $row[] = is_null($value) ? '' : (string) $value;
             }
+            // dd($row);
+
             $writer->addRow(Row::fromValues($row));
         }
 
@@ -183,8 +260,14 @@ class ImportExportController extends Controller
         $headerStyle = (new Style())->withFontBold(true)->withFontSize(11);
         $writer->addRow(Row::fromValuesWithStyle($headers, $headerStyle));
 
-        // Satu baris contoh kosong
-        $writer->addRow(Row::fromValues(array_fill(0, count($headers), '')));
+        // Satu baris contoh kosong (isi contoh untuk kolom relasi)
+        $example = array_map(function ($header) {
+            if (stripos($header, 'kelurahan') !== false) return 'Batua';
+            if (stripos($header, 'RW') !== false) return '01';
+            if (stripos($header, 'RT') !== false) return '01';
+            return '';
+        }, $headers);
+        $writer->addRow(Row::fromValues($example));
 
         $writer->close();
 
@@ -208,6 +291,7 @@ class ImportExportController extends Controller
         $modelClass    = $config['model'];
         $importColumns = $config['import_columns'] ?? $config['columns'];
         $required      = $config['required'] ?? [];
+        $importers     = $config['importers'] ?? [];
         $skipErrors    = $request->boolean('skip_errors', false);
 
         $file   = $request->file('file');
@@ -237,23 +321,49 @@ class ImportExportController extends Controller
                 }
 
                 $cells = $row->toArray();
+                // dd($cells);
 
+                // dd($cells);
                 // Skip baris kosong
-                if (count(array_filter($cells, fn ($v) => trim((string) $v) !== '')) === 0) {
+                if (collect($cells)->filter(fn($v) => !empty($v))->isEmpty()) {
                     continue;
                 }
+
 
                 // Pastikan jumlah kolom sesuai
                 if (count($cells) < count($importColumns)) {
                     $cells = array_pad($cells, count($importColumns), '');
                 }
 
+
                 // Map ke associative array
                 $data = [];
                 foreach ($importColumns as $i => $col) {
-                    $value = isset($cells[$i]) ? trim((string) $cells[$i]) : '';
+                    $value = $cells[$i] ?? null;
+                    if ($value instanceof \DateTimeInterface) {
+                        $value = $value->format('Y-m-d');
+                    } elseif (is_string($value)) {
+                        $value = trim($value);
+                    }
                     $data[$col] = $value === '' ? null : $value;
                 }
+
+                // Mapping nama kelurahan/rw/rt ke id jika ada importers
+                if (isset($importers['kelurahan_id'])) {
+                    $data['kelurahan_id'] = $this->lookup_kelurahan_id($data['kelurahan'] ?? null);
+                    // dd("masuk kelurahan", $data['kelurahan_id']);
+                }
+                if (isset($importers['rw_id'])) {
+                    $data['rw_id'] = $this->lookup_rw_id($data['rw'] ?? null, $data);
+                }
+                if (isset($importers['rt_id'])) {
+                    $data['rt_id'] = $this->lookup_rt_id($data['rt'] ?? null, $data);
+                    }
+
+                    // dd($data);
+                // Hapus kolom input relasi string agar tidak dikirim ke DB
+                unset($data['kelurahan'], $data['rw'], $data['rt']);
+
 
                 // Validasi required fields
                 $missingFields = [];
@@ -277,14 +387,23 @@ class ImportExportController extends Controller
                 }
 
                 // Cek duplikat: lewati jika semua kolom non-null sudah ada di database
-                $checkData = array_filter($data, fn ($v) => ! is_null($v));
-                if (! empty($checkData) && $modelClass::where($checkData)->exists()) {
-                    $skipped++;
+                $uniqueBy = $config['unique_by'] ?? [];
 
-                    continue;
+                if ($uniqueBy) {
+                    $query = $modelClass::query();
+
+                    foreach ($uniqueBy as $col) {
+                        $query->where($col, $data[$col] ?? null);
+                    }
+
+                    if ($query->exists()) {
+                        $skipped++;
+                        continue;
+                    }
                 }
 
                 // Insert ke database
+                // dd($data);
                 try {
                     $modelClass::create($data);
                     $imported++;

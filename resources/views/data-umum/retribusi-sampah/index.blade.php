@@ -62,6 +62,8 @@
                     <tr>
                         <th class="w-12">No</th>
                         <th>Nama Nasabah</th>
+                        <th>NPWR</th>
+
                         <th>Alamat</th>
                         <th>No. SKRD</th>
                         <th class="text-right">Beban (Rp)</th>
@@ -76,6 +78,7 @@
                             <td class="text-sm text-base-content/60">
                                 {{ $retribusiList->firstItem() + $loop->index }}</td>
                             <td class="font-medium">{{ $item->nama_nasabah }}</td>
+                            <td class="text-sm">{{ $item->npwr ?? '-' }}</td>
                             <td class="text-sm">{{ $item->alamat ?? '-' }}</td>
                             <td class="text-sm font-mono">{{ $item->no_skrd ?? '-' }}</td>
                             <td class="text-sm text-right font-semibold">

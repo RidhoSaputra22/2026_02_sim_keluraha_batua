@@ -553,6 +553,8 @@ class PetaLayerController extends Controller
                     ->pengurus
                     ->first()?->penduduk?->nama ?? '-';
 
+                $luas_area = $rw->luas_area ? number_format($rw->luas_area, 2) . ' m²' : '-';
+
                 $stats[$rwLabel] = [
                     'total_penduduk' => (int) $rw->total_penduduk,
                     'total_kk' => (int) $rw->total_kk,
@@ -562,7 +564,7 @@ class PetaLayerController extends Controller
                     'perempuan' => (int) $rw->perempuan,
                     'profil_rw' => [
                         'foto' => $rw->foto,
-                        'luas_area' => $rw->luas_area,
+                        'luas_area' => $luas_area ,
                         'no_telp' => $rw->no_telp,
                         'alamat_sekretariat' => $rw->alamat_sekretariat,
                         'deskripsi' => $rw->deskripsi,

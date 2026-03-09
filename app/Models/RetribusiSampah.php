@@ -16,6 +16,7 @@ class RetribusiSampah extends Model
         'rw_id',
         'rt_id',
         'nama_nasabah',
+        'npwr',
         'alamat',
         'no_skrd',
         'beban',
@@ -27,6 +28,16 @@ class RetribusiSampah extends Model
     protected $casts = [
         'beban' => 'decimal:2',
     ];
+
+    // ── Boot ────────────────────────────────────────────────
+    protected static function booted(): void
+    {
+        static::creating(function (self $data) {
+            if(empty($data->status)) {
+                $data->status = 'Belum';
+            }
+        });
+    }
 
     public function kelurahan()
     {

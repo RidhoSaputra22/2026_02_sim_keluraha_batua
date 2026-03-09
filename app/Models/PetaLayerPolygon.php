@@ -22,6 +22,7 @@ class PetaLayerPolygon extends Model
         'kelurahan_id',
         'properties',
         'sort_order',
+        'area', // luas area dalam satuan meter persegi (opsional)
     ];
 
     // ── Boot ────────────────────────────────────────────────
@@ -33,6 +34,8 @@ class PetaLayerPolygon extends Model
                 $layer->sort_order = $maxSort + 10; // Tambahkan gap 10 untuk memudahkan penyisipan
             }
         });
+
+
     }
 
 
@@ -51,7 +54,9 @@ class PetaLayerPolygon extends Model
 
     protected $casts = [
         'properties' => 'array',
+        'area' => 'float',
     ];
+
 
     // ── Relationships ───────────────────────────────────────
     public function layer()
