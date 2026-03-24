@@ -38,10 +38,10 @@ class RetribusiSampahController extends Controller
         $retribusiList = $query->latest()->paginate(15)->withQueryString();
 
         // Summary stats
-        $totalBeban = RetribusiSampah::sum('beban');
-        $totalLunas = RetribusiSampah::where('status', 'Lunas')->sum('beban');
-        $totalBelum = RetribusiSampah::where('status', 'Belum')->sum('beban');
-        $totalNasabah = RetribusiSampah::count();
+        $totalNasabah = $query->count();
+        $totalBeban = $query->sum('beban');
+        $totalLunas = $totalBeban - $query->where('status', 'Belum')->sum('beban');
+        $totalBelum = $totalBeban - $totalLunas ;
         $tahunList = RetribusiSampah::distinct()->whereNotNull('tahun')->orderByDesc('tahun')->pluck('tahun');
 
         return view('data-umum.retribusi-sampah.index', compact(
@@ -89,26 +89,31 @@ class RetribusiSampahController extends Controller
         $rtList = $this->wilayahRtList();
         $rwList = $this->wilayahRwList();
 
+        // dd($rwList);
+
         return view('data-umum.retribusi-sampah.edit', compact('retribusiSampah', 'kelurahanList', 'rtList', 'rwList'));
     }
 
     public function update(Request $request, RetribusiSampah $retribusiSampah)
     {
         $this->authorizeWilayahByRtId($retribusiSampah->rt_id);
+        // dd($request->all());
+
 
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
             'rt_id'        => ['required', 'exists:rts,id'],
-            'rw_id'        => ['required', 'exists:rws,id'],
+            'rw_id'        => ['nullable', 'exists:rws,id'],
             'nama_nasabah' => ['required', 'string', 'max:255'],
             'npwr'         => ['nullable', 'string', 'max:100'],
             'alamat'       => ['nullable', 'string', 'max:500'],
             'no_skrd'      => ['nullable', 'string', 'max:100'],
             'beban'        => ['nullable', 'numeric', 'min:0'],
-            'status'       => ['required', 'in:Lunas,Belum'],
+            'status'       => ['required'],
             'tahun'        => ['nullable', 'string', 'max:10'],
             'keterangan'   => ['nullable', 'string', 'max:1000'],
         ]);
+
 
         $retribusiSampah->update($validated);
 

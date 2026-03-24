@@ -83,7 +83,7 @@
                     <div class="flex justify-between">
                         <span>Luas Area</span>
                         <span
-                            class="font-semibold text-base-content">{{ $rw->luas_area ? $rw->luas_area . ' km²' : '-' }}</span>
+                            class="font-semibold text-base-content">{{ $rw->luas_area ? number_format($rw->luas_area, 0, ',') . 'm2' : '-' }}</span>
                     </div>
                     @if ($rw->no_telp)
                         <div class="flex justify-between">

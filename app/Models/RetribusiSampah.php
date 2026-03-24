@@ -34,6 +34,7 @@ class RetribusiSampah extends Model
     {
         static::creating(function (self $data) {
             if(empty($data->status)) {
+
                 $data->status = 'Belum';
             }
         });
