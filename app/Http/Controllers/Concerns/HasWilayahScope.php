@@ -88,7 +88,9 @@ trait HasWilayahScope
     protected function wilayahRwList(): Collection
     {
         if ($this->isRtRw()) {
-            return new Collection;
+            return Rw::whereIn('id', $this->wilayahRwIds())
+                ->orderBy('nomor')
+                ->get();
         }
 
         return Rw::orderBy('nomor')->get();
@@ -102,13 +104,33 @@ trait HasWilayahScope
      *
      * @return array<int, string>
      */
-    protected function rtIdRules(): array
+    protected function rtIdRules(bool $required = false): array
     {
-        $rules = ['nullable', 'exists:rts,id'];
+        $rules = [$required ? 'required' : 'nullable', 'exists:rts,id'];
 
         if ($this->isRtRw()) {
             $allowed = $this->wilayahRtIds();
             $rules[] = 'in:'.implode(',', $allowed ?: [0]);
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Kembalikan aturan validasi untuk field rw_id.
+     *
+     * RT/RW → hanya boleh pilih RW dalam wilayahnya.
+     * Lainnya → bebas pilih RW mana saja.
+     *
+     * @return array<int, string>
+     */
+    protected function rwIdRules(bool $required = false): array
+    {
+        $rules = [$required ? 'required' : 'nullable', 'exists:rws,id'];
+
+        if ($this->isRtRw()) {
+            $allowed = $this->wilayahRwIds();
+            $rules[] = 'in:' . implode(',', $allowed ?: [0]);
         }
 
         return $rules;
@@ -218,13 +240,57 @@ trait HasWilayahScope
     }
 
     /**
+     * Terapkan scope wilayah untuk model yang dapat berada di level RT atau RW.
+     *
+     * RT/RW akan melihat:
+     * - data dengan rt_id di wilayah RT miliknya
+     * - data level RW (rt_id null) di wilayah RW miliknya
+     */
+    protected function applyWilayahScopeByRtOrRw($query)
+    {
+        if ($this->isRtRw()) {
+            $rtIds = $this->wilayahRtIds();
+            $rwIds = $this->wilayahRwIds();
+
+            $query->where(function (Builder $scopedQuery) use ($rtIds, $rwIds) {
+                $hasConstraint = false;
+
+                if (! empty($rtIds)) {
+                    $scopedQuery->whereIn('rt_id', $rtIds);
+                    $hasConstraint = true;
+                }
+
+                if (! empty($rwIds)) {
+                    if ($hasConstraint) {
+                        $scopedQuery->orWhere(function (Builder $rwQuery) use ($rwIds) {
+                            $rwQuery->whereNull('rt_id')
+                                ->whereIn('rw_id', $rwIds);
+                        });
+                    } else {
+                        $scopedQuery->whereNull('rt_id')
+                            ->whereIn('rw_id', $rwIds);
+                    }
+
+                    $hasConstraint = true;
+                }
+
+                if (! $hasConstraint) {
+                    $scopedQuery->whereRaw('1 = 0');
+                }
+            });
+        }
+
+        return $query;
+    }
+
+    /**
      * Pastikan rw_id tertentu berada dalam wilayah RT/RW user yang login.
      *
      * @throws \Symfony\Component\HttpKernel\Exception\HttpException (403)
      */
     protected function authorizeWilayahByRwId(?int $rwId, string $message = 'Data tidak berada di wilayah Anda.'): void
     {
-        if ($this->isRtRw() && $rwId !== null && ! in_array($rwId, $this->wilayahRwIds())) {
+        if ($this->isRtRw() && ($rwId === null || ! in_array($rwId, $this->wilayahRwIds()))) {
             abort(403, $message);
         }
     }
@@ -241,5 +307,47 @@ trait HasWilayahScope
         if ($this->isRtRw() && $rtId !== null && ! in_array($rtId, $this->wilayahRtIds())) {
             abort(403, $message);
         }
+    }
+
+    /**
+     * Pastikan data dengan kombinasi rt_id/rw_id berada dalam wilayah RT/RW user.
+     */
+    protected function authorizeWilayahByRtOrRwId(?int $rtId, ?int $rwId, string $message = 'Data tidak berada di wilayah Anda.'): void
+    {
+        if (! $this->isRtRw()) {
+            return;
+        }
+
+        if ($rtId !== null) {
+            $this->authorizeWilayahByRtId($rtId, $message);
+
+            return;
+        }
+
+        $this->authorizeWilayahByRwId($rwId, $message);
+    }
+
+    /**
+     * Sinkronkan rw_id dari rt_id, dan isi default wilayah milik user RT/RW saat rw_id kosong.
+     *
+     * @param  array<string, mixed>  $validated
+     * @return array<string, mixed>
+     */
+    protected function normalizeWilayahInput(array $validated, string $rtKey = 'rt_id', string $rwKey = 'rw_id'): array
+    {
+        $rtId = $validated[$rtKey] ?? null;
+        $rwId = $validated[$rwKey] ?? null;
+
+        if ($rtId !== null) {
+            $rwId = Rt::whereKey($rtId)->value('rw_id') ?? $rwId;
+        } elseif ($this->isRtRw()) {
+            $rwId = $rwId ?? ($this->wilayahRwIds()[0] ?? null);
+        }
+
+        if (array_key_exists($rwKey, $validated) || $rwId !== null) {
+            $validated[$rwKey] = $rwId;
+        }
+
+        return $validated;
     }
 }

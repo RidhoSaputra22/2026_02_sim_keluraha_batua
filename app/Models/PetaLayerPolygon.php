@@ -106,15 +106,31 @@ class PetaLayerPolygon extends Model
 
     // ── PostGIS Methods ─────────────────────────────────────
 
+    public static function usesDatabaseGeometry(): bool
+    {
+        return DB::getDriverName() === 'pgsql';
+    }
+
+    public static function geojsonSelectExpression(string $column = 'polygon', string $alias = 'geojson'): string
+    {
+        if (self::usesDatabaseGeometry()) {
+            return "ST_AsGeoJSON({$column}) as {$alias}";
+        }
+
+        return "{$column} as {$alias}";
+    }
+
     /**
      * Get polygon as GeoJSON string.
      */
     public function getPolygonGeojsonAttribute(): ?string
     {
-        return DB::selectOne(
-            'SELECT ST_AsGeoJSON(polygon) as geojson FROM peta_layer_polygons WHERE id = ?',
+        $row = DB::selectOne(
+            'SELECT ' . self::geojsonSelectExpression('polygon') . ' FROM peta_layer_polygons WHERE id = ?',
             [$this->id]
-        )->geojson ?? null;
+        );
+
+        return $row?->geojson;
     }
 
     /**
@@ -124,10 +140,18 @@ class PetaLayerPolygon extends Model
     {
         $json = is_array($geojson) ? json_encode($geojson) : $geojson;
 
-        DB::statement(
-            'UPDATE peta_layer_polygons SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
-            [$json, $this->id]
-        );
+        if (self::usesDatabaseGeometry()) {
+            DB::statement(
+                'UPDATE peta_layer_polygons SET polygon = ST_SetSRID(ST_GeomFromGeoJSON(?), 4326) WHERE id = ?',
+                [$json, $this->id]
+            );
+
+            return;
+        }
+
+        DB::table('peta_layer_polygons')
+            ->where('id', $this->id)
+            ->update(['polygon' => $json]);
     }
 
     /**
@@ -135,6 +159,6 @@ class PetaLayerPolygon extends Model
      */
     public function scopeWithPolygonGeojson($query)
     {
-        return $query->addSelect(DB::raw('ST_AsGeoJSON(polygon) as polygon_geojson'));
+        return $query->addSelect(DB::raw(self::geojsonSelectExpression('polygon', 'polygon_geojson')));
     }
 }

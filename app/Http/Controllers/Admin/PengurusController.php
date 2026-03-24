@@ -164,7 +164,9 @@ class PengurusController extends Controller
                 'unique:users,email,' . ($penguru->user_id ?? 'NULL') . ',id'],
         ]);
 
-        DB::transaction(function () use ($request, $validated, $penguru) {
+        $previousUserId = $penguru->user_id;
+
+        DB::transaction(function () use ($request, $validated, $penguru, $previousUserId) {
             $mode = $request->input('assign_user_mode', 'none');
 
             if ($mode === 'none') {
@@ -192,6 +194,10 @@ class PengurusController extends Controller
 
             unset($validated['assign_user_mode'], $validated['new_user_email']);
             $penguru->update($validated);
+
+            if ($previousUserId && $previousUserId !== $penguru->user_id) {
+                $this->clearUserWilayah($previousUserId);
+            }
         });
 
         return redirect()->route('master.pengurus.index')
@@ -200,7 +206,12 @@ class PengurusController extends Controller
 
     public function destroy(RtRwPengurus $penguru)
     {
+        $userId = $penguru->user_id;
         $penguru->delete();
+
+        if ($userId) {
+            $this->clearUserWilayah($userId);
+        }
 
         return redirect()->route('master.pengurus.index')
             ->with('success', 'Data pengurus RT/RW berhasil dihapus.');
@@ -216,6 +227,14 @@ class PengurusController extends Controller
         User::where('id', $userId)->update([
             'wilayah_rw' => $rw?->nomor,
             'wilayah_rt' => $rt?->nomor,
+        ]);
+    }
+
+    private function clearUserWilayah(int $userId): void
+    {
+        User::where('id', $userId)->update([
+            'wilayah_rw' => null,
+            'wilayah_rt' => null,
         ]);
     }
 }

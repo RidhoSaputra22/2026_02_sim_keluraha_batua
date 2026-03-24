@@ -30,7 +30,7 @@ class AsramaController extends Controller
         $query = Asrama::with(['kelurahan', 'rw', 'rt']);
 
         // Wilayah scoping for RT/RW users
-        $this->applyWilayahScope($query);
+        $this->applyWilayahScopeByRtOrRw($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -44,9 +44,13 @@ class AsramaController extends Controller
             $query->where('jenis', $jenis);
         }
 
-        $asramaList = $query->orderBy('nama')->paginate(15)->withQueryString();
+        $summaryQuery = clone $query;
+        $asramaList = (clone $query)->orderBy('nama')->paginate(15)->withQueryString();
         $jenisOptions = Asrama::jenisOptions();
-        $summaryData = Asrama::selectRaw('jenis, SUM(jumlah) as total')->groupBy('jenis')->pluck('total', 'jenis');
+        $summaryData = (clone $summaryQuery)
+            ->selectRaw('jenis, SUM(jumlah) as total')
+            ->groupBy('jenis')
+            ->pluck('total', 'jenis');
 
         return view('data-umum.asrama.index', compact('asramaList', 'jenisOptions', 'summaryData'));
     }
@@ -66,7 +70,7 @@ class AsramaController extends Controller
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
             'rt_id'        => $this->rtIdRules(),
-            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rw_id'        => $this->rwIdRules(),
             'nama'         => ['nullable', 'string', 'max:255'],
             'alamat'       => ['nullable', 'string', 'max:500'],
             'jenis'        => ['required', 'string', 'in:TNI,POLRI,Mahasiswa,Kerukunan'],
@@ -75,6 +79,8 @@ class AsramaController extends Controller
             'latitude'     => ['nullable', 'numeric'],
             'longitude'    => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $asrama = Asrama::create($validated);
 
@@ -86,7 +92,7 @@ class AsramaController extends Controller
 
     public function edit(Asrama $asrama)
     {
-        $this->authorizeWilayahByRtId($asrama->rt_id);
+        $this->authorizeWilayahByRtOrRwId($asrama->rt_id, $asrama->rw_id);
 
         $kelurahanList = Kelurahan::orderBy('nama')->get();
         $rtList = $this->wilayahRtList();
@@ -98,12 +104,12 @@ class AsramaController extends Controller
 
     public function update(Request $request, Asrama $asrama)
     {
-        $this->authorizeWilayahByRtId($asrama->rt_id);
+        $this->authorizeWilayahByRtOrRwId($asrama->rt_id, $asrama->rw_id);
 
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
             'rt_id'        => $this->rtIdRules(),
-            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rw_id'        => $this->rwIdRules(),
             'nama'         => ['nullable', 'string', 'max:255'],
             'alamat'       => ['nullable', 'string', 'max:500'],
             'jenis'        => ['required', 'string', 'in:TNI,POLRI,Mahasiswa,Kerukunan'],
@@ -112,6 +118,8 @@ class AsramaController extends Controller
             'latitude'     => ['nullable', 'numeric'],
             'longitude'    => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $asrama->update($validated);
 
@@ -123,7 +131,7 @@ class AsramaController extends Controller
 
     public function destroy(Asrama $asrama)
     {
-        $this->authorizeWilayahByRtId($asrama->rt_id);
+        $this->authorizeWilayahByRtOrRwId($asrama->rt_id, $asrama->rw_id);
 
         $this->removePetaPolygon($asrama);
         $asrama->delete();

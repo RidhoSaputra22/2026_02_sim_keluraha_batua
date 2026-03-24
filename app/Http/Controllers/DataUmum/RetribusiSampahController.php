@@ -16,7 +16,7 @@ class RetribusiSampahController extends Controller
     {
         $query = RetribusiSampah::with(['kelurahan', 'rw', 'rt']);
 
-        $this->applyWilayahScope($query);
+        $this->applyWilayahScopeByRtOrRw($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -35,13 +35,14 @@ class RetribusiSampahController extends Controller
             $query->where('tahun', $tahun);
         }
 
-        $retribusiList = $query->latest()->paginate(15)->withQueryString();
+        $summaryQuery = clone $query;
+        $retribusiList = (clone $query)->latest()->paginate(15)->withQueryString();
 
         // Summary stats
-        $totalNasabah = $query->count();
-        $totalBeban = $query->sum('beban');
-        $totalLunas = $totalBeban - $query->where('status', 'Belum')->sum('beban');
-        $totalBelum = $totalBeban - $totalLunas ;
+        $totalNasabah = (clone $summaryQuery)->count();
+        $totalBeban = (clone $summaryQuery)->sum('beban');
+        $totalLunas = (clone $summaryQuery)->where('status', 'Lunas')->sum('beban');
+        $totalBelum = (clone $summaryQuery)->where('status', 'Belum')->sum('beban');
         $tahunList = RetribusiSampah::distinct()->whereNotNull('tahun')->orderByDesc('tahun')->pluck('tahun');
 
         return view('data-umum.retribusi-sampah.index', compact(
@@ -63,8 +64,8 @@ class RetribusiSampahController extends Controller
 
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'rt_id'        => ['required', 'exists:rts,id'],
-            'rw_id'        => ['required', 'exists:rws,id'],
+            'rt_id'        => $this->rtIdRules(required: true),
+            'rw_id'        => $this->rwIdRules(required: true),
             'nama_nasabah' => ['required', 'string', 'max:255'],
             'npwr'         => ['nullable', 'string', 'max:100'],
             'alamat'       => ['nullable', 'string', 'max:500'],
@@ -75,6 +76,8 @@ class RetribusiSampahController extends Controller
             'keterangan'   => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $validated = $this->normalizeWilayahInput($validated);
+
         RetribusiSampah::create($validated);
 
         return redirect()->route('data-umum.retribusi-sampah.index')
@@ -83,7 +86,7 @@ class RetribusiSampahController extends Controller
 
     public function edit(RetribusiSampah $retribusiSampah)
     {
-        $this->authorizeWilayahByRtId($retribusiSampah->rt_id);
+        $this->authorizeWilayahByRtOrRwId($retribusiSampah->rt_id, $retribusiSampah->rw_id);
 
         $kelurahanList = Kelurahan::orderBy('nama')->get();
         $rtList = $this->wilayahRtList();
@@ -96,24 +99,25 @@ class RetribusiSampahController extends Controller
 
     public function update(Request $request, RetribusiSampah $retribusiSampah)
     {
-        $this->authorizeWilayahByRtId($retribusiSampah->rt_id);
+        $this->authorizeWilayahByRtOrRwId($retribusiSampah->rt_id, $retribusiSampah->rw_id);
         // dd($request->all());
 
 
         $validated = $request->validate([
             'kelurahan_id' => ['required', 'exists:kelurahans,id'],
-            'rt_id'        => ['required', 'exists:rts,id'],
-            'rw_id'        => ['nullable', 'exists:rws,id'],
+            'rt_id'        => $this->rtIdRules(required: true),
+            'rw_id'        => $this->rwIdRules(required: true),
             'nama_nasabah' => ['required', 'string', 'max:255'],
             'npwr'         => ['nullable', 'string', 'max:100'],
             'alamat'       => ['nullable', 'string', 'max:500'],
             'no_skrd'      => ['nullable', 'string', 'max:100'],
             'beban'        => ['nullable', 'numeric', 'min:0'],
-            'status'       => ['required'],
+            'status'       => ['required', 'in:Lunas,Belum'],
             'tahun'        => ['nullable', 'string', 'max:10'],
             'keterangan'   => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $validated = $this->normalizeWilayahInput($validated);
 
         $retribusiSampah->update($validated);
 
@@ -123,7 +127,7 @@ class RetribusiSampahController extends Controller
 
     public function destroy(RetribusiSampah $retribusiSampah)
     {
-        $this->authorizeWilayahByRtId($retribusiSampah->rt_id);
+        $this->authorizeWilayahByRtOrRwId($retribusiSampah->rt_id, $retribusiSampah->rw_id);
 
         $retribusiSampah->delete();
 

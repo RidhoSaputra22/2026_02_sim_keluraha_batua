@@ -29,16 +29,17 @@ class PetaController extends Controller
     public function geojsonKelurahan(): JsonResponse
     {
         $kelLayer = PetaLayer::where('slug', PetaLayer::LAYER_BATAS_KELURAHAN)->first();
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('plp.polygon');
 
         if (! $kelLayer) {
             return response()->json(['error' => 'Layer batas kelurahan belum tersedia'], 404);
         }
 
         $rows = DB::select(
-            'SELECT plp.id, plp.nama, plp.kelurahan_id, ST_AsGeoJSON(plp.polygon) as geojson
+            "SELECT plp.id, plp.nama, plp.kelurahan_id, {$geojsonSelect}
              FROM peta_layer_polygons plp
              WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
-             ORDER BY plp.id',
+             ORDER BY plp.id",
             [$kelLayer->id]
         );
 
@@ -77,16 +78,17 @@ class PetaController extends Controller
     public function geojsonRw(): JsonResponse
     {
         $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('plp.polygon');
 
         if (! $rwLayer) {
             return response()->json(['error' => 'Layer RW belum tersedia'], 404);
         }
 
         $rows = DB::select(
-            'SELECT plp.id, plp.nama, plp.warna, plp.rw_id, ST_AsGeoJSON(plp.polygon) as geojson
+            "SELECT plp.id, plp.nama, plp.warna, plp.rw_id, {$geojsonSelect}
              FROM peta_layer_polygons plp
              WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
-             ORDER BY plp.nama',
+             ORDER BY plp.nama",
             [$rwLayer->id]
         );
 
@@ -194,13 +196,15 @@ class PetaController extends Controller
     {
         $rwList = Rw::orderBy('nomor')->get();
         $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('polygon');
+        $layerGeojsonSelect = PetaLayerPolygon::geojsonSelectExpression('plp.polygon');
 
         // Get current polygon from peta_layer_polygons
         $polygonGeojson = null;
         $currentPolygonRecord = null;
         if ($rwLayer) {
             $currentPolygonRecord = DB::selectOne(
-                'SELECT id, warna, ST_AsGeoJSON(polygon) as geojson FROM peta_layer_polygons WHERE peta_layer_id = ? AND rw_id = ? AND polygon IS NOT NULL',
+                "SELECT id, warna, {$geojsonSelect} FROM peta_layer_polygons WHERE peta_layer_id = ? AND rw_id = ? AND polygon IS NOT NULL",
                 [$rwLayer->id, $rw->id]
             );
             if ($currentPolygonRecord && $currentPolygonRecord->geojson) {
@@ -212,10 +216,10 @@ class PetaController extends Controller
         $allRwPolygons = [];
         if ($rwLayer) {
             $allRwPolygons = DB::select(
-                'SELECT plp.id, plp.nama, plp.warna, plp.rw_id, ST_AsGeoJSON(plp.polygon) as geojson
+                "SELECT plp.id, plp.nama, plp.warna, plp.rw_id, {$layerGeojsonSelect}
                  FROM peta_layer_polygons plp
                  WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
-                 ORDER BY plp.nama',
+                 ORDER BY plp.nama",
                 [$rwLayer->id]
             );
         }
@@ -225,7 +229,7 @@ class PetaController extends Controller
         $kelLayer = PetaLayer::where('slug', PetaLayer::LAYER_BATAS_KELURAHAN)->first();
         if ($kelLayer) {
             $kel = DB::selectOne(
-                'SELECT ST_AsGeoJSON(polygon) as geojson FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL LIMIT 1',
+                "SELECT {$geojsonSelect} FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL LIMIT 1",
                 [$kelLayer->id]
             );
             if ($kel && $kel->geojson) {

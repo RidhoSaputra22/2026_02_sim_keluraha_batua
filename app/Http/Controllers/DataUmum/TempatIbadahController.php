@@ -29,7 +29,7 @@ class TempatIbadahController extends Controller
     {
         $query = TempatIbadah::with(['kelurahan', 'rt', 'rw']);
 
-        $this->applyWilayahScope($query);
+        $this->applyWilayahScopeByRtOrRw($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -67,11 +67,13 @@ class TempatIbadahController extends Controller
             'nama'          => ['required', 'string', 'max:255'],
             'alamat'        => ['nullable', 'string', 'max:500'],
             'rt_id'         => $this->rtIdRules(),
-            'rw_id'         => ['nullable', 'exists:rws,id'],
+            'rw_id'         => $this->rwIdRules(),
             'pengurus'      => ['nullable', 'string', 'max:255'],
             'latitude'      => ['nullable', 'numeric'],
             'longitude'     => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $tempatIbadah = TempatIbadah::create($validated);
 
@@ -83,7 +85,7 @@ class TempatIbadahController extends Controller
 
     public function edit(TempatIbadah $tempatIbadah)
     {
-        $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
+        $this->authorizeWilayahByRtOrRwId($tempatIbadah->rt_id, $tempatIbadah->rw_id);
 
         $kelurahanList = Kelurahan::orderBy('nama')->get();
         $rwList        = $this->wilayahRwList();
@@ -94,7 +96,7 @@ class TempatIbadahController extends Controller
 
     public function update(Request $request, TempatIbadah $tempatIbadah)
     {
-        $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
+        $this->authorizeWilayahByRtOrRwId($tempatIbadah->rt_id, $tempatIbadah->rw_id);
 
         $validated = $request->validate([
             'kelurahan_id'  => ['required', 'exists:kelurahans,id'],
@@ -102,11 +104,13 @@ class TempatIbadahController extends Controller
             'nama'          => ['required', 'string', 'max:255'],
             'alamat'        => ['nullable', 'string', 'max:500'],
             'rt_id'         => $this->rtIdRules(),
-            'rw_id'         => ['nullable', 'exists:rws,id'],
+            'rw_id'         => $this->rwIdRules(),
             'pengurus'      => ['nullable', 'string', 'max:255'],
             'latitude'      => ['nullable', 'numeric'],
             'longitude'     => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $tempatIbadah->update($validated);
 
@@ -118,7 +122,7 @@ class TempatIbadahController extends Controller
 
     public function destroy(TempatIbadah $tempatIbadah)
     {
-        $this->authorizeWilayahByRtId($tempatIbadah->rt_id);
+        $this->authorizeWilayahByRtOrRwId($tempatIbadah->rt_id, $tempatIbadah->rw_id);
 
         $this->removePetaPolygon($tempatIbadah);
         $tempatIbadah->delete();

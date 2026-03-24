@@ -21,7 +21,11 @@
 
             <h3 class="text-lg font-semibold mb-4 border-b pb-2">Informasi Nasabah</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                @php $kelurahanOptions = $kelurahanList->pluck('nama', 'id')->toArray(); @endphp
+                @php
+                    $kelurahanOptions = $kelurahanList->pluck('nama', 'id')->toArray();
+                    $defaultRtId = $rtList->count() === 1 ? $rtList->first()->id : $retribusiSampah->rt_id;
+                    $defaultRwId = $rwList->count() === 1 ? $rwList->first()->id : $retribusiSampah->rw_id;
+                @endphp
                 <x-ui.select label="Kelurahan" name="kelurahan_id" placeholder="Pilih Kelurahan"
                     :options="$kelurahanOptions"
                     selected="{{ old('kelurahan_id', $retribusiSampah->kelurahan_id) }}" required />
@@ -31,11 +35,11 @@
                     value="{{ old('npwr', $retribusiSampah->npwr) }}" />
                 @php $rtOptions = $rtList->mapWithKeys(fn($rt) => [$rt->id => 'RT ' . $rt->nomor . ' / RW ' . ($rt->rw->nomor ?? '-')])->toArray(); @endphp
                 <x-ui.select label="RT" name="rt_id" placeholder="Pilih RT" :options="$rtOptions"
-                    selected="{{ old('rt_id', $retribusiSampah->rt_id) }}" />
+                    selected="{{ old('rt_id', $defaultRtId) }}" />
                 @if ($rwList->isNotEmpty())
                     @php $rwOptions = $rwList->mapWithKeys(fn($rw) => [$rw->id => 'RW ' . $rw->nomor])->toArray(); @endphp
                     <x-ui.select label="RW" name="rw_id" placeholder="Pilih RW" :options="$rwOptions"
-                        selected="{{ old('rw_id', $retribusiSampah->rw_id) }}" />
+                        selected="{{ old('rw_id', $defaultRwId) }}" />
                 @endif
                 <x-ui.input label="Alamat" name="alamat" placeholder="Alamat lengkap nasabah"
                     value="{{ old('alamat', $retribusiSampah->alamat) }}" class="md:col-span-2" />

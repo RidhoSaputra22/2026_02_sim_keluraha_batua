@@ -19,7 +19,7 @@ class PetaLayerController extends Controller
      */
     public function index()
     {
-
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('polygon');
         $layers = PetaLayer::ordered()
             ->withCount('polygons')
             ->where('jenis', 'polygon') // Hanya tampilkan layer polygon di daftar utama
@@ -33,8 +33,8 @@ class PetaLayerController extends Controller
         foreach ($layers as $layer) {
 
             $polygons = DB::select(
-                'SELECT id, nama, deskripsi, warna, ST_AsGeoJSON(polygon) as geojson
-                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY sort_order, id',
+                "SELECT id, nama, deskripsi, warna, {$geojsonSelect}
+                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY sort_order, id",
                 [$layer->id]
             );
 
@@ -106,11 +106,12 @@ class PetaLayerController extends Controller
     public function edit(PetaLayer $petaLayer)
     {
         $patternTypes = PetaLayer::patternTypes();
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('polygon');
 
         // Get existing polygons as GeoJSON FeatureCollection
         $polygons = DB::select(
-            'SELECT id, nama, deskripsi, warna, properties, ST_AsGeoJSON(polygon) as geojson
-             FROM peta_layer_polygons WHERE peta_layer_id = ? ORDER BY sort_order, id',
+            "SELECT id, nama, deskripsi, warna, properties, {$geojsonSelect}
+             FROM peta_layer_polygons WHERE peta_layer_id = ? ORDER BY sort_order, id",
             [$petaLayer->id]
         );
 
@@ -331,6 +332,8 @@ class PetaLayerController extends Controller
      */
     public function updatePolygon(Request $request, PetaLayer $petaLayer, PetaLayerPolygon $polygon): JsonResponse
     {
+        abort_if((int) $polygon->peta_layer_id !== (int) $petaLayer->id, 404);
+
         $request->validate([
             'nama' => ['nullable', 'string', 'max:150'],
             'deskripsi' => ['nullable', 'string'],
@@ -371,6 +374,8 @@ class PetaLayerController extends Controller
      */
     public function destroyPolygon(PetaLayer $petaLayer, PetaLayerPolygon $polygon): JsonResponse
     {
+        abort_if((int) $polygon->peta_layer_id !== (int) $petaLayer->id, 404);
+
         $polygon->delete();
 
         return response()->json([
@@ -412,6 +417,7 @@ class PetaLayerController extends Controller
     public function geojsonLayers(): JsonResponse
     {
         $layers = PetaLayer::active()->has('polygons')->ordered()->get();
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('polygon');
 
         // Precompute RW stats for the RW layer
         $rwStats = [];
@@ -429,8 +435,8 @@ class PetaLayerController extends Controller
             };
 
             $polygons = DB::select(
-                'SELECT id, nama, deskripsi, warna, rw_id, kelurahan_id, ST_AsGeoJSON(polygon) as geojson
-                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY sort_order, id',
+                "SELECT id, nama, deskripsi, warna, rw_id, kelurahan_id, {$geojsonSelect}
+                 FROM peta_layer_polygons WHERE peta_layer_id = ? AND polygon IS NOT NULL ORDER BY sort_order, id",
                 [$layer->id]
             );
 

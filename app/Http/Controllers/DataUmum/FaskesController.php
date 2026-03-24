@@ -64,7 +64,7 @@ class FaskesController extends Controller
             'kelurahan_id'    => ['required', 'exists:kelurahans,id'],
             'nama_rs'         => ['required', 'string', 'max:255'],
             'alamat'          => ['nullable', 'string', 'max:500'],
-            'rw_id'           => ['nullable', 'exists:rws,id'],
+            'rw_id'           => $this->rwIdRules(),
             'jenis'           => ['nullable', 'string', 'max:100'],
             'kelas'           => ['nullable', 'string', 'max:50'],
             'jenis_pelayanan' => ['nullable', 'string', 'max:255'],
@@ -73,6 +73,8 @@ class FaskesController extends Controller
             'latitude'        => ['nullable', 'numeric'],
             'longitude'       => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $faskes = Faskes::create($validated);
 
@@ -103,15 +105,17 @@ class FaskesController extends Controller
             'kelurahan_id'    => ['required', 'exists:kelurahans,id'],
             'nama_rs'         => ['required', 'string', 'max:255'],
             'alamat'          => ['nullable', 'string', 'max:500'],
-            'rw_id'           => ['nullable', 'exists:rws,id'],
+            'rw_id'           => $this->rwIdRules(),
             'jenis'           => ['nullable', 'string', 'max:100'],
             'kelas'           => ['nullable', 'string', 'max:50'],
             'jenis_pelayanan' => ['nullable', 'string', 'max:255'],
             'akreditasi'      => ['nullable', 'string', 'max:100'],
             'telp'            => ['nullable', 'string', 'max:20'],
-            'latitude'        => ['required', 'numeric'],
-            'longitude'       => ['required', 'numeric'],
+            'latitude'        => ['nullable', 'numeric'],
+            'longitude'       => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $faske->update($validated);
 

@@ -235,6 +235,8 @@ class RwController extends Controller
 
     public function updatePengurus(Request $request, Rw $rw, RtRwPengurus $penguru)
     {
+        $this->assertPengurusBelongsToRw($penguru, $rw);
+
         $validated = $request->validate([
             'penduduk_id'      => ['required', 'exists:penduduks,id'],
             'jabatan_id'       => ['required', 'exists:jabatan_rt_rw,id'],
@@ -250,7 +252,9 @@ class RwController extends Controller
                 'unique:users,email,' . ($penguru->user_id ?? 'NULL') . ',id'],
         ]);
 
-        DB::transaction(function () use ($request, $validated, $penguru, $rw) {
+        $previousUserId = $penguru->user_id;
+
+        DB::transaction(function () use ($request, $validated, $penguru, $rw, $previousUserId) {
             $mode = $request->input('assign_user_mode', 'none');
 
             if ($mode === 'none') {
@@ -278,6 +282,10 @@ class RwController extends Controller
 
             unset($validated['assign_user_mode'], $validated['new_user_email']);
             $penguru->update($validated);
+
+            if ($previousUserId && $previousUserId !== $penguru->user_id) {
+                $this->clearUserWilayah($previousUserId);
+            }
         });
 
         return redirect()->route('master.rw.show', $rw)
@@ -286,7 +294,14 @@ class RwController extends Controller
 
     public function destroyPengurus(Rw $rw, RtRwPengurus $penguru)
     {
+        $this->assertPengurusBelongsToRw($penguru, $rw);
+
+        $userId = $penguru->user_id;
         $penguru->delete();
+
+        if ($userId) {
+            $this->clearUserWilayah($userId);
+        }
 
         return redirect()->route('master.rw.show', $rw)
             ->with('success', 'Pengurus berhasil dihapus.');
@@ -303,5 +318,18 @@ class RwController extends Controller
             'wilayah_rw' => $rw?->nomor,
             'wilayah_rt' => $rt?->nomor,
         ]);
+    }
+
+    private function clearUserWilayah(int $userId): void
+    {
+        User::where('id', $userId)->update([
+            'wilayah_rw' => null,
+            'wilayah_rt' => null,
+        ]);
+    }
+
+    private function assertPengurusBelongsToRw(RtRwPengurus $penguru, Rw $rw): void
+    {
+        abort_if((int) $penguru->rw_id !== (int) $rw->id || $penguru->rt_id !== null, 404);
     }
 }

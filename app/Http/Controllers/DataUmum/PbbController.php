@@ -16,7 +16,7 @@ class PbbController extends Controller
     {
         $query = Pbb::with(['kelurahan', 'rw', 'rt']);
 
-        $this->applyWilayahScope($query);
+        $this->applyWilayahScopeByRtOrRw($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -34,12 +34,13 @@ class PbbController extends Controller
             $query->where('tahun_pajak', $tahun);
         }
 
-        $pbbList = $query->latest()->paginate(15)->withQueryString();
+        $summaryQuery = clone $query;
+        $pbbList = (clone $query)->latest()->paginate(15)->withQueryString();
 
         // Summary stats
-        $totalBeban = Pbb::sum('beban');
-        $totalLunas = Pbb::where('status', 'Lunas')->sum('beban');
-        $totalBelum = Pbb::where('status', 'Belum')->sum('beban');
+        $totalBeban = (clone $summaryQuery)->sum('beban');
+        $totalLunas = (clone $summaryQuery)->where('status', 'Lunas')->sum('beban');
+        $totalBelum = (clone $summaryQuery)->where('status', 'Belum')->sum('beban');
         $tahunList = Pbb::distinct()->whereNotNull('tahun_pajak')->orderByDesc('tahun_pajak')->pluck('tahun_pajak');
 
         return view('data-umum.pbb.index', compact('pbbList', 'totalBeban', 'totalLunas', 'totalBelum', 'tahunList'));
@@ -59,7 +60,7 @@ class PbbController extends Controller
         $validated = $request->validate([
             'kelurahan_id'      => ['required', 'exists:kelurahans,id'],
             'rt_id'             => $this->rtIdRules(),
-            'rw_id'             => ['nullable', 'exists:rws,id'],
+            'rw_id'             => $this->rwIdRules(),
             'nama_wajib_pajak'  => ['required', 'string', 'max:255'],
             'objek_pajak'       => ['nullable', 'string', 'max:255'],
             'nob'               => ['nullable', 'string', 'max:100'],
@@ -69,6 +70,8 @@ class PbbController extends Controller
             'keterangan'        => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $validated = $this->normalizeWilayahInput($validated);
+
         Pbb::create($validated);
 
         return redirect()->route('data-umum.pbb.index')
@@ -77,7 +80,7 @@ class PbbController extends Controller
 
     public function edit(Pbb $pbb)
     {
-        $this->authorizeWilayahByRtId($pbb->rt_id);
+        $this->authorizeWilayahByRtOrRwId($pbb->rt_id, $pbb->rw_id);
 
         $kelurahanList = Kelurahan::orderBy('nama')->get();
         $rtList = $this->wilayahRtList();
@@ -88,12 +91,12 @@ class PbbController extends Controller
 
     public function update(Request $request, Pbb $pbb)
     {
-        $this->authorizeWilayahByRtId($pbb->rt_id);
+        $this->authorizeWilayahByRtOrRwId($pbb->rt_id, $pbb->rw_id);
 
         $validated = $request->validate([
             'kelurahan_id'      => ['required', 'exists:kelurahans,id'],
             'rt_id'             => $this->rtIdRules(),
-            'rw_id'             => ['nullable', 'exists:rws,id'],
+            'rw_id'             => $this->rwIdRules(),
             'nama_wajib_pajak'  => ['required', 'string', 'max:255'],
             'objek_pajak'       => ['nullable', 'string', 'max:255'],
             'nob'               => ['nullable', 'string', 'max:100'],
@@ -103,6 +106,8 @@ class PbbController extends Controller
             'keterangan'        => ['nullable', 'string', 'max:1000'],
         ]);
 
+        $validated = $this->normalizeWilayahInput($validated);
+
         $pbb->update($validated);
 
         return redirect()->route('data-umum.pbb.index')
@@ -111,7 +116,7 @@ class PbbController extends Controller
 
     public function destroy(Pbb $pbb)
     {
-        $this->authorizeWilayahByRtId($pbb->rt_id);
+        $this->authorizeWilayahByRtOrRwId($pbb->rt_id, $pbb->rw_id);
 
         $pbb->delete();
 

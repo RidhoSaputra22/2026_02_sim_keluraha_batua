@@ -30,7 +30,7 @@ class KontrakanController extends Controller
         $query = Kontrakan::with(['kelurahan', 'rw', 'rt']);
 
         // Wilayah scoping for RT/RW users
-        $this->applyWilayahScope($query);
+        $this->applyWilayahScopeByRtOrRw($query);
 
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
@@ -59,7 +59,7 @@ class KontrakanController extends Controller
         $validated = $request->validate([
             'kelurahan_id'        => ['required', 'exists:kelurahans,id'],
             'rt_id'               => $this->rtIdRules(),
-            'rw_id'               => ['nullable', 'exists:rws,id'],
+            'rw_id'               => $this->rwIdRules(),
             'nama'                => ['nullable', 'string', 'max:255'],
             'alamat'              => ['nullable', 'string', 'max:500'],
             'pemilik'             => ['nullable', 'string', 'max:255'],
@@ -70,6 +70,8 @@ class KontrakanController extends Controller
             'latitude'            => ['nullable', 'numeric'],
             'longitude'           => ['nullable', 'numeric'],
         ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
 
         $kontrakan = Kontrakan::create($validated);
 
@@ -81,7 +83,7 @@ class KontrakanController extends Controller
 
     public function edit(Kontrakan $kontrakan)
     {
-        $this->authorizeWilayahByRtId($kontrakan->rt_id);
+        $this->authorizeWilayahByRtOrRwId($kontrakan->rt_id, $kontrakan->rw_id);
 
         $kelurahanList = Kelurahan::orderBy('nama')->get();
         $rtList = $this->wilayahRtList();
@@ -92,12 +94,12 @@ class KontrakanController extends Controller
 
     public function update(Request $request, Kontrakan $kontrakan)
     {
-        $this->authorizeWilayahByRtId($kontrakan->rt_id);
+        $this->authorizeWilayahByRtOrRwId($kontrakan->rt_id, $kontrakan->rw_id);
 
         $validated = $request->validate([
             'kelurahan_id'        => ['required', 'exists:kelurahans,id'],
             'rt_id'               => $this->rtIdRules(),
-            'rw_id'               => ['nullable', 'exists:rws,id'],
+            'rw_id'               => $this->rwIdRules(),
             'nama'                => ['nullable', 'string', 'max:255'],
             'alamat'              => ['nullable', 'string', 'max:500'],
             'pemilik'             => ['nullable', 'string', 'max:255'],
@@ -109,6 +111,8 @@ class KontrakanController extends Controller
             'longitude'           => ['nullable', 'numeric'],
         ]);
 
+        $validated = $this->normalizeWilayahInput($validated);
+
         $kontrakan->update($validated);
 
         $this->syncPetaPolygon($kontrakan, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
@@ -119,7 +123,7 @@ class KontrakanController extends Controller
 
     public function destroy(Kontrakan $kontrakan)
     {
-        $this->authorizeWilayahByRtId($kontrakan->rt_id);
+        $this->authorizeWilayahByRtOrRwId($kontrakan->rt_id, $kontrakan->rw_id);
 
         $this->removePetaPolygon($kontrakan);
         $kontrakan->delete();

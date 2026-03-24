@@ -2,11 +2,16 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::getConnection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::unprepared('
         CREATE OR REPLACE FUNCTION update_rw_luas_area()
         RETURNS trigger AS $$
@@ -53,6 +58,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (Schema::getConnection()->getDriverName() !== 'pgsql') {
+            return;
+        }
+
         DB::unprepared("DROP TRIGGER IF EXISTS trg_update_rw_luas_area ON peta_layer_polygons;");
         DB::unprepared("DROP FUNCTION IF EXISTS update_rw_luas_area;");
     }

@@ -16,6 +16,7 @@ class DashboardController extends Controller
 
         return match ($user->getRoleName()) {
             Role::ADMIN => redirect()->route('admin.dashboard'),
+            Role::OPERATOR => redirect()->route('peta.index'),
             Role::RT_RW => redirect()->route('rtrw.dashboard'),
             default     => abort(403, 'Role tidak dikenali.'),
         };

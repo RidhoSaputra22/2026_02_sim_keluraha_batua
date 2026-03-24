@@ -11,6 +11,7 @@ class Role extends Model
 
     // ─── Role Constants ───────────────────────────────────────
     public const ADMIN = 'admin';
+    public const OPERATOR = 'operator';
     public const RT_RW = 'rt_rw';
 
     protected $fillable = [
@@ -42,6 +43,7 @@ class Role extends Model
     {
         return [
             self::ADMIN => 'Administrator',
+            self::OPERATOR => 'Operator',
             self::RT_RW => 'RT/RW',
         ];
     }

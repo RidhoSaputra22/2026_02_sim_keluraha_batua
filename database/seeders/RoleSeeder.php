@@ -18,6 +18,13 @@ class RoleSeeder extends Seeder
                 'is_active' => true,
             ],
             [
+                'name' => Role::OPERATOR,
+                'label' => 'Operator',
+                'description' => 'Akses operasional untuk pengelolaan peta dan data lapangan.',
+                'permissions' => ['peta.view', 'peta.manage'],
+                'is_active' => true,
+            ],
+            [
                 'name' => Role::RT_RW,
                 'label' => 'Ketua RT/RW',
                 'description' => 'Pengelolaan data warga RT/RW, surat pengantar, dan monitoring wilayah.',
