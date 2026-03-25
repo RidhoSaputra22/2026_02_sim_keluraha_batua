@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\StatusAktifEnum;
 use App\Http\Controllers\Controller;
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class RtController extends Controller
 {
@@ -177,7 +179,7 @@ class RtController extends Controller
             'penduduk_id'      => ['required', 'exists:penduduks,id'],
             'jabatan_id'       => ['required', 'exists:jabatan_rt_rw,id'],
             'tgl_mulai'        => ['nullable', 'date'],
-            'status'           => ['required', 'in:aktif,nonaktif'],
+            'status'           => ['required', Rule::in(StatusAktifEnum::values())],
             'alamat'           => ['nullable', 'string'],
             'no_telp'          => ['nullable', 'string', 'max:20'],
             'no_rekening'      => ['nullable', 'string', 'max:30'],
@@ -233,7 +235,7 @@ class RtController extends Controller
             'penduduk_id'      => ['required', 'exists:penduduks,id'],
             'jabatan_id'       => ['required', 'exists:jabatan_rt_rw,id'],
             'tgl_mulai'        => ['nullable', 'date'],
-            'status'           => ['required', 'in:aktif,nonaktif'],
+            'status'           => ['required', Rule::in(StatusAktifEnum::values())],
             'alamat'           => ['nullable', 'string'],
             'no_telp'          => ['nullable', 'string', 'max:20'],
             'no_rekening'      => ['nullable', 'string', 'max:30'],

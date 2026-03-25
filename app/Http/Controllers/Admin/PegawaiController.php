@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\StatusAktifEnum;
 use App\Http\Controllers\Controller;
 use App\Models\PegawaiStaff;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class PegawaiController extends Controller
 {
@@ -20,7 +22,7 @@ class PegawaiController extends Controller
         }
 
         if ($status = $request->get('status_pegawai')) {
-            $query->where('status_pegawai', $status);
+            $query->whereRaw('LOWER(status_pegawai) = ?', [strtolower($status)]);
         }
 
         $pegawai = $query->orderBy('no_urut')->paginate(15)->withQueryString();
@@ -41,7 +43,7 @@ class PegawaiController extends Controller
             'jabatan'        => 'required|string|max:255',
             'gol'            => 'nullable|string|max:10',
             'pangkat'        => 'nullable|string|max:100',
-            'status_pegawai' => 'required|in:aktif,nonaktif',
+            'status_pegawai' => ['required', Rule::in(StatusAktifEnum::values())],
             'no_urut'        => 'nullable|integer',
         ]);
 
@@ -67,7 +69,7 @@ class PegawaiController extends Controller
             'jabatan'        => 'required|string|max:255',
             'gol'            => 'nullable|string|max:10',
             'pangkat'        => 'nullable|string|max:100',
-            'status_pegawai' => 'required|in:aktif,nonaktif',
+            'status_pegawai' => ['required', Rule::in(StatusAktifEnum::values())],
             'no_urut'        => 'nullable|integer',
         ]);
 

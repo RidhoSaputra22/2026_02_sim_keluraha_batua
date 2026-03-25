@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\StatusAktifEnum;
 use App\Http\Controllers\Controller;
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
@@ -14,6 +15,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class WilayahController extends Controller
 {
@@ -40,7 +42,7 @@ class WilayahController extends Controller
         }
 
         if ($status = $request->get('status')) {
-            $query->where('status', $status);
+            $query->whereRaw('LOWER(status) = ?', [strtolower($status)]);
         }
 
         $wilayah = $query->orderBy('rw_id')->orderBy('rt_id')->paginate(15)->withQueryString();
@@ -51,8 +53,8 @@ class WilayahController extends Controller
         // Stats for summary cards
         $totalRT = Rt::count();
         $totalRW = Rw::count();
-        $totalAktif = RtRwPengurus::where('status', 'aktif')->count();
-        $totalNonaktif = RtRwPengurus::where('status', 'nonaktif')->count();
+        $totalAktif = RtRwPengurus::whereRaw('LOWER(status) = ?', [StatusAktifEnum::AKTIF->value])->count();
+        $totalNonaktif = RtRwPengurus::whereRaw('LOWER(status) = ?', [StatusAktifEnum::NONAKTIF->value])->count();
 
         return view('wilayah.index', compact('wilayah', 'rwList', 'jabatanList', 'totalRT', 'totalRW', 'totalAktif', 'totalNonaktif'));
     }
@@ -83,7 +85,7 @@ class WilayahController extends Controller
             'rw_id' => ['nullable', 'exists:rws,id'],
             'rt_id' => ['nullable', 'exists:rts,id'],
             'tgl_mulai' => ['nullable', 'date'],
-            'status' => ['required', 'in:aktif,nonaktif'],
+            'status' => ['required', Rule::in(StatusAktifEnum::values())],
             'alamat' => ['nullable', 'string'],
             'no_telp' => ['nullable', 'string', 'max:20'],
             'no_rekening' => ['nullable', 'string', 'max:30'],
@@ -156,7 +158,7 @@ class WilayahController extends Controller
             'rw_id' => ['nullable', 'exists:rws,id'],
             'rt_id' => ['nullable', 'exists:rts,id'],
             'tgl_mulai' => ['nullable', 'date'],
-            'status' => ['required', 'in:aktif,nonaktif'],
+            'status' => ['required', Rule::in(StatusAktifEnum::values())],
             'alamat' => ['nullable', 'string'],
             'no_telp' => ['nullable', 'string', 'max:20'],
             'no_rekening' => ['nullable', 'string', 'max:30'],

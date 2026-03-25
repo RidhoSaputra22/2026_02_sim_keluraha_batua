@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\StatusAktifEnum;
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
 use App\Models\Kecamatan;
@@ -85,7 +86,7 @@ class PengurusImportExportTest extends TestCase
             'rt_id' => $rt->id,
             'alamat' => 'JL. INSPEKSI PAM LR. 4 NO.17',
             'no_telp' => '08121262294',
-            'status' => 'aktif',
+            'status' => StatusAktifEnum::AKTIF->value,
         ]);
     }
 
@@ -112,7 +113,7 @@ class PengurusImportExportTest extends TestCase
             'jabatan_id' => $jabatan->id,
             'rw_id' => $rw->id,
             'rt_id' => $rt->id,
-            'status' => 'aktif',
+            'status' => StatusAktifEnum::AKTIF->value,
             'alamat' => 'Jl. Batua Raya No. 10',
             'no_telp' => '08113858806',
         ]);

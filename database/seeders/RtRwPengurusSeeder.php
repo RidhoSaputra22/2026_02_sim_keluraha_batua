@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\StatusAktifEnum;
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
 use App\Models\Penduduk;
@@ -44,7 +45,7 @@ class RtRwPengurusSeeder extends Seeder
                 'rw_id'        => $rw->id,
                 'rt_id'        => null,
                 'tgl_mulai'    => '2024-01-01',
-                'status'       => 'Aktif',
+                'status'       => StatusAktifEnum::AKTIF->value,
                 'alamat'       => $pendudukLk[$idx]->alamat,
                 'no_telp'      => '0811' . rand(1000000, 9999999),
             ]);
@@ -66,7 +67,7 @@ class RtRwPengurusSeeder extends Seeder
                 'rw_id'        => $rt->rw_id,
                 'rt_id'        => $rt->id,
                 'tgl_mulai'    => '2024-01-01',
-                'status'       => 'Aktif',
+                'status'       => StatusAktifEnum::AKTIF->value,
                 'alamat'       => $pendudukLk[$idx]->alamat,
                 'no_telp'      => '0811' . rand(1000000, 9999999),
             ]);

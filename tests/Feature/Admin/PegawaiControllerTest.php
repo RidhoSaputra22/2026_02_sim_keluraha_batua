@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\StatusAktifEnum;
 use App\Models\PegawaiStaff;
 use App\Models\Role;
 use App\Models\User;
@@ -71,11 +72,11 @@ class PegawaiControllerTest extends TestCase
 
     public function test_pegawai_index_filter_by_status_pegawai(): void
     {
-        PegawaiStaff::factory()->create(['status_pegawai' => 'aktif', 'nama' => 'Aktif Staff']);
-        PegawaiStaff::factory()->create(['status_pegawai' => 'nonaktif', 'nama' => 'Nonaktif Staff']);
+        PegawaiStaff::factory()->create(['status_pegawai' => StatusAktifEnum::AKTIF->value, 'nama' => 'Aktif Staff']);
+        PegawaiStaff::factory()->create(['status_pegawai' => StatusAktifEnum::NONAKTIF->value, 'nama' => 'Nonaktif Staff']);
 
         $response = $this->actingAs($this->admin)
-            ->get(route('master.pegawai.index', ['status_pegawai' => 'aktif']));
+            ->get(route('master.pegawai.index', ['status_pegawai' => StatusAktifEnum::AKTIF->value]));
 
         $response->assertStatus(200);
     }
@@ -112,7 +113,7 @@ class PegawaiControllerTest extends TestCase
             'jabatan'        => 'Kasi Pelayanan',
             'gol'            => 'III/b',
             'pangkat'        => 'Penata Muda',
-            'status_pegawai' => 'aktif',
+            'status_pegawai' => StatusAktifEnum::AKTIF->value,
             'no_urut'        => 5,
         ];
 
@@ -132,7 +133,7 @@ class PegawaiControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nip'            => '199901012022011099',
             'jabatan'        => 'Staff',
-            'status_pegawai' => 'aktif',
+            'status_pegawai' => StatusAktifEnum::AKTIF->value,
         ]);
 
         $response->assertSessionHasErrors('nama');
@@ -143,7 +144,7 @@ class PegawaiControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nip'            => '199901012022011099',
             'nama'           => 'Test',
-            'status_pegawai' => 'aktif',
+            'status_pegawai' => StatusAktifEnum::AKTIF->value,
         ]);
 
         $response->assertSessionHasErrors('jabatan');
@@ -166,7 +167,7 @@ class PegawaiControllerTest extends TestCase
         $response = $this->actingAs($this->admin)->post(route('master.pegawai.store'), [
             'nama'           => 'Test',
             'jabatan'        => 'Staff',
-            'status_pegawai' => 'aktif',
+            'status_pegawai' => StatusAktifEnum::AKTIF->value,
         ]);
 
         $response->assertSessionHasErrors('nip');
@@ -178,7 +179,7 @@ class PegawaiControllerTest extends TestCase
             'nip'            => '199901019999011099',
             'nama'           => 'Test Petugas',
             'jabatan'        => 'Staff',
-            'status_pegawai' => 'aktif',
+            'status_pegawai' => StatusAktifEnum::AKTIF->value,
         ];
 
         $this->actingAs($this->admin)->post(route('master.pegawai.store'), $data);
@@ -211,7 +212,7 @@ class PegawaiControllerTest extends TestCase
             'nip'            => $pegawai->nip,
             'nama'           => 'Nama Updated',
             'jabatan'        => 'Sekretaris Lurah',
-            'status_pegawai' => 'nonaktif',
+            'status_pegawai' => StatusAktifEnum::NONAKTIF->value,
         ]);
 
         $response->assertRedirect(route('master.pegawai.index'));
@@ -219,7 +220,7 @@ class PegawaiControllerTest extends TestCase
         $this->assertDatabaseHas('pegawai_staff', [
             'id'             => $pegawai->id,
             'nama'           => 'Nama Updated',
-            'status_pegawai' => 'nonaktif',
+            'status_pegawai' => StatusAktifEnum::NONAKTIF->value,
         ]);
     }
 

@@ -28,7 +28,7 @@
                 <x-ui.select label="RW" name="rw_id" :options="$rwList->mapWithKeys(fn($r) => [$r->id => 'RW ' . $r->nomor])->toArray()" selected="{{ old('rw_id') }}" />
                 <x-ui.select label="RT" name="rt_id" :options="$rtList->mapWithKeys(fn($r) => [$r->id => 'RT ' . $r->nomor . ' / RW ' . ($r->rw->nomor ?? '-')])->toArray()" selected="{{ old('rt_id') }}" />
                 <x-ui.input label="Tanggal Mulai" name="tgl_mulai" type="date" value="{{ old('tgl_mulai') }}" />
-                <x-ui.select label="Status" name="status" required :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" selected="{{ old('status', 'aktif') }}" />
+                <x-ui.select label="Status" name="status" required :options="\App\Enums\StatusAktifEnum::options()" selected="{{ old('status', \App\Enums\StatusAktifEnum::AKTIF->value) }}" />
             </div>
 
             {{-- Data Tambahan --}}

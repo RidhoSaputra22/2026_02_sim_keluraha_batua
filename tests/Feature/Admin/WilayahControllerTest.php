@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Enums\StatusAktifEnum;
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
 use App\Models\Penduduk;
@@ -77,7 +78,7 @@ class WilayahControllerTest extends TestCase
         $data = [
             'penduduk_id' => $penduduk->id,
             'jabatan_id' => $jabatan->id,
-            'status' => 'aktif',
+            'status' => StatusAktifEnum::AKTIF->value,
             'alamat' => 'Jl. Batua Raya',
             'no_telp' => '08123456789',
         ];
@@ -100,7 +101,7 @@ class WilayahControllerTest extends TestCase
 
         $response = $this->actingAs($this->admin)->post(route('master.rt.pengurus.store', $rt), [
             'jabatan_id' => $jabatan->id,
-            'status' => 'aktif',
+            'status' => StatusAktifEnum::AKTIF->value,
         ]);
 
         $response->assertSessionHasErrors('penduduk_id');
@@ -136,7 +137,7 @@ class WilayahControllerTest extends TestCase
             [
                 'penduduk_id' => $pengurus->penduduk_id,
                 'jabatan_id' => $newJabatan->id,
-                'status' => 'aktif',
+                'status' => StatusAktifEnum::AKTIF->value,
             ]
         );
 
@@ -220,7 +221,7 @@ class WilayahControllerTest extends TestCase
         $data = [
             'penduduk_id' => $penduduk->id,
             'jabatan_id' => $jabatan->id,
-            'status' => 'aktif',
+            'status' => StatusAktifEnum::AKTIF->value,
             'alamat' => 'Jl. Batua Raya',
             'no_telp' => '08123456789',
         ];
@@ -267,7 +268,7 @@ class WilayahControllerTest extends TestCase
             'rw_id' => $rw->id,
             'rt_id' => null,
             'user_id' => $user->id,
-            'status' => 'aktif',
+            'status' => StatusAktifEnum::AKTIF->value,
         ]);
 
         $response = $this->actingAs($this->admin)->put(
@@ -275,7 +276,7 @@ class WilayahControllerTest extends TestCase
             [
                 'penduduk_id' => $pengurus->penduduk_id,
                 'jabatan_id' => $pengurus->jabatan_id,
-                'status' => 'aktif',
+                'status' => StatusAktifEnum::AKTIF->value,
                 'assign_user_mode' => 'none',
             ]
         );

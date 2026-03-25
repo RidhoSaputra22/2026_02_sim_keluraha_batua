@@ -65,10 +65,10 @@
                     </td>
                     <td>{{ $penguru->jabatan->nama ?? '-' }}</td>
                     <td>
-                        @if($penguru->status === 'aktif')
-                            <x-ui.badge type="success">Aktif</x-ui.badge>
+                        @if(strtolower((string) ($penguru->status ?? '')) === \App\Enums\StatusAktifEnum::AKTIF->value)
+                            <x-ui.badge type="success">{{ \App\Enums\StatusAktifEnum::AKTIF->label() }}</x-ui.badge>
                         @else
-                            <x-ui.badge type="ghost">Nonaktif</x-ui.badge>
+                            <x-ui.badge type="ghost">{{ \App\Enums\StatusAktifEnum::NONAKTIF->label() }}</x-ui.badge>
                         @endif
                     </td>
                     <td>{{ $penguru->tgl_mulai?->format('d M Y') ?? '-' }}</td>

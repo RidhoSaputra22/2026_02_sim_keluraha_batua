@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\StatusAktifEnum;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\RtRwPengurus;
 
@@ -18,7 +19,7 @@ class RtRwPengurusFactory extends Factory
             'rw_id' => \App\Models\Rw::factory(),
             'rt_id' => \App\Models\Rt::factory(),
             'tgl_mulai' => $this->faker->date(),
-            'status' => $this->faker->randomElement(['Aktif','Nonaktif']),
+            'status' => $this->faker->randomElement(StatusAktifEnum::values()),
             'alamat' => $this->faker->address(),
             'no_telp' => $this->faker->e164PhoneNumber(),
             'no_rekening' => $this->faker->numerify('################'),

@@ -11,8 +11,8 @@
                 <x-ui.input name="gol" label="Golongan" value="{{ old('gol') }}" />
                 <x-ui.input name="pangkat" label="Pangkat" value="{{ old('pangkat') }}" />
                 <x-ui.select name="status_pegawai" label="Status"
-                    :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']"
-                    selected="{{ old('status_pegawai', 'aktif') }}" required />
+                    :options="\App\Enums\StatusAktifEnum::options()"
+                    selected="{{ old('status_pegawai', \App\Enums\StatusAktifEnum::AKTIF->value) }}" required />
                 <x-ui.input name="no_urut" label="No Urut" type="number" value="{{ old('no_urut') }}" />
             </div>
             <div class="mt-6 flex justify-end gap-2">

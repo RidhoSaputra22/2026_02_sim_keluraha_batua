@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\StatusAktifEnum;
 use App\Models\JabatanRtRw;
 use App\Models\Kelurahan;
 use App\Models\Penduduk;
@@ -640,10 +641,10 @@ class ImportExportController extends Controller
         $keterangan = Str::lower(trim((string) $keterangan));
 
         if ($keterangan !== '' && str_contains($keterangan, 'nonaktif')) {
-            return 'nonaktif';
+            return StatusAktifEnum::NONAKTIF->value;
         }
 
-        return 'aktif';
+        return StatusAktifEnum::AKTIF->value;
     }
 
     protected function upsertPendudukDariImportPengurus(array $data, ?int $rtId): Penduduk

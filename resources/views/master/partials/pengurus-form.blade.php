@@ -21,8 +21,8 @@
 
     {{-- Status --}}
     <x-ui.select label="Status" name="status" required
-        :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']"
-        selected="{{ old('status', $penguru?->status ?? 'aktif') }}" />
+        :options="\App\Enums\StatusAktifEnum::options()"
+        selected="{{ old('status', strtolower((string) ($penguru?->status ?? \App\Enums\StatusAktifEnum::AKTIF->value))) }}" />
 
     {{-- Tgl Mulai --}}
     <x-ui.input label="Tanggal Mulai" name="tgl_mulai" type="date"

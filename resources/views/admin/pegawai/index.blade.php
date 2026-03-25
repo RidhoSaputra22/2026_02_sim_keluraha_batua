@@ -11,7 +11,7 @@
             <x-ui.input name="search" label="Cari" placeholder="Nama atau NIP..."
                 value="{{ request('search') }}" class="w-64" />
             <x-ui.select name="status_pegawai" label="Status"
-                :options="['' => 'Semua', 'aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']"
+                :options="['' => 'Semua'] + \App\Enums\StatusAktifEnum::options()"
                 selected="{{ request('status_pegawai') }}" />
             <x-ui.button type="submit" color="primary" size="sm">Filter</x-ui.button>
             <a href="{{ route('master.pegawai.index') }}" class="btn btn-ghost btn-sm">Reset</a>
@@ -42,8 +42,8 @@
                             <td>{{ $p->jabatan }}</td>
                             <td>{{ $p->gol }} {{ $p->pangkat ? "/ $p->pangkat" : '' }}</td>
                             <td>
-                                <x-ui.badge color="{{ $p->status_pegawai === 'aktif' ? 'success' : 'error' }}">
-                                    {{ ucfirst($p->status_pegawai) }}
+                                <x-ui.badge color="{{ strtolower((string) $p->status_pegawai) === \App\Enums\StatusAktifEnum::AKTIF->value ? 'success' : 'error' }}">
+                                    {{ \App\Enums\StatusAktifEnum::labelOf(strtolower((string) $p->status_pegawai)) }}
                                 </x-ui.badge>
                             </td>
                             <td class="flex gap-1">

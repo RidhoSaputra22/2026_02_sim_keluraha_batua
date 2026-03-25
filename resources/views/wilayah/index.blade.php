@@ -23,7 +23,7 @@
                 <x-ui.select name="rw" placeholder="Semua RW" :options="$rwList->mapWithKeys(fn($r) => [$r->id => 'RW ' . $r->nomor])->toArray()" selected="{{ request('rw') }}" />
             </div>
             <div class="w-full md:w-36">
-                <x-ui.select name="status" placeholder="Semua Status" :options="['aktif' => 'Aktif', 'nonaktif' => 'Nonaktif']" selected="{{ request('status') }}" />
+                <x-ui.select name="status" placeholder="Semua Status" :options="\App\Enums\StatusAktifEnum::options()" selected="{{ request('status') }}" />
             </div>
             <div class="flex gap-2">
                 <x-ui.button type="primary" size="md" :isSubmit="true">Cari</x-ui.button>
@@ -69,8 +69,8 @@
                         </td>
                         <td class="text-sm">{{ $w->no_telp ?? '-' }}</td>
                         <td>
-                            <x-ui.badge :type="$w->status === 'aktif' ? 'success' : 'error'" size="sm">
-                                {{ ucfirst($w->status ?? 'aktif') }}
+                            <x-ui.badge :type="strtolower((string) ($w->status ?? '')) === \App\Enums\StatusAktifEnum::AKTIF->value ? 'success' : 'error'" size="sm">
+                                {{ \App\Enums\StatusAktifEnum::labelOf(strtolower((string) ($w->status ?? \App\Enums\StatusAktifEnum::AKTIF->value))) }}
                             </x-ui.badge>
                         </td>
                         <td>
