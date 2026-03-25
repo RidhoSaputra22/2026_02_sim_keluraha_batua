@@ -127,6 +127,18 @@ class ImportExportController extends Controller
                 return $this->getRetribusiStatusLabel($model);
             }
 
+            if ($path === 'pbb_no') {
+                return $context['pbb_no'][$model->id] ?? '';
+            }
+
+            if ($path === 'pbb_beban') {
+                return $this->getPbbBebanLabel($model);
+            }
+
+            if ($path === 'pbb_status') {
+                return $this->getPbbStatusLabel($model);
+            }
+
             if ($path === 'rt') {
                 return $this->getRtLabel($model);
             }
@@ -256,6 +268,16 @@ class ImportExportController extends Controller
         return $this->normalizeRetribusiStatus($model->status ?? null) ?? 'Belum';
     }
 
+    protected function getPbbBebanLabel($model): string
+    {
+        return $this->normalizePlainNumber($model->beban ?? null);
+    }
+
+    protected function getPbbStatusLabel($model): string
+    {
+        return Str::upper($this->normalizeRetribusiStatus($model->status ?? null) ?? 'Belum');
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  EXPORT
     // ═══════════════════════════════════════════════════════════════
@@ -308,6 +330,8 @@ class ImportExportController extends Controller
 
         if ($module === 'penduduk') {
             $records = $this->preparePendudukExportRecords($records);
+        } elseif ($module === 'pbb') {
+            $records = $this->preparePbbExportRecords($records);
         }
 
         $exportContext = $this->buildExportContext($module, $records);
@@ -545,10 +569,36 @@ class ImportExportController extends Controller
         })->values();
     }
 
+    protected function preparePbbExportRecords($records)
+    {
+        return $records->sortBy(function ($record) {
+            $rwNomor = (int) ($record->rw?->nomor ?? $record->rt?->rw?->nomor ?? 99999);
+            $rtNomor = (int) ($record->rt?->nomor ?? 99999);
+            $nama = Str::lower((string) ($record->nama_wajib_pajak ?? ''));
+
+            return sprintf('%05d-%05d-%s-%s', $rwNomor, $rtNomor, $nama, (string) ($record->nob ?? ''));
+        })->values();
+    }
+
     protected function buildExportContext(string $module, $records): array
     {
         if ($module !== 'penduduk') {
-            return [];
+            if ($module !== 'pbb') {
+                return [];
+            }
+        }
+
+        if ($module === 'pbb') {
+            $context = [
+                'pbb_no' => [],
+            ];
+
+            $nextNo = 1;
+            foreach ($records as $record) {
+                $context['pbb_no'][$record->id] = (string) $nextNo++;
+            }
+
+            return $context;
         }
 
         $context = [
@@ -641,6 +691,20 @@ class ImportExportController extends Controller
             return $data;
         }
 
+        if ($module === 'pbb') {
+            $data['nama_wajib_pajak'] = $this->normalizeTextValue($data['nama_wajib_pajak'] ?? null);
+            $data['rw'] = $this->normalizeWilayahNomor($data['rw'] ?? null);
+            $data['rt'] = $this->normalizeWilayahNomor($data['rt'] ?? null);
+            $data['objek_pajak'] = $this->normalizeTextValue($data['objek_pajak'] ?? null);
+            $data['nob'] = $this->normalizeTextValue($data['nob'] ?? null);
+            $data['beban'] = $this->normalizeNumericImportValue($data['beban'] ?? null);
+            $data['status'] = $this->normalizeRetribusiStatus($data['status'] ?? null) ?? 'Belum';
+
+            unset($data['no']);
+
+            return $data;
+        }
+
         if ($module === 'pengurus') {
             $data['rw'] = $this->normalizeWilayahNomor($data['rw'] ?? null);
             $data['rt'] = $this->normalizeWilayahNomor($data['rt'] ?? null);
@@ -697,6 +761,10 @@ class ImportExportController extends Controller
 
         if ($module === 'retribusi-sampah') {
             return $this->persistRetribusiSampahImportRow($data);
+        }
+
+        if ($module === 'pbb') {
+            return $this->persistPbbImportRow($data);
         }
 
         if ($module === 'pengurus') {
@@ -828,6 +896,47 @@ class ImportExportController extends Controller
                 'nama_nasabah' => $data['nama_nasabah'],
                 'no_skrd' => $data['no_skrd'] ?? null,
                 'alamat' => $data['alamat'] ?? null,
+                'beban' => $data['beban'] ?? 0,
+                'status' => $data['status'] ?? 'Belum',
+            ]);
+
+            return 'created';
+        });
+    }
+
+    protected function persistPbbImportRow(array $data): string
+    {
+        return DB::transaction(function () use ($data) {
+            $kelurahanId = $this->resolveDefaultImportKelurahanId();
+
+            if (! $kelurahanId) {
+                throw new \RuntimeException('Data kelurahan belum tersedia untuk mengaitkan wilayah RT/RW.');
+            }
+
+            $rwNomor = $this->normalizeWilayahNomor($data['rw'] ?? null);
+            $rtNomor = $this->normalizeWilayahNomor($data['rt'] ?? null);
+
+            if (! $rwNomor || ! $rtNomor) {
+                throw new \RuntimeException('Nomor RW dan RT wajib diisi.');
+            }
+
+            $rw = Rw::firstOrCreate([
+                'kelurahan_id' => $kelurahanId,
+                'nomor' => $rwNomor,
+            ]);
+
+            $rt = Rt::firstOrCreate([
+                'rw_id' => $rw->id,
+                'nomor' => $rtNomor,
+            ]);
+
+            \App\Models\Pbb::create([
+                'kelurahan_id' => $kelurahanId,
+                'rw_id' => $rw->id,
+                'rt_id' => $rt->id,
+                'nama_wajib_pajak' => $data['nama_wajib_pajak'],
+                'objek_pajak' => $data['objek_pajak'] ?? null,
+                'nob' => $data['nob'] ?? null,
                 'beban' => $data['beban'] ?? 0,
                 'status' => $data['status'] ?? 'Belum',
             ]);
