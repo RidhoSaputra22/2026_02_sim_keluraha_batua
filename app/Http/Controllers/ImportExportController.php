@@ -2,8 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\JabatanRtRw;
+use App\Models\Kelurahan;
+use App\Models\Penduduk;
+use App\Models\Rt;
+use App\Models\RtRwPengurus;
+use App\Models\Rw;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Reader\XLSX\Reader as XlsxReader;
@@ -12,15 +19,20 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ImportExportController extends Controller
 {
+    protected ?int $defaultPengurusKelurahanId = null;
+
     /**
      * Lookup kelurahan_id dari nama kelurahan
      */
     protected function lookup_kelurahan_id($nama)
     {
-        if (!$nama) return null;
-        $kel = \App\Models\Kelurahan::where('nama', $nama)->first();
-        // dd($kel);
-        return $kel ? $kel->id : null;
+        $nama = $this->normalizeTextValue($nama);
+
+        if (! $nama) {
+            return null;
+        }
+
+        return Kelurahan::where('nama', $nama)->value('id');
     }
 
     /**
@@ -28,9 +40,15 @@ class ImportExportController extends Controller
      */
     protected function lookup_rw_id($nomor, $row)
     {
-        if (!$nomor || empty($row['kelurahan_id'])) return null;
-        $rw = \App\Models\Rw::where('nomor', $nomor)->where('kelurahan_id', $row['kelurahan_id'])->first();
-        return $rw ? $rw->id : null;
+        $nomor = $this->normalizeWilayahNomor($nomor);
+
+        if (! $nomor || empty($row['kelurahan_id'])) {
+            return null;
+        }
+
+        return Rw::where('nomor', $nomor)
+            ->where('kelurahan_id', $row['kelurahan_id'])
+            ->value('id');
     }
 
     /**
@@ -38,11 +56,15 @@ class ImportExportController extends Controller
      */
     protected function lookup_rt_id($nomor, $row)
     {
-        if (!$nomor || empty($row['rw_id'])) return null;
-        $rt = \App\Models\Rt::where('nomor', $nomor)->where('rw_id', $row['rw_id'])->first();
+        $nomor = $this->normalizeWilayahNomor($nomor);
 
-        // dd($rt);
-        return $rt ? $rt->id : null;
+        if (! $nomor || empty($row['rw_id'])) {
+            return null;
+        }
+
+        return Rt::where('nomor', $nomor)
+            ->where('rw_id', $row['rw_id'])
+            ->value('id');
     }
 
     /**
@@ -64,33 +86,28 @@ class ImportExportController extends Controller
      */
     protected function resolveValue($model, string $column, array $resolvers): mixed
     {
-        // Cek apakah ada resolver khusus untuk kolom ini
-        // if($column === 'rt') dd($column, isset($resolvers[$column]), $resolvers);
-
         if (isset($resolvers[$column])) {
             $path = $resolvers[$column];
-            // dd($path);
 
-            // Handle special rt
             if ($path === 'rt') {
                 return $this->getRtLabel($model);
             }
 
-            // Handle special rw
             if ($path === 'rw') {
                 return $this->getRwLabel($model);
             }
 
-            // Handle special kelurahan
             if ($path === 'kelurahan') {
                 return $this->getKelurahanLabel($model);
             }
 
-            // Dot-notation resolver (e.g., 'keluarga.no_kk')
+            if ($path === 'pengurus_keterangan') {
+                return $this->getPengurusKeteranganLabel($model);
+            }
+
             return data_get($model, $path, '-');
         }
-        // dd($model, $column, $resolvers, $model->{$column});
-        // Ambil langsung dari atribut model
+
         return $model->{$column} ?? '-';
     }
 
@@ -103,9 +120,8 @@ class ImportExportController extends Controller
         if (! $rt) {
             return '-';
         }
-        $rtNomor = $rt->nomor ?? '-';
 
-        return '0' . $rtNomor;
+        return str_pad((string) ($rt->nomor ?? '-'), 2, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -117,9 +133,8 @@ class ImportExportController extends Controller
         if (! $rw) {
             return '-';
         }
-        $rwNomor = $rw->nomor ?? '-';
 
-        return '0' . $rwNomor;
+        return str_pad((string) ($rw->nomor ?? '-'), 2, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -131,9 +146,19 @@ class ImportExportController extends Controller
         if (! $kelurahan) {
             return '-';
         }
-        $kelurahanNama = $kelurahan->nama ?? '-';
 
-        return $kelurahanNama;
+        return $kelurahan->nama ?? '-';
+    }
+
+    protected function getPengurusKeteranganLabel($model): string
+    {
+        $jabatan = trim((string) data_get($model, 'jabatan.nama', ''));
+
+        if (in_array(Str::lower($jabatan), ['ketua rt', 'ketua rw'], true)) {
+            return '';
+        }
+
+        return $jabatan;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -172,15 +197,14 @@ class ImportExportController extends Controller
         $dateColumn = $config['date_column'];
         $query      = $modelClass::query();
 
-        // Eager load relasi
         if (! empty($config['with'])) {
             $query->with($config['with']);
         }
 
-        // Filter rentang tanggal
         if ($request->filled('tanggal_dari')) {
             $query->whereDate($dateColumn, '>=', $request->tanggal_dari);
         }
+
         if ($request->filled('tanggal_sampai')) {
             $query->whereDate($dateColumn, '<=', $request->tanggal_sampai);
         }
@@ -192,24 +216,18 @@ class ImportExportController extends Controller
         $filename  = 'export_' . str_replace('-', '_', $module) . '_' . now()->format('Ymd_His') . '.xlsx';
         $tempPath  = storage_path('app/' . $filename);
 
-        // Tulis file XLSX menggunakan OpenSpout
         $writer = new XlsxWriter();
         $writer->openToFile($tempPath);
 
-        // Header row dengan style bold
         $headerStyle = (new Style())->withFontBold(true)->withFontSize(11);
         $writer->addRow(Row::fromValuesWithStyle($headers, $headerStyle));
 
-        // Data rows
-        // dd($records);
         foreach ($records as $record) {
             $row = [];
             foreach ($columns as $col) {
-                // dd($col, $resolvers);
                 $value = $this->resolveValue($record, $col, $resolvers);
                 $row[] = is_null($value) ? '' : (string) $value;
             }
-            // dd($row);
 
             $writer->addRow(Row::fromValues($row));
         }
@@ -233,11 +251,11 @@ class ImportExportController extends Controller
         $config = $this->getModuleConfig($module);
 
         return view('import-export.import', [
-            'module'    => $module,
-            'config'    => $config,
-            'title'     => $config['title'],
-            'backRoute' => $config['back_route'],
-            'required'  => $config['required'] ?? [],
+            'module'        => $module,
+            'config'        => $config,
+            'title'         => $config['title'],
+            'backRoute'     => $config['back_route'],
+            'required'      => $config['required'] ?? [],
             'importHeaders' => $config['import_headers'] ?? $config['headers'],
             'importColumns' => $config['import_columns'] ?? $config['columns'],
         ]);
@@ -256,18 +274,9 @@ class ImportExportController extends Controller
         $writer = new XlsxWriter();
         $writer->openToFile($tempPath);
 
-        // Header row dengan style bold
         $headerStyle = (new Style())->withFontBold(true)->withFontSize(11);
         $writer->addRow(Row::fromValuesWithStyle($headers, $headerStyle));
-
-        // Satu baris contoh kosong (isi contoh untuk kolom relasi)
-        $example = array_map(function ($header) {
-            if (stripos($header, 'kelurahan') !== false) return 'Batua';
-            if (stripos($header, 'RW') !== false) return '01';
-            if (stripos($header, 'RT') !== false) return '01';
-            return '';
-        }, $headers);
-        $writer->addRow(Row::fromValues($example));
+        $writer->addRow(Row::fromValues($this->buildTemplateExampleRow($headers, $config)));
 
         $writer->close();
 
@@ -313,62 +322,31 @@ class ImportExportController extends Controller
             foreach ($sheet->getRowIterator() as $row) {
                 $rowNum++;
 
-                // Lewati baris header (baris pertama)
                 if ($isHeader) {
                     $isHeader = false;
-
                     continue;
                 }
 
                 $cells = $row->toArray();
-                // dd($cells);
 
-                // dd($cells);
-                // Skip baris kosong
-                if (collect($cells)->filter(fn($v) => !empty($v))->isEmpty()) {
+                if (collect($cells)->filter(fn ($value) => ! empty($value))->isEmpty()) {
                     continue;
                 }
 
-
-                // Pastikan jumlah kolom sesuai
                 if (count($cells) < count($importColumns)) {
                     $cells = array_pad($cells, count($importColumns), '');
                 }
 
-
-                // Map ke associative array
                 $data = [];
                 foreach ($importColumns as $i => $col) {
-                    $value = $cells[$i] ?? null;
-                    if ($value instanceof \DateTimeInterface) {
-                        $value = $value->format('Y-m-d');
-                    } elseif (is_string($value)) {
-                        $value = trim($value);
-                    }
-                    $data[$col] = $value === '' ? null : $value;
+                    $data[$col] = $this->normalizeImportValue($cells[$i] ?? null, $col);
                 }
 
-                // Mapping nama kelurahan/rw/rt ke id jika ada importers
-                if (isset($importers['kelurahan_id'])) {
-                    $data['kelurahan_id'] = $this->lookup_kelurahan_id($data['kelurahan'] ?? null);
-                    // dd("masuk kelurahan", $data['kelurahan_id']);
-                }
-                if (isset($importers['rw_id'])) {
-                    $data['rw_id'] = $this->lookup_rw_id($data['rw'] ?? null, $data);
-                }
-                if (isset($importers['rt_id'])) {
-                    $data['rt_id'] = $this->lookup_rt_id($data['rt'] ?? null, $data);
-                    }
+                $data = $this->transformImportData($module, $data, $importers);
 
-                    // dd($data);
-                // Hapus kolom input relasi string agar tidak dikirim ke DB
-                unset($data['kelurahan'], $data['rw'], $data['rt']);
-
-
-                // Validasi required fields
                 $missingFields = [];
                 foreach ($required as $field) {
-                    if (in_array($field, $importColumns) && empty($data[$field])) {
+                    if (in_array($field, $importColumns, true) && empty($data[$field])) {
                         $missingFields[] = $field;
                     }
                 }
@@ -386,27 +364,19 @@ class ImportExportController extends Controller
                     continue;
                 }
 
-                // Cek duplikat: lewati jika semua kolom non-null sudah ada di database
-                $uniqueBy = $config['unique_by'] ?? [];
-
-                if ($uniqueBy) {
-                    $query = $modelClass::query();
-
-                    foreach ($uniqueBy as $col) {
-                        $query->where($col, $data[$col] ?? null);
-                    }
-
-                    if ($query->exists()) {
-                        $skipped++;
-                        continue;
-                    }
+                if ($module !== 'pengurus' && $this->rowAlreadyExists($modelClass, $data, $config)) {
+                    $skipped++;
+                    continue;
                 }
 
-                // Insert ke database
-                // dd($data);
                 try {
-                    $modelClass::create($data);
-                    $imported++;
+                    $result = $this->persistImportedRow($module, $modelClass, $data);
+
+                    if ($result === 'skipped') {
+                        $skipped++;
+                    } else {
+                        $imported++;
+                    }
                 } catch (\Exception $e) {
                     $errorMsg = "Baris {$rowNum}: " . $this->cleanErrorMessage($e->getMessage());
                     $errors[] = $errorMsg;
@@ -421,7 +391,6 @@ class ImportExportController extends Controller
                 }
             }
 
-            // Hanya proses sheet pertama
             break;
         }
 
@@ -440,25 +409,338 @@ class ImportExportController extends Controller
             ->with('import_errors', $errors);
     }
 
+    protected function buildTemplateExampleRow(array $headers, array $config): array
+    {
+        if (! empty($config['example_row'])) {
+            return array_pad($config['example_row'], count($headers), '');
+        }
+
+        return array_map(function ($header) {
+            if (preg_match('/\bkelurahan\b/i', $header)) {
+                return 'Batua';
+            }
+
+            if (preg_match('/\bRW\b/i', $header)) {
+                return '01';
+            }
+
+            if (preg_match('/\bRT\b/i', $header)) {
+                return '01';
+            }
+
+            return '';
+        }, $headers);
+    }
+
+    protected function normalizeImportValue(mixed $value, string $column): mixed
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return $value->format('Y-m-d');
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+
+            return $value === '' ? null : $value;
+        }
+
+        if (is_int($value)) {
+            return in_array($column, ['nik', 'no_telp', 'rw', 'rt'], true)
+                ? (string) $value
+                : $value;
+        }
+
+        if (is_float($value)) {
+            if (fmod($value, 1.0) === 0.0) {
+                return in_array($column, ['nik', 'no_telp', 'rw', 'rt'], true)
+                    ? number_format($value, 0, '.', '')
+                    : (int) $value;
+            }
+
+            return rtrim(rtrim(number_format($value, 10, '.', ''), '0'), '.');
+        }
+
+        return $value;
+    }
+
+    protected function transformImportData(string $module, array $data, array $importers): array
+    {
+        if ($module === 'pengurus') {
+            $data['rw'] = $this->normalizeWilayahNomor($data['rw'] ?? null);
+            $data['rt'] = $this->normalizeWilayahNomor($data['rt'] ?? null);
+            $data['nik'] = $this->normalizeTextValue($data['nik'] ?? null);
+            $data['nama'] = $this->normalizeTextValue($data['nama'] ?? null);
+            $data['alamat'] = $this->normalizeTextValue($data['alamat'] ?? null);
+            $data['pekerjaan'] = $this->normalizeTextValue($data['pekerjaan'] ?? null);
+            $data['pendidikan'] = $this->normalizeTextValue($data['pendidikan'] ?? null);
+            $data['no_telp'] = $this->normalizeTextValue($data['no_telp'] ?? null);
+            $data['keterangan'] = $this->normalizeTextValue($data['keterangan'] ?? null);
+
+            return $data;
+        }
+
+        if (isset($importers['kelurahan_id'])) {
+            $data['kelurahan_id'] = $this->lookup_kelurahan_id($data['kelurahan'] ?? null);
+        }
+
+        if (isset($importers['rw_id'])) {
+            $data['rw_id'] = $this->lookup_rw_id($data['rw'] ?? null, $data);
+        }
+
+        if (isset($importers['rt_id'])) {
+            $data['rt_id'] = $this->lookup_rt_id($data['rt'] ?? null, $data);
+        }
+
+        unset($data['kelurahan'], $data['rw'], $data['rt']);
+
+        return $data;
+    }
+
+    protected function rowAlreadyExists(string $modelClass, array $data, array $config): bool
+    {
+        $uniqueBy = $config['unique_by'] ?? [];
+
+        if (! $uniqueBy) {
+            return false;
+        }
+
+        $query = $modelClass::query();
+
+        foreach ($uniqueBy as $col) {
+            $query->where($col, $data[$col] ?? null);
+        }
+
+        return $query->exists();
+    }
+
+    protected function persistImportedRow(string $module, string $modelClass, array $data): string
+    {
+        if ($module === 'pengurus') {
+            return $this->persistPengurusImportRow($data);
+        }
+
+        $modelClass::create($data);
+
+        return 'created';
+    }
+
+    protected function persistPengurusImportRow(array $data): string
+    {
+        return DB::transaction(function () use ($data) {
+            $kelurahanId = $this->resolveDefaultPengurusKelurahanId();
+
+            if (! $kelurahanId) {
+                throw new \RuntimeException('Data kelurahan belum tersedia untuk mengaitkan RW/RT.');
+            }
+
+            $rwNomor = $this->normalizeWilayahNomor($data['rw'] ?? null);
+            if (! $rwNomor) {
+                throw new \RuntimeException('Nomor RW wajib diisi.');
+            }
+
+            $rw = Rw::firstOrCreate([
+                'kelurahan_id' => $kelurahanId,
+                'nomor' => $rwNomor,
+            ]);
+
+            $jabatan = $this->resolvePengurusJabatan($data);
+            $rt = null;
+
+            if ($this->jabatanMemerlukanRt($jabatan)) {
+                $rtNomor = $this->normalizeWilayahNomor($data['rt'] ?? null);
+
+                if (! $rtNomor) {
+                    throw new \RuntimeException('Nomor RT wajib diisi untuk jabatan level RT.');
+                }
+
+                $rt = Rt::firstOrCreate([
+                    'rw_id' => $rw->id,
+                    'nomor' => $rtNomor,
+                ]);
+            }
+
+            $penduduk = $this->upsertPendudukDariImportPengurus($data, $rt?->id);
+
+            $existingPengurus = RtRwPengurus::query()
+                ->where('penduduk_id', $penduduk->id)
+                ->where('jabatan_id', $jabatan->id)
+                ->where('rw_id', $rw->id)
+                ->where('rt_id', $rt?->id)
+                ->first();
+
+            if ($existingPengurus) {
+                return 'skipped';
+            }
+
+            RtRwPengurus::create([
+                'kelurahan_id' => $kelurahanId,
+                'penduduk_id' => $penduduk->id,
+                'jabatan_id' => $jabatan->id,
+                'rw_id' => $rw->id,
+                'rt_id' => $rt?->id,
+                'tgl_mulai' => null,
+                'status' => $this->resolvePengurusStatus($data['keterangan'] ?? null),
+                'alamat' => $data['alamat'] ?? $penduduk->alamat,
+                'no_telp' => $data['no_telp'] ?? null,
+            ]);
+
+            return 'created';
+        });
+    }
+
+    protected function resolveDefaultPengurusKelurahanId(): ?int
+    {
+        if ($this->defaultPengurusKelurahanId !== null) {
+            return $this->defaultPengurusKelurahanId;
+        }
+
+        $this->defaultPengurusKelurahanId = Rw::query()
+            ->select('kelurahan_id')
+            ->distinct()
+            ->orderBy('kelurahan_id')
+            ->value('kelurahan_id');
+
+        if ($this->defaultPengurusKelurahanId === null) {
+            $this->defaultPengurusKelurahanId = Kelurahan::query()
+                ->orderBy('id')
+                ->value('id');
+        }
+
+        return $this->defaultPengurusKelurahanId;
+    }
+
+    protected function resolvePengurusJabatan(array $data): JabatanRtRw
+    {
+        $keterangan = $this->normalizeTextValue($data['keterangan'] ?? null);
+
+        if ($keterangan) {
+            $jabatan = JabatanRtRw::query()
+                ->whereRaw('LOWER(nama) = ?', [Str::lower($keterangan)])
+                ->first();
+
+            if ($jabatan) {
+                return $jabatan;
+            }
+        }
+
+        $jabatanDefault = ! empty($data['rt']) ? 'Ketua RT' : 'Ketua RW';
+
+        return JabatanRtRw::firstOrCreate([
+            'nama' => $jabatanDefault,
+        ]);
+    }
+
+    protected function jabatanMemerlukanRt(JabatanRtRw $jabatan): bool
+    {
+        return (bool) preg_match('/\bRT\b/i', $jabatan->nama);
+    }
+
+    protected function resolvePengurusStatus(?string $keterangan): string
+    {
+        $keterangan = Str::lower(trim((string) $keterangan));
+
+        if ($keterangan !== '' && str_contains($keterangan, 'nonaktif')) {
+            return 'nonaktif';
+        }
+
+        return 'aktif';
+    }
+
+    protected function upsertPendudukDariImportPengurus(array $data, ?int $rtId): Penduduk
+    {
+        $nik = $this->normalizeTextValue($data['nik'] ?? null);
+
+        if (! $nik) {
+            throw new \RuntimeException('NIK wajib diisi untuk data pengurus.');
+        }
+
+        $penduduk = Penduduk::firstOrNew(['nik' => $nik]);
+        $penduduk->nama = $data['nama'] ?? $penduduk->nama;
+
+        if (! empty($data['alamat'])) {
+            $penduduk->alamat = $data['alamat'];
+        }
+
+        if (! empty($data['pendidikan'])) {
+            $penduduk->pendidikan = $data['pendidikan'];
+        }
+
+        if (! empty($data['pekerjaan'])) {
+            $penduduk->pekerjaan = $data['pekerjaan'];
+        }
+
+        if ($rtId) {
+            $penduduk->rt_id = $rtId;
+        }
+
+        $penduduk->save();
+
+        return $penduduk;
+    }
+
+    protected function normalizeWilayahNomor(mixed $value): ?int
+    {
+        $value = $this->normalizeTextValue($value);
+
+        if (! $value) {
+            return null;
+        }
+
+        if (preg_match('/\d+/', $value, $matches) !== 1) {
+            return null;
+        }
+
+        $nomor = (int) $matches[0];
+
+        return $nomor > 0 ? $nomor : null;
+    }
+
+    protected function normalizeTextValue(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_string($value)) {
+            $value = trim($value);
+
+            return $value === '' ? null : $value;
+        }
+
+        if (is_int($value)) {
+            return (string) $value;
+        }
+
+        if (is_float($value)) {
+            if (fmod($value, 1.0) === 0.0) {
+                return number_format($value, 0, '.', '');
+            }
+
+            return rtrim(rtrim(number_format($value, 10, '.', ''), '0'), '.');
+        }
+
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
+    }
+
     /**
      * Bersihkan pesan error agar lebih user-friendly
      */
     protected function cleanErrorMessage(string $message): string
     {
-        // Singkatkan pesan Integrity constraint / Duplicate entry
         if (str_contains($message, 'Duplicate entry')) {
-            preg_match("/Duplicate entry '(.+?)' for key/", $message, $m);
+            preg_match("/Duplicate entry '(.+?)' for key/", $message, $matches);
 
-            return 'Data duplikat: ' . ($m[1] ?? 'tidak diketahui');
+            return 'Data duplikat: ' . ($matches[1] ?? 'tidak diketahui');
         }
 
         if (str_contains($message, 'SQLSTATE')) {
-            // Ambil pesan setelah ']:
             $parts = explode(']: ', $message);
 
             return end($parts);
         }
 
-        return \Illuminate\Support\Str::limit($message, 120);
+        return Str::limit($message, 120);
     }
 }

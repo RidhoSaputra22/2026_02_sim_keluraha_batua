@@ -22,6 +22,7 @@ class Penduduk extends Model {
         'agama',
         'status_kawin',
         'pendidikan',
+        'pekerjaan',
         'status_data',
         'tgl_input',
         'petugas_input_id'
@@ -47,4 +48,3 @@ class Penduduk extends Model {
         return $this->hasOne(Pemohon::class);
     }
 }
-

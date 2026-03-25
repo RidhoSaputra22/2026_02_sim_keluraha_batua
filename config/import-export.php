@@ -269,6 +269,29 @@ return [
         'import_headers' => ['Nama Usaha', 'Nama Pemilik', 'NIK Pemilik', 'No HP', 'Alamat', 'Sektor', 'Status'],
     ],
 
+    'pengurus' => [
+        'title'       => 'Pengurus RT/RW',
+        'model'       => \App\Models\RtRwPengurus::class,
+        'date_column' => 'tgl_mulai',
+        'back_route'  => 'master.pengurus.index',
+        'with'        => ['penduduk', 'jabatan', 'rw', 'rt'],
+        'columns'     => ['rw', 'rt', 'nama', 'nik', 'alamat', 'pekerjaan', 'pendidikan', 'no_telp', 'keterangan'],
+        'headers'     => ['RW', 'RT', 'NAMA', 'NIK', 'ALAMAT', 'PEKERJAAN', 'PENDIDIKAN TERAKHIR', 'NO. TLP', 'KET'],
+        'required'    => ['rw', 'nama', 'nik'],
+        'resolvers'   => [
+            'rw'         => 'rw.nomor',
+            'rt'         => 'rt.nomor',
+            'nama'       => 'penduduk.nama',
+            'nik'        => 'penduduk.nik',
+            'pekerjaan'  => 'penduduk.pekerjaan',
+            'pendidikan' => 'penduduk.pendidikan',
+            'keterangan' => 'pengurus_keterangan',
+        ],
+        'import_columns' => ['rw', 'rt', 'nama', 'nik', 'alamat', 'pekerjaan', 'pendidikan', 'no_telp', 'keterangan'],
+        'import_headers' => ['RW', 'RT', 'NAMA', 'NIK', 'ALAMAT', 'PEKERJAAN', 'PENDIDIKAN TERAKHIR', 'NO. TLP', 'KET'],
+        'example_row'    => ['1', '1', 'DR. YOHANIS SATTU', '7371121404680011', 'JL. INSPEKSI PAM LR. 4 NO.17', 'PNS', 'S3', '08121262294', ''],
+    ],
+
     // ── WILAYAH ──────────────────────────────────────────────────
     'wilayah' => [
         'title'       => 'Data Wilayah RT/RW',
