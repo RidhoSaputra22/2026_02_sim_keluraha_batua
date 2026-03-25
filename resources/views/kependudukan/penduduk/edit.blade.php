@@ -38,6 +38,7 @@
                 <x-ui.select name="pendidikan" label="Pendidikan Terakhir"
                     :options="['Tidak/Belum Sekolah' => 'Tidak/Belum Sekolah', 'SD' => 'SD', 'SMP' => 'SMP', 'SMA' => 'SMA', 'D1/D2' => 'D1/D2', 'D3' => 'D3', 'S1' => 'S1', 'S2' => 'S2', 'S3' => 'S3']"
                     selected="{{ old('pendidikan', $penduduk->pendidikan) }}" />
+                <x-ui.input name="pekerjaan" label="Pekerjaan" value="{{ old('pekerjaan', $penduduk->pekerjaan) }}" />
             </div>
 
             <h3 class="text-lg font-semibold mb-4">Alamat</h3>
@@ -51,7 +52,7 @@
                     selected="{{ old('rt_id', $penduduk->rt_id) }}" />
                 <x-ui.select name="status_data" label="Status Data"
                     :options="['aktif' => 'Aktif', 'pindah' => 'Pindah', 'meninggal' => 'Meninggal']"
-                    selected="{{ old('status_data', $penduduk->status_data) }}" />
+                    selected="{{ old('status_data', strtolower((string) ($penduduk->status_data ?? 'aktif'))) }}" />
             </div>
 
             <div class="flex justify-end gap-2 mt-6">

@@ -73,9 +73,9 @@
                         <td class="text-sm">{{ $p->agama ?? '-' }}</td>
                         <td class="text-sm">{{ $p->rt->nomor ?? '-' }}/{{ $p->rt->rw->nomor ?? '-' }}</td>
                         <td>
-                            <x-ui.badge type="{{ ($p->status_data ?? 'aktif') === 'aktif' ? 'success' : 'warning' }}"
+                            <x-ui.badge type="{{ strtolower((string) ($p->status_data ?? 'aktif')) === 'aktif' ? 'success' : 'warning' }}"
                                 size="xs">
-                                {{ $p->status_data ?? 'aktif' }}
+                                {{ ucfirst(strtolower((string) ($p->status_data ?? 'aktif'))) }}
                             </x-ui.badge>
                         </td>
                         <td>

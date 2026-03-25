@@ -23,7 +23,7 @@ class PendudukFactory extends Factory
             'status_kawin' => $this->faker->randomElement(['Belum Kawin','Kawin','Cerai Hidup','Cerai Mati']),
             'pendidikan' => $this->faker->randomElement(['SD','SMP','SMA','D3','S1','S2']),
             'pekerjaan' => $this->faker->jobTitle(),
-            'status_data' => $this->faker->randomElement(['Aktif','Nonaktif']),
+            'status_data' => $this->faker->randomElement(['aktif','pindah','meninggal']),
             'tgl_input' => $this->faker->dateTimeThisYear(),
             'petugas_input_id' => null
         ];

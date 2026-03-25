@@ -51,6 +51,10 @@
                         <span class="text-sm text-base-content/60">Pendidikan</span>
                         <p>{{ $penduduk->pendidikan ?? '-' }}</p>
                     </div>
+                    <div>
+                        <span class="text-sm text-base-content/60">Pekerjaan</span>
+                        <p>{{ $penduduk->pekerjaan ?? '-' }}</p>
+                    </div>
                 </div>
             </x-ui.card>
 
@@ -74,8 +78,8 @@
                 <div class="space-y-3">
                     <div class="flex justify-between items-center">
                         <span class="text-sm">Status Data</span>
-                        <x-ui.badge type="{{ ($penduduk->status_data ?? 'aktif') === 'aktif' ? 'success' : 'warning' }}" size="sm">
-                            {{ $penduduk->status_data ?? 'aktif' }}
+                        <x-ui.badge type="{{ strtolower((string) ($penduduk->status_data ?? 'aktif')) === 'aktif' ? 'success' : 'warning' }}" size="sm">
+                            {{ ucfirst(strtolower((string) ($penduduk->status_data ?? 'aktif'))) }}
                         </x-ui.badge>
                     </div>
                     <div class="flex justify-between items-center">

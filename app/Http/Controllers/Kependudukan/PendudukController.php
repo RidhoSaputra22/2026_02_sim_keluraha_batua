@@ -71,6 +71,7 @@ class PendudukController extends Controller
             'agama'         => ['nullable', 'string', 'max:50'],
             'status_kawin'  => ['nullable', 'string', 'max:30'],
             'pendidikan'    => ['nullable', 'string', 'max:50'],
+            'pekerjaan'     => ['nullable', 'string', 'max:255'],
             'alamat'        => ['nullable', 'string'],
             'status_data'   => ['nullable', 'string', 'max:20'],
         ]);
@@ -117,6 +118,7 @@ class PendudukController extends Controller
             'agama'         => ['nullable', 'string', 'max:50'],
             'status_kawin'  => ['nullable', 'string', 'max:30'],
             'pendidikan'    => ['nullable', 'string', 'max:50'],
+            'pekerjaan'     => ['nullable', 'string', 'max:255'],
             'alamat'        => ['nullable', 'string'],
             'status_data'   => ['nullable', 'string', 'max:20'],
         ]);

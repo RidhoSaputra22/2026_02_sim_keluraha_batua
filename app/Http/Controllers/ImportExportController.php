@@ -9,6 +9,7 @@ use App\Models\Penduduk;
 use App\Models\Rt;
 use App\Models\RtRwPengurus;
 use App\Models\Rw;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -20,7 +21,7 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ImportExportController extends Controller
 {
-    protected ?int $defaultPengurusKelurahanId = null;
+    protected ?int $defaultImportKelurahanId = null;
 
     /**
      * Lookup kelurahan_id dari nama kelurahan
@@ -85,10 +86,38 @@ class ImportExportController extends Controller
     /**
      * Resolve nilai kolom dari model (termasuk relasi dot-notation)
      */
-    protected function resolveValue($model, string $column, array $resolvers): mixed
+    protected function resolveValue($model, string $column, array $resolvers, array $context = []): mixed
     {
         if (isset($resolvers[$column])) {
             $path = $resolvers[$column];
+
+            if ($path === 'penduduk_no_urut') {
+                return $context['penduduk_no_urut'][$model->id] ?? '';
+            }
+
+            if ($path === 'penduduk_no_urut_kk') {
+                return $context['penduduk_no_urut_kk'][$model->id] ?? '';
+            }
+
+            if ($path === 'penduduk_umur') {
+                return $this->getPendudukUmurLabel($model);
+            }
+
+            if ($path === 'penduduk_status_dalam_keluarga') {
+                return $this->getPendudukStatusDalamKeluargaLabel($model);
+            }
+
+            if ($path === 'penduduk_wilayah') {
+                return $this->getPendudukWilayahLabel($model);
+            }
+
+            if ($path === 'penduduk_status_data') {
+                return $this->getPendudukStatusDataLabel($model);
+            }
+
+            if ($path === 'penduduk_kategori') {
+                return $this->getPendudukKategoriLabel($model);
+            }
 
             if ($path === 'rt') {
                 return $this->getRtLabel($model);
@@ -162,6 +191,53 @@ class ImportExportController extends Controller
         return $jabatan;
     }
 
+    protected function getPendudukUmurLabel($model): string
+    {
+        $tanggalLahir = $this->parseTanggalLahirDariNik($model->nik ?? null);
+
+        return $tanggalLahir?->age ? (string) $tanggalLahir->age : '';
+    }
+
+    protected function getPendudukStatusDalamKeluargaLabel($model): string
+    {
+        $keluarga = $model->keluarga ?? null;
+
+        if (! $keluarga) {
+            return '';
+        }
+
+        if ((int) $keluarga->kepala_keluarga_id === (int) $model->id) {
+            return 'Kepala Rumah Tangga';
+        }
+
+        return 'Anggota Keluarga';
+    }
+
+    protected function getPendudukWilayahLabel($model): string
+    {
+        $rt = $model->rt ?? null;
+        $rw = $rt?->rw ?? null;
+
+        if (! $rt && ! $rw) {
+            return '';
+        }
+
+        return 'RT ' . str_pad((string) ($rt->nomor ?? '-'), 2, '0', STR_PAD_LEFT)
+            . ' / RW ' . str_pad((string) ($rw->nomor ?? '-'), 2, '0', STR_PAD_LEFT);
+    }
+
+    protected function getPendudukStatusDataLabel($model): string
+    {
+        $status = $this->normalizePendudukStatusData($model->status_data ?? null) ?? 'aktif';
+
+        return Str::upper($status);
+    }
+
+    protected function getPendudukKategoriLabel($model): string
+    {
+        return $this->normalizePendudukGolDarah($model->gol_darah ?? null) ?? '';
+    }
+
     // ═══════════════════════════════════════════════════════════════
     //  EXPORT
     // ═══════════════════════════════════════════════════════════════
@@ -210,7 +286,13 @@ class ImportExportController extends Controller
             $query->whereDate($dateColumn, '<=', $request->tanggal_sampai);
         }
 
-        $records   = $query->get();
+        $records = $query->get();
+
+        if ($module === 'penduduk') {
+            $records = $this->preparePendudukExportRecords($records);
+        }
+
+        $exportContext = $this->buildExportContext($module, $records);
         $headers   = $config['headers'];
         $columns   = $config['columns'];
         $resolvers = $config['resolvers'] ?? [];
@@ -226,7 +308,7 @@ class ImportExportController extends Controller
         foreach ($records as $record) {
             $row = [];
             foreach ($columns as $col) {
-                $value = $this->resolveValue($record, $col, $resolvers);
+                $value = $this->resolveValue($record, $col, $resolvers, $exportContext);
                 $row[] = is_null($value) ? '' : (string) $value;
             }
 
@@ -433,6 +515,50 @@ class ImportExportController extends Controller
         }, $headers);
     }
 
+    protected function preparePendudukExportRecords($records)
+    {
+        return $records->sortBy(function ($record) {
+            $rwNomor = (int) ($record->rt?->rw?->nomor ?? 99999);
+            $rtNomor = (int) ($record->rt?->nomor ?? 99999);
+            $keluargaId = (int) ($record->keluarga_id ?? 99999);
+            $nama = Str::lower((string) ($record->nama ?? ''));
+
+            return sprintf('%05d-%05d-%05d-%s-%s', $rwNomor, $rtNomor, $keluargaId, $nama, (string) ($record->nik ?? ''));
+        })->values();
+    }
+
+    protected function buildExportContext(string $module, $records): array
+    {
+        if ($module !== 'penduduk') {
+            return [];
+        }
+
+        $context = [
+            'penduduk_no_urut' => [],
+            'penduduk_no_urut_kk' => [],
+        ];
+
+        $nextUrut = 1;
+        $nextUrutKk = 1;
+        $kkGroups = [];
+
+        foreach ($records as $record) {
+            $context['penduduk_no_urut'][$record->id] = (string) $nextUrut++;
+
+            $groupKey = $record->keluarga_id
+                ? 'keluarga:' . $record->keluarga_id
+                : 'penduduk:' . $record->id;
+
+            if (! isset($kkGroups[$groupKey])) {
+                $kkGroups[$groupKey] = (string) $nextUrutKk++;
+            }
+
+            $context['penduduk_no_urut_kk'][$record->id] = $kkGroups[$groupKey];
+        }
+
+        return $context;
+    }
+
     protected function normalizeImportValue(mixed $value, string $column): mixed
     {
         if ($value instanceof \DateTimeInterface) {
@@ -466,6 +592,24 @@ class ImportExportController extends Controller
 
     protected function transformImportData(string $module, array $data, array $importers): array
     {
+        if ($module === 'penduduk') {
+            [$rtNomor, $rwNomor] = $this->extractWilayahNumbers($data['wilayah'] ?? null);
+
+            $data['nik'] = $this->normalizeTextValue($data['nik'] ?? null);
+            $data['nama'] = $this->normalizeTextValue($data['nama'] ?? null);
+            $data['jenis_kelamin'] = $this->normalizePendudukJenisKelamin($data['jenis_kelamin'] ?? null);
+            $data['pendidikan'] = $this->normalizeTextValue($data['pendidikan'] ?? null);
+            $data['pekerjaan'] = $this->normalizeTextValue($data['pekerjaan'] ?? null);
+            $data['status_data'] = $this->normalizePendudukStatusData($data['status_data'] ?? null) ?? 'aktif';
+            $data['gol_darah'] = $this->normalizePendudukGolDarah($data['gol_darah'] ?? null);
+            $data['rt_nomor'] = $rtNomor;
+            $data['rw_nomor'] = $rwNomor;
+
+            unset($data['no_urut'], $data['no_urut_kk'], $data['umur'], $data['status_dalam_keluarga'], $data['wilayah']);
+
+            return $data;
+        }
+
         if ($module === 'pengurus') {
             $data['rw'] = $this->normalizeWilayahNomor($data['rw'] ?? null);
             $data['rt'] = $this->normalizeWilayahNomor($data['rt'] ?? null);
@@ -516,6 +660,10 @@ class ImportExportController extends Controller
 
     protected function persistImportedRow(string $module, string $modelClass, array $data): string
     {
+        if ($module === 'penduduk') {
+            return $this->persistPendudukImportRow($data);
+        }
+
         if ($module === 'pengurus') {
             return $this->persistPengurusImportRow($data);
         }
@@ -528,7 +676,7 @@ class ImportExportController extends Controller
     protected function persistPengurusImportRow(array $data): string
     {
         return DB::transaction(function () use ($data) {
-            $kelurahanId = $this->resolveDefaultPengurusKelurahanId();
+            $kelurahanId = $this->resolveDefaultImportKelurahanId();
 
             if (! $kelurahanId) {
                 throw new \RuntimeException('Data kelurahan belum tersedia untuk mengaitkan RW/RT.');
@@ -589,25 +737,47 @@ class ImportExportController extends Controller
         });
     }
 
-    protected function resolveDefaultPengurusKelurahanId(): ?int
+    protected function persistPendudukImportRow(array $data): string
     {
-        if ($this->defaultPengurusKelurahanId !== null) {
-            return $this->defaultPengurusKelurahanId;
+        return DB::transaction(function () use ($data) {
+            $payload = [
+                'nik' => $data['nik'],
+                'nama' => $data['nama'],
+                'jenis_kelamin' => $data['jenis_kelamin'],
+                'gol_darah' => $data['gol_darah'] ?? null,
+                'pendidikan' => $data['pendidikan'] ?? null,
+                'pekerjaan' => $data['pekerjaan'] ?? null,
+                'status_data' => $data['status_data'] ?? 'aktif',
+                'rt_id' => $this->resolvePendudukRtIdForImport($data),
+                'tgl_input' => now(),
+                'petugas_input_id' => auth()->id(),
+            ];
+
+            Penduduk::create($payload);
+
+            return 'created';
+        });
+    }
+
+    protected function resolveDefaultImportKelurahanId(): ?int
+    {
+        if ($this->defaultImportKelurahanId !== null) {
+            return $this->defaultImportKelurahanId;
         }
 
-        $this->defaultPengurusKelurahanId = Rw::query()
+        $this->defaultImportKelurahanId = Rw::query()
             ->select('kelurahan_id')
             ->distinct()
             ->orderBy('kelurahan_id')
             ->value('kelurahan_id');
 
-        if ($this->defaultPengurusKelurahanId === null) {
-            $this->defaultPengurusKelurahanId = Kelurahan::query()
+        if ($this->defaultImportKelurahanId === null) {
+            $this->defaultImportKelurahanId = Kelurahan::query()
                 ->orderBy('id')
                 ->value('id');
         }
 
-        return $this->defaultPengurusKelurahanId;
+        return $this->defaultImportKelurahanId;
     }
 
     protected function resolvePengurusJabatan(array $data): JabatanRtRw
@@ -694,6 +864,127 @@ class ImportExportController extends Controller
         $nomor = (int) $matches[0];
 
         return $nomor > 0 ? $nomor : null;
+    }
+
+    protected function extractWilayahNumbers(mixed $value): array
+    {
+        $value = $this->normalizeTextValue($value);
+
+        if (! $value) {
+            return [null, null];
+        }
+
+        $rtNomor = null;
+        $rwNomor = null;
+
+        if (preg_match('/RT\s*0*([0-9]+)/i', $value, $matches) === 1) {
+            $rtNomor = (int) $matches[1];
+        }
+
+        if (preg_match('/RW\s*0*([0-9]+)/i', $value, $matches) === 1) {
+            $rwNomor = (int) $matches[1];
+        }
+
+        if (($rtNomor === null || $rwNomor === null) && preg_match_all('/([0-9]+)/', $value, $matches) && count($matches[1]) >= 2) {
+            $rtNomor ??= (int) $matches[1][0];
+            $rwNomor ??= (int) $matches[1][1];
+        }
+
+        return [
+            $rtNomor > 0 ? $rtNomor : null,
+            $rwNomor > 0 ? $rwNomor : null,
+        ];
+    }
+
+    protected function resolvePendudukRtIdForImport(array $data): ?int
+    {
+        $rwNomor = $this->normalizeWilayahNomor($data['rw_nomor'] ?? null);
+        $rtNomor = $this->normalizeWilayahNomor($data['rt_nomor'] ?? null);
+
+        if (! $rwNomor) {
+            return null;
+        }
+
+        $kelurahanId = $this->resolveDefaultImportKelurahanId();
+
+        if (! $kelurahanId) {
+            throw new \RuntimeException('Data kelurahan belum tersedia untuk mengaitkan wilayah RT/RW.');
+        }
+
+        $rw = Rw::firstOrCreate([
+            'kelurahan_id' => $kelurahanId,
+            'nomor' => $rwNomor,
+        ]);
+
+        if (! $rtNomor) {
+            return null;
+        }
+
+        $rt = Rt::firstOrCreate([
+            'rw_id' => $rw->id,
+            'nomor' => $rtNomor,
+        ]);
+
+        return $rt->id;
+    }
+
+    protected function normalizePendudukJenisKelamin(mixed $value): ?string
+    {
+        $value = Str::lower((string) $this->normalizeTextValue($value));
+
+        return match ($value) {
+            'l', 'lk', 'laki-laki', 'laki laki', 'pria' => 'L',
+            'p', 'pr', 'perempuan', 'wanita' => 'P',
+            default => $value !== '' ? Str::upper($value) : null,
+        };
+    }
+
+    protected function normalizePendudukStatusData(mixed $value): ?string
+    {
+        $value = Str::lower((string) $this->normalizeTextValue($value));
+
+        return match ($value) {
+            '', null => null,
+            'aktif', 'active' => 'aktif',
+            'pindah' => 'pindah',
+            'meninggal', 'wafat' => 'meninggal',
+            default => $value,
+        };
+    }
+
+    protected function normalizePendudukGolDarah(mixed $value): ?string
+    {
+        $value = Str::upper((string) $this->normalizeTextValue($value));
+
+        return $value !== '' ? $value : null;
+    }
+
+    protected function parseTanggalLahirDariNik(mixed $nik): ?Carbon
+    {
+        $nik = preg_replace('/\D+/', '', (string) $nik);
+
+        if (strlen($nik) < 12) {
+            return null;
+        }
+
+        $tanggalSegment = substr($nik, 6, 6);
+        $hari = (int) substr($tanggalSegment, 0, 2);
+        $bulan = (int) substr($tanggalSegment, 2, 2);
+        $tahun = (int) substr($tanggalSegment, 4, 2);
+
+        if ($hari > 40) {
+            $hari -= 40;
+        }
+
+        $tahunPenuh = $tahun > (int) now()->format('y')
+            ? 1900 + $tahun
+            : 2000 + $tahun;
+
+        if (! checkdate($bulan, $hari, $tahunPenuh)) {
+            return null;
+        }
+
+        return Carbon::create($tahunPenuh, $bulan, $hari)->startOfDay();
     }
 
     protected function normalizeTextValue(mixed $value): ?string

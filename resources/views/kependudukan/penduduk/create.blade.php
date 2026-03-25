@@ -40,6 +40,8 @@
                 <x-ui.select name="pendidikan" label="Pendidikan Terakhir"
                     :options="['Tidak/Belum Sekolah' => 'Tidak/Belum Sekolah', 'SD' => 'SD', 'SMP' => 'SMP', 'SMA' => 'SMA', 'D1/D2' => 'D1/D2', 'D3' => 'D3', 'S1' => 'S1', 'S2' => 'S2', 'S3' => 'S3']"
                     selected="{{ old('pendidikan') }}" />
+                <x-ui.input name="pekerjaan" label="Pekerjaan" placeholder="Pekerjaan warga"
+                    value="{{ old('pekerjaan') }}" />
             </div>
 
             {{-- Alamat --}}
