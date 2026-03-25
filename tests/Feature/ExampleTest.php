@@ -2,11 +2,12 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
     /**
      * A basic test example.
      */
@@ -14,7 +15,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        // Root redirects to login for unauthenticated users
-        $response->assertRedirect();
+        // Root serves the guest welcome page
+        $response->assertOk();
     }
 }

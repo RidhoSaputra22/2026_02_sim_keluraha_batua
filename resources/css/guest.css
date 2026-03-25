@@ -1,0 +1,41 @@
+/* Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap');
+
+/* Material Icons */
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import 'tailwindcss';
+
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Public Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+     --color-primary: #E4121B;
+
+    /* secondary: navy gelap (kontras tinggi dengan merah) */
+    --color-secondary: #0F172A;
+
+    /* background light: putih keabu-abuan lembut */
+    --color-background-light: #F8FAFC;
+
+    /* background dark: slate sangat gelap */
+    --color-background-dark: #0B1220;
+}
+
+/* Alpine.js cloak */
+[x-cloak] {
+    display: none !important;
+}
+
+
+
+/* Make them visible when a specific class (e.g., .font-loaded) is applied to the body */
+body.font-loaded .material-icons {
+  visibility: visible;
+}

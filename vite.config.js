@@ -8,6 +8,7 @@ export default defineConfig({
             input: [
                 "resources/css/app.css",
                 "resources/js/app.js",
+                "resources/css/guest.css",
                 "resources/css/peta.css",
                 "resources/js/map/index.js",
                 "resources/js/peta/app.js",

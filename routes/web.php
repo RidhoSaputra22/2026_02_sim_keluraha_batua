@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\Auth\LoginController;
 // ─── Admin Module Controllers ──────────────────────────────────
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Guest\GuestController;
 use App\Http\Controllers\DataUmum\AsramaController;
 use App\Http\Controllers\DataUmum\FaskesController;
 use App\Http\Controllers\DataUmum\KendaraanController;
@@ -49,6 +50,20 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+
+Route::get('/', [GuestController::class, 'welcome'])->name('guest.welcome');
+Route::get('/profil', [GuestController::class, 'profil'])->name('guest.profil');
+Route::get('/data-kelurahan', [GuestController::class, 'dataKelurahan'])->name('guest.data-kelurahan');
+Route::get('/cek-data', [GuestController::class, 'cekData'])->name('guest.cek-data');
+Route::post('/cek-data', [GuestController::class, 'cekDataSearch'])->name('guest.cek-data.search');
+Route::get('/surat-online', [GuestController::class, 'suratOnline'])->name('guest.surat-online');
+Route::get('/publikasi', [GuestController::class, 'publikasi'])->name('guest.publikasi');
+Route::get('/parawisata', [GuestController::class, 'parawisata'])->name('guest.parawisata');
+Route::get('/umkm', [GuestController::class, 'umkm'])->name('guest.umkm');
+Route::get('/pengaduan', [GuestController::class, 'pengaduan'])->name('guest.pengaduan');
+Route::get('/kontak', [GuestController::class, 'kontak'])->name('guest.kontak');
+
+
 // Guest routes
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -60,8 +75,8 @@ Route::middleware('auth')->group(function () {
     Route::post('logout', [LoginController::class, 'logout'])->name('logout');
 
     // Dashboard router — redirect ke dashboard sesuai role
-    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/index', [DashboardController::class, 'index'])->name('dashboard.index');
 
     // Global Search API
     Route::get('/search', GlobalSearchController::class)->name('global-search');
