@@ -119,6 +119,14 @@ class ImportExportController extends Controller
                 return $this->getPendudukKategoriLabel($model);
             }
 
+            if ($path === 'retribusi_beban') {
+                return $this->getRetribusiBebanLabel($model);
+            }
+
+            if ($path === 'retribusi_status') {
+                return $this->getRetribusiStatusLabel($model);
+            }
+
             if ($path === 'rt') {
                 return $this->getRtLabel($model);
             }
@@ -236,6 +244,16 @@ class ImportExportController extends Controller
     protected function getPendudukKategoriLabel($model): string
     {
         return $this->normalizePendudukGolDarah($model->gol_darah ?? null) ?? '';
+    }
+
+    protected function getRetribusiBebanLabel($model): string
+    {
+        return $this->normalizePlainNumber($model->beban ?? null);
+    }
+
+    protected function getRetribusiStatusLabel($model): string
+    {
+        return $this->normalizeRetribusiStatus($model->status ?? null) ?? 'Belum';
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -610,6 +628,19 @@ class ImportExportController extends Controller
             return $data;
         }
 
+        if ($module === 'retribusi-sampah') {
+            $data['npwr'] = $this->normalizeTextValue($data['npwr'] ?? null);
+            $data['nama_nasabah'] = $this->normalizeTextValue($data['nama_nasabah'] ?? null);
+            $data['no_skrd'] = $this->normalizeTextValue($data['no_skrd'] ?? null);
+            $data['alamat'] = $this->normalizeTextValue($data['alamat'] ?? null);
+            $data['rw'] = $this->normalizeWilayahNomor($data['rw'] ?? null);
+            $data['rt'] = $this->normalizeWilayahNomor($data['rt'] ?? null);
+            $data['beban'] = $this->normalizeNumericImportValue($data['beban'] ?? null);
+            $data['status'] = $this->normalizeRetribusiStatus($data['status'] ?? null) ?? 'Belum';
+
+            return $data;
+        }
+
         if ($module === 'pengurus') {
             $data['rw'] = $this->normalizeWilayahNomor($data['rw'] ?? null);
             $data['rt'] = $this->normalizeWilayahNomor($data['rt'] ?? null);
@@ -662,6 +693,10 @@ class ImportExportController extends Controller
     {
         if ($module === 'penduduk') {
             return $this->persistPendudukImportRow($data);
+        }
+
+        if ($module === 'retribusi-sampah') {
+            return $this->persistRetribusiSampahImportRow($data);
         }
 
         if ($module === 'pengurus') {
@@ -754,6 +789,48 @@ class ImportExportController extends Controller
             ];
 
             Penduduk::create($payload);
+
+            return 'created';
+        });
+    }
+
+    protected function persistRetribusiSampahImportRow(array $data): string
+    {
+        return DB::transaction(function () use ($data) {
+            $kelurahanId = $this->resolveDefaultImportKelurahanId();
+
+            if (! $kelurahanId) {
+                throw new \RuntimeException('Data kelurahan belum tersedia untuk mengaitkan wilayah RT/RW.');
+            }
+
+            $rwNomor = $this->normalizeWilayahNomor($data['rw'] ?? null);
+            $rtNomor = $this->normalizeWilayahNomor($data['rt'] ?? null);
+
+            if (! $rwNomor || ! $rtNomor) {
+                throw new \RuntimeException('Nomor RW dan RT wajib diisi.');
+            }
+
+            $rw = Rw::firstOrCreate([
+                'kelurahan_id' => $kelurahanId,
+                'nomor' => $rwNomor,
+            ]);
+
+            $rt = Rt::firstOrCreate([
+                'rw_id' => $rw->id,
+                'nomor' => $rtNomor,
+            ]);
+
+            \App\Models\RetribusiSampah::create([
+                'kelurahan_id' => $kelurahanId,
+                'rw_id' => $rw->id,
+                'rt_id' => $rt->id,
+                'npwr' => $data['npwr'],
+                'nama_nasabah' => $data['nama_nasabah'],
+                'no_skrd' => $data['no_skrd'] ?? null,
+                'alamat' => $data['alamat'] ?? null,
+                'beban' => $data['beban'] ?? 0,
+                'status' => $data['status'] ?? 'Belum',
+            ]);
 
             return 'created';
         });
@@ -957,6 +1034,77 @@ class ImportExportController extends Controller
         $value = Str::upper((string) $this->normalizeTextValue($value));
 
         return $value !== '' ? $value : null;
+    }
+
+    protected function normalizeRetribusiStatus(mixed $value): ?string
+    {
+        $value = Str::lower((string) $this->normalizeTextValue($value));
+
+        return match ($value) {
+            '', null => null,
+            'lunas' => 'Lunas',
+            'belum', 'belum lunas' => 'Belum',
+            default => Str::ucfirst($value),
+        };
+    }
+
+    protected function normalizeNumericImportValue(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return $this->normalizePlainNumber($value);
+        }
+
+        $value = preg_replace('/[^0-9,.\-]/', '', (string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^-?\d{1,3}(\.\d{3})+$/', $value) === 1) {
+            $value = str_replace('.', '', $value);
+        } elseif (preg_match('/^-?\d{1,3}(,\d{3})+$/', $value) === 1) {
+            $value = str_replace(',', '', $value);
+        } elseif (str_contains($value, ',') && str_contains($value, '.')) {
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        } elseif (str_contains($value, ',')) {
+            $value = str_replace(',', '.', $value);
+        }
+
+        if (! is_numeric($value)) {
+            return null;
+        }
+
+        return $this->normalizePlainNumber((float) $value);
+    }
+
+    protected function normalizePlainNumber(mixed $value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+
+        if (is_string($value) && is_numeric($value)) {
+            $value = (float) $value;
+        }
+
+        if (is_int($value)) {
+            return (string) $value;
+        }
+
+        if (is_float($value)) {
+            if (fmod($value, 1.0) === 0.0) {
+                return number_format($value, 0, '.', '');
+            }
+
+            return rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+        }
+
+        return (string) $value;
     }
 
     protected function parseTanggalLahirDariNik(mixed $nik): ?Carbon

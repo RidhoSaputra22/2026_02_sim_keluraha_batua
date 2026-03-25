@@ -240,22 +240,19 @@ return [
         'date_column' => 'created_at',
         'back_route'  => 'data-umum.retribusi-sampah.index',
         'with'        => ['kelurahan', 'rw', 'rt'],
-        'columns'     => ['npwr', 'nama_nasabah', 'no_skrd', 'alamat', 'rw', 'rt', 'beban', 'status', 'tahun', 'kelurahan', 'keterangan'],
-        'headers'     => ['NPWR', 'Nama', 'No SKRD', 'Alamat', 'RW', 'RT', 'Tagihan', 'Status', 'Tahun', 'Kelurahan', 'Keterangan'],
-        'required'    => ['npwr', 'nama_nasabah', 'rw_id', 'rt_id'],
+        'columns'     => ['npwr', 'nama_nasabah', 'no_skrd', 'alamat', 'rw', 'rt', 'beban', 'status'],
+        'headers'     => ['NPWR', 'NAMA', 'NO. SKRD', 'ALAMAT', 'RW', 'RT', 'TAGIHAN', 'KET (LUNAS/BELUM)'],
+        'required'    => ['npwr', 'nama_nasabah', 'rw', 'rt'],
         'resolvers'   => [
             'rt' => 'rt',
             'rw' => 'rw',
-            'kelurahan' => 'kelurahan'
+            'beban' => 'retribusi_beban',
+            'status' => 'retribusi_status',
         ],
-        'import_columns' => ['npwr', 'nama_nasabah', 'no_skrd', 'alamat', 'rw', 'rt', 'beban', 'status', 'tahun', 'kelurahan', 'keterangan'],
-        'import_headers' => ['NPWR', 'Nama', 'No SKRD', 'Alamat', 'RW', 'RT', 'Tagihan', 'Status', 'Tahun', 'Kelurahan', 'Keterangan'],
-        'importers' => [
-            'kelurahan_id' => 'lookup_kelurahan_id',
-            'rw_id'        => 'lookup_rw_id',
-            'rt_id'        => 'lookup_rt_id',
-        ],
+        'import_columns' => ['npwr', 'nama_nasabah', 'no_skrd', 'alamat', 'rw', 'rt', 'beban', 'status'],
+        'import_headers' => ['NPWR', 'NAMA', 'NO. SKRD', 'ALAMAT', 'RW', 'RT', 'TAGIHAN', 'KET (LUNAS/BELUM)'],
         'unique_by' => ['npwr'],
+        'example_row' => ['71.F.02.05.01.001', 'Alfamart (Batua)', '240', 'Jl. Batua Raya No.3', '05', '01', '268000', ''],
     ],
 
     // ── USAHA ────────────────────────────────────────────────────
