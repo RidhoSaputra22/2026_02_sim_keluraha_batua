@@ -18,7 +18,7 @@
             </p>
 
             <x-guest::ui.search-bar placeholder="Cari layanan, berita, atau informasi publik..." button-text="CARI" action="#">
-                <div class="mt-4 flex flex-wrap justify-center gap-2 text-sm">
+                <div class="mt-4 flex flex-wrap items-center     justify-center gap-2 text-sm">
                     <span class="opacity-80">Populer:</span>
                     <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full" href="#">Cek
                         KTP</a>
