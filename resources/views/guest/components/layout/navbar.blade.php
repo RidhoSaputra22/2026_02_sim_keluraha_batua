@@ -7,17 +7,18 @@
 
 @php
 $activeRoute = request()->route()?->getName() ?? '';
+$kelurahan = \App\Models\Kelurahan::first();
 
 $navItems = [
-    ['route' => 'guest.profil', 'label' => 'Profil'],
-    ['route' => 'guest.data-kelurahan', 'label' => 'Data Kelurahan'],
-    ['route' => 'guest.cek-data', 'label' => 'Cek Data'],
-    ['route' => 'guest.surat-online', 'label' => 'Surat Online'],
-    ['route' => 'guest.publikasi', 'label' => 'Publikasi'],
-    ['route' => 'guest.parawisata', 'label' => 'Parawisata'],
-    ['route' => 'guest.umkm', 'label' => 'UMKM'],
-    ['route' => 'guest.pengaduan', 'label' => 'Pengaduan'],
-    ['route' => 'guest.kontak', 'label' => 'Kontak'],
+    ['route' => 'guest.profil', 'label' => 'Profil', 'patterns' => ['guest.profil']],
+    ['route' => 'guest.data-kelurahan', 'label' => 'Data Kelurahan', 'patterns' => ['guest.data-kelurahan']],
+    ['route' => 'guest.cek-data', 'label' => 'Cek Data', 'patterns' => ['guest.cek-data']],
+    ['route' => 'guest.surat-online', 'label' => 'Surat Online', 'patterns' => ['guest.surat-online']],
+    ['route' => 'guest.publikasi', 'label' => 'Publikasi', 'patterns' => ['guest.publikasi', 'guest.berita.show']],
+    ['route' => 'guest.parawisata', 'label' => 'Pariwisata', 'patterns' => ['guest.parawisata']],
+    ['route' => 'guest.umkm', 'label' => 'UMKM', 'patterns' => ['guest.umkm']],
+    ['route' => 'guest.pengaduan', 'label' => 'Pengaduan', 'patterns' => ['guest.pengaduan']],
+    ['route' => 'guest.kontak', 'label' => 'Kontak', 'patterns' => ['guest.kontak']],
 ];
 @endphp
 
@@ -49,7 +50,7 @@ $navItems = [
                         <img src="{{ asset('logo.png') }}" alt="Logo" class="w-full h-full object-contain">
                     </div>
                     <div>
-                        <h1 class="font-bold text-lg leading-tight text-primary">Kelurahan Batua Raya</h1>
+                        <h1 class="font-bold text-lg leading-tight text-primary">{{ $kelurahan?->nama ?? 'Kelurahan Batua Raya' }}</h1>
                         <p class="text-xs text-slate-500">Pemerintahan Kota Makassar</p>
                     </div>
                 </a>
@@ -59,7 +60,7 @@ $navItems = [
                     @foreach ($navItems as $item)
                         <x-guest::layout.nav-link
                             href="{{ route($item['route']) }}"
-                            :active="$activeRoute === $item['route']">
+                            :active="request()->routeIs(...$item['patterns'])">
                             {{ $item['label'] }}
                         </x-guest::layout.nav-link>
                     @endforeach
@@ -80,7 +81,7 @@ $navItems = [
             <div class="px-4 py-3 space-y-1 bg-white">
                 @foreach ($navItems as $item)
                     <a href="{{ route($item['route']) }}"
-                       class="block px-3 py-2 rounded-lg transition-colors {{ $activeRoute === $item['route'] ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-slate-100' }}">
+                       class="block px-3 py-2 rounded-lg transition-colors {{ request()->routeIs(...$item['patterns']) ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-slate-100' }}">
                         {{ $item['label'] }}
                     </a>
                 @endforeach

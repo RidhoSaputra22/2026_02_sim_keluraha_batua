@@ -16,7 +16,7 @@ class RtRwPengurusSeeder extends Seeder
 {
     public function run(): void
     {
-        $kelurahan = Kelurahan::where('nama', 'Batua')->first();
+        $kelurahan = Kelurahan::first();
         $adminId   = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->first()?->id;
 
         $jabatanKetuaRw  = JabatanRtRw::where('nama', 'Ketua RW')->first();

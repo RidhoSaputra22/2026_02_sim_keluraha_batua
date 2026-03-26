@@ -251,6 +251,43 @@
             </li>
         @endif
 
+        @if ($user && $user->hasRole('admin'))
+            <li class="menu-title mt-3">
+                <span class="text-xs uppercase tracking-wider text-base-content/40">Website Publik</span>
+            </li>
+            <li>
+                <details {{ request()->routeIs('admin.website.*') ? 'open' : '' }}>
+                    <summary>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 21H5a2 2 0 01-2-2V8l7-5 7 5v11a2 2 0 01-2 2z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 21V9h6v12" />
+                        </svg>
+                        Website Publik
+                    </summary>
+                    <ul>
+                        <li><a href="{{ route('admin.website.berita.index') }}"
+                                class="{{ request()->routeIs('admin.website.berita.*') ? 'active' : '' }}">Berita</a>
+                        </li>
+                        <li><a href="{{ route('admin.website.dokumen-publik.index') }}"
+                                class="{{ request()->routeIs('admin.website.dokumen-publik.*') ? 'active' : '' }}">Dokumen
+                                Publik</a></li>
+                        <li><a href="{{ route('admin.website.layanan-surat.index') }}"
+                                class="{{ request()->routeIs('admin.website.layanan-surat.*') ? 'active' : '' }}">Layanan
+                                Surat</a></li>
+                        <li><a href="{{ route('admin.website.destinasi-wisata.index') }}"
+                                class="{{ request()->routeIs('admin.website.destinasi-wisata.*') ? 'active' : '' }}">Destinasi
+                                Wisata</a></li>
+                        <li><a href="{{ route('admin.website.pengaduan-warga.index') }}"
+                                class="{{ request()->routeIs('admin.website.pengaduan-warga.*') ? 'active' : '' }}">Pengaduan
+                                Warga</a></li>
+                    </ul>
+                </details>
+            </li>
+        @endif
+
 
 
         {{-- ============================================================ --}}

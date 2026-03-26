@@ -1,7 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\DashboardController as AdminDashboard;
+use App\Http\Controllers\Admin\BeritaController as AdminBeritaController;
+use App\Http\Controllers\Admin\DestinasiWisataController as AdminDestinasiWisataController;
+use App\Http\Controllers\Admin\DokumenPublikController as AdminDokumenPublikController;
+use App\Http\Controllers\Admin\LayananSuratController as AdminLayananSuratController;
 use App\Http\Controllers\Admin\PegawaiController;
+use App\Http\Controllers\Admin\PengaduanWargaController as AdminPengaduanWargaController;
 use App\Http\Controllers\Admin\PengurusController;
 use App\Http\Controllers\Admin\PetaLayerController;
 use App\Http\Controllers\Admin\ProfilWilayahController;
@@ -58,9 +63,12 @@ Route::get('/cek-data', [GuestController::class, 'cekData'])->name('guest.cek-da
 Route::post('/cek-data', [GuestController::class, 'cekDataSearch'])->name('guest.cek-data.search');
 Route::get('/surat-online', [GuestController::class, 'suratOnline'])->name('guest.surat-online');
 Route::get('/publikasi', [GuestController::class, 'publikasi'])->name('guest.publikasi');
+Route::get('/publikasi/{berita:slug}', [GuestController::class, 'showBerita'])->name('guest.berita.show');
+Route::get('/dokumen-publik/{dokumenPublik:slug}/unduh', [GuestController::class, 'downloadDokumenPublik'])->name('guest.publikasi.download');
 Route::get('/parawisata', [GuestController::class, 'parawisata'])->name('guest.parawisata');
 Route::get('/umkm', [GuestController::class, 'umkm'])->name('guest.umkm');
 Route::get('/pengaduan', [GuestController::class, 'pengaduan'])->name('guest.pengaduan');
+Route::post('/pengaduan', [GuestController::class, 'storePengaduan'])->name('guest.pengaduan.store');
 Route::get('/kontak', [GuestController::class, 'kontak'])->name('guest.kontak');
 
 
@@ -113,6 +121,25 @@ Route::middleware('auth')->group(function () {
 
         // Role (read-only)
         Route::get('roles', [AdminRoleController::class, 'index'])->name('roles.index');
+
+        // Website publik
+        Route::prefix('website')->name('website.')->group(function () {
+            Route::resource('berita', AdminBeritaController::class)
+                ->parameters(['berita' => 'berita'])
+                ->except(['show']);
+            Route::resource('dokumen-publik', AdminDokumenPublikController::class)
+                ->parameters(['dokumen-publik' => 'dokumenPublik'])
+                ->except(['show']);
+            Route::resource('layanan-surat', AdminLayananSuratController::class)
+                ->parameters(['layanan-surat' => 'layananSurat'])
+                ->except(['show']);
+            Route::resource('destinasi-wisata', AdminDestinasiWisataController::class)
+                ->parameters(['destinasi-wisata' => 'destinasiWisata'])
+                ->except(['show']);
+            Route::resource('pengaduan-warga', AdminPengaduanWargaController::class)
+                ->parameters(['pengaduan-warga' => 'pengaduanWarga'])
+                ->only(['index', 'show', 'update', 'destroy']);
+        });
     });
 
     // ╔══════════════════════════════════════════════════════════════╗

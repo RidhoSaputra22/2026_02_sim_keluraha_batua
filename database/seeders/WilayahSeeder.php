@@ -18,7 +18,7 @@ class WilayahSeeder extends Seeder
         // ─── Kelurahan Batua (dengan biodata) ─────────────────
         $kelurahan = Kelurahan::create([
             'kecamatan_id' => $kecamatan->id,
-            'nama' => 'Batua',
+            'nama' => 'Kelurahan Batua Raya',
             'kode_pos' => '90233',
             'luas_area' => 3.12,
             'alamat_kantor' => 'Jl. Batua Raya No. 1, Kec. Manggala, Kota Makassar',
@@ -37,13 +37,7 @@ class WilayahSeeder extends Seeder
         ]);
 
         // ─── Kelurahan lain di Kecamatan Manggala (referensi) ─
-        $kelurahanLain = [
-            'Antang',
-            'Bangkala',
-            'Borong',
-            'Manggala',
-            'Tamangapa',
-        ];
+        $kelurahanLain = [];
 
         foreach ($kelurahanLain as $nama) {
             Kelurahan::create([

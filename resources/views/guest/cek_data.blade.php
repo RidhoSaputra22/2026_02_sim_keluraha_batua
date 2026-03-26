@@ -13,7 +13,7 @@
 
         {{-- CEK DATA SECTION --}}
         <section class="py-12 px-4">
-            <div class="max-w-4xl mx-auto">
+            <div class="max-w-7xl mx-auto">
                 <x-guest::ui.card variant="bordered" padding="lg">
                     <x-slot:icon>person_search</x-slot:icon>
                     <x-slot:title>Cek Data Warga</x-slot:title>
@@ -70,11 +70,11 @@
         </section>
 
         {{-- DIVIDER --}}
-        <x-guest::ui.divider text="Atau" class="max-w-4xl mx-auto px-4" />
+        <x-guest::ui.divider text="Atau" class="max-w-7xl mx-auto px-4" />
 
         {{-- FORM INPUT DATA SECTION --}}
         <section class="pb-12 px-4">
-            <div class="max-w-4xl mx-auto">
+            <div class="max-w-7xl mx-auto">
                 <x-guest::ui.card variant="bordered" padding="lg">
                     <x-slot:icon>app_registration</x-slot:icon>
                     <x-slot:title>Formulir Input Data Mandiri</x-slot:title>
@@ -125,7 +125,7 @@
 
         {{-- INFO SECTION --}}
         <section class="pb-20 px-4">
-            <div class="max-w-4xl mx-auto">
+            <div class="max-w-7xl mx-auto">
                 <x-guest::ui.section-header title="Informasi Penting" subtitle="Hal yang perlu Anda ketahui" size="md" />
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

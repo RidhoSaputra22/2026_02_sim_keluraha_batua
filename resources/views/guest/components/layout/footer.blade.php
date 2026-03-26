@@ -17,6 +17,13 @@
 'year' => date('Y'),
 ])
 
+@php
+    $kelurahan = \App\Models\Kelurahan::first();
+    $address = $kelurahan?->alamat_kantor ?: $address;
+    $phone = $kelurahan?->no_telp ?: $phone;
+    $email = $kelurahan?->email ?: $email;
+@endphp
+
 <footer class="bg-white border-t border-slate-200 py-12 mt-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid md:grid-cols-3 gap-12">
@@ -28,7 +35,7 @@
                             <img src="{{ asset('logo.png') }}" alt="Logo" class="w-full h-full object-contain">
                         </div>
                         <div>
-                            <h1 class="font-bold text-lg leading-tight text-primary">Kelurahan Batua Raya</h1>
+                            <h1 class="font-bold text-lg leading-tight text-primary">{{ $kelurahan?->nama ?? 'Kelurahan Batua Raya' }}</h1>
                             <p class="text-xs text-slate-500">Pemerintahan Kota Makassar</p>
                         </div>
                     </a>

@@ -19,6 +19,7 @@ $sizeClass = match($size) {
 'md' => 'text-base',
 'lg' => 'text-2xl',
 'xl' => 'text-4xl',
+'2xl' => 'text-6xl',
 default => 'text-base'
 };
 @endphp

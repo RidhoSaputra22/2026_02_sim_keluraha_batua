@@ -1,157 +1,114 @@
 <x-guest::layout.app title="Kontak">
-
-    {{-- HERO SECTION --}}
     <x-guest::ui.hero size="lg" background="white">
         <x-slot:title>
-            Hubungi <span class="text-primary">Kami</span>
+            Hubungi <span class="text-primary">{{ $kelurahan?->nama ?? 'Kelurahan' }}</span>
         </x-slot:title>
 
         <x-slot:subtitle>
-            Punya pertanyaan atau ingin memberikan saran untuk kemajuan Kelurahan kita? Kami siap mendengarkan aspirasi dan melayani kebutuhan administrasi Anda.
+            Gunakan halaman ini untuk melihat informasi kontak resmi, jam layanan, dan jalur cepat menuju layanan surat, publikasi, maupun pengaduan warga.
         </x-slot:subtitle>
     </x-guest::ui.hero>
 
-    {{-- MAIN CONTENT --}}
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-
-            {{-- LEFT COLUMN: Contact Info --}}
-            <section class="lg:col-span-5 space-y-10">
-                <div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <span class="w-8 h-1 bg-primary rounded-full"></span>
-                        Informasi Kontak
-                    </h3>
-
-                    <div class="bg-white p-1 rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-                        <div class="aspect-video bg-slate-100 rounded-lg flex items-center justify-center">
-                            <x-guest::ui.icon name="map" size="xl" color="text-slate-400" />
-                        </div>
-                    </div>
-
-                    <div class="space-y-6">
-                        <x-guest::ui.contact-info
-                            icon="place"
-                            title="Alamat"
-                            content="Jl. Merdeka No. 123, Pusat Kota, Jakarta 12345"
-                        />
-
-                        <x-guest::ui.contact-info
-                            icon="call"
-                            title="Telepon"
-                            content="(021) 1234-5678"
-                            link="tel:02112345678"
-                        />
-
-                        <x-guest::ui.contact-info
-                            icon="email"
-                            title="Email"
-                            content="info@kelurahan-digital.go.id"
-                            link="mailto:info@kelurahan-digital.go.id"
-                        />
-
-                        <x-guest::ui.contact-info
-                            icon="schedule"
-                            title="Jam Operasional"
-                            content="Senin - Jumat: 08:00 - 16:00 WIB"
-                        />
-                    </div>
-                </div>
-
-                {{-- Social Media --}}
-                <div>
-                    <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                        <span class="w-8 h-1 bg-primary rounded-full"></span>
-                        Ikuti Kami
-                    </h3>
-
-                    <div class="flex gap-4">
-                        <a href="#" class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-all hover:scale-110">
-                            <x-guest::ui.icon name="facebook" />
-                        </a>
-                        <a href="#" class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-all hover:scale-110">
-                            <x-guest::ui.icon name="language" />
-                        </a>
-                        <a href="#" class="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-primary hover:text-white transition-all hover:scale-110">
-                            <x-guest::ui.icon name="camera_alt" />
-                        </a>
-                    </div>
-                </div>
-            </section>
-
-            {{-- RIGHT COLUMN: Contact Form --}}
-            <section class="lg:col-span-7">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+            <section class="lg:col-span-5 space-y-6">
                 <x-guest::ui.card variant="bordered" padding="lg">
-                    <x-slot:icon>send</x-slot:icon>
-                    <x-slot:title>Kirim Pesan</x-slot:title>
+                    <h3 class="text-xl font-bold text-slate-900 mb-6">Informasi Kontak</h3>
 
-                    <p class="text-slate-600 mb-8">
-                        Silakan isi formulir di bawah ini untuk menghubungi kami. Kami akan merespons pesan Anda secepatnya.
+                    <div class="space-y-5">
+                        <x-guest::ui.contact-info icon="place" title="Alamat"
+                            content="{{ $kelurahan?->alamat_kantor ?: 'Alamat kantor kelurahan belum diisi.' }}" />
+                        <x-guest::ui.contact-info icon="call" title="Telepon"
+                            content="{{ $kelurahan?->no_telp ?: 'Nomor telepon belum diisi.' }}"
+                            link="{{ $kelurahan?->no_telp ? 'tel:' . preg_replace('/\D+/', '', $kelurahan->no_telp) : null }}" />
+                        <x-guest::ui.contact-info icon="email" title="Email"
+                            content="{{ $kelurahan?->email ?: 'Email belum diisi.' }}"
+                            link="{{ $kelurahan?->email ? 'mailto:' . $kelurahan->email : null }}" />
+                        <x-guest::ui.contact-info icon="language" title="Website"
+                            content="{{ $kelurahan?->website ?: 'Website belum diisi.' }}"
+                            link="{{ $kelurahan?->website ?: null }}" />
+                        <x-guest::ui.contact-info icon="schedule" title="Jam Layanan"
+                            content="Senin - Jumat, pukul 08.00 - 16.00 WITA" />
+                    </div>
+                </x-guest::ui.card>
+
+                <x-guest::ui.card variant="bordered" padding="lg">
+                    <h3 class="text-xl font-bold text-slate-900 mb-4">Butuh Lokasi Kantor?</h3>
+                    <p class="text-sm text-slate-500 leading-6">
+                        Gunakan alamat resmi di atas saat membuka peta atau aplikasi navigasi favorit Anda.
                     </p>
-
-                    <form class="space-y-6" method="POST" action="#">
-                        @csrf
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <x-guest::ui.input
-                                name="name"
-                                label="Nama Lengkap"
-                                placeholder="Masukkan nama lengkap Anda"
-                                icon="person"
-                                :required="true"
-                            />
-
-                            <x-guest::ui.input
-                                name="email"
-                                type="email"
-                                label="Email"
-                                placeholder="email@example.com"
-                                icon="email"
-                                :required="true"
-                            />
-                        </div>
-
-                        <x-guest::ui.input
-                            name="phone"
-                            type="tel"
-                            label="Nomor Telepon (Opsional)"
-                            placeholder="081234567890"
-                            icon="phone"
-                        />
-
-                        <x-guest::ui.select
-                            name="subject"
-                            label="Subjek Pesan"
-                            :options="[
-                                ['value' => 'pengaduan', 'label' => 'Pengaduan'],
-                                ['value' => 'saran', 'label' => 'Saran & Kritik'],
-                                ['value' => 'informasi', 'label' => 'Permintaan Informasi'],
-                                ['value' => 'lainnya', 'label' => 'Lainnya'],
-                            ]"
-                            placeholder="Pilih subjek pesan"
-                            :required="true"
-                        />
-
-                        <x-guest::ui.textarea
-                            name="message"
-                            label="Pesan"
-                            placeholder="Tuliskan pesan Anda di sini..."
-                            rows="6"
-                            :required="true"
-                        />
-
-                        <x-slot:footer>
-                            <div class="flex justify-end">
-                                <x-guest::ui.button type="submit" size="lg" icon="send">
-                                    Kirim Pesan
-                                </x-guest::ui.button>
-                            </div>
-                        </x-slot:footer>
-                    </form>
                 </x-guest::ui.card>
             </section>
 
+            <section class="lg:col-span-7 space-y-6">
+                <x-guest::ui.card variant="bordered" padding="lg">
+                    <h3 class="text-2xl font-bold text-slate-900 mb-6">Akses Layanan Cepat</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <a href="{{ route('guest.surat-online') }}" class="rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <x-guest::ui.icon name="description" />
+                                </div>
+                                <h4 class="font-bold text-slate-900">Persyaratan Surat</h4>
+                            </div>
+                            <p class="text-sm text-slate-500">Cek daftar berkas untuk setiap layanan surat sebelum datang ke kantor kelurahan.</p>
+                        </a>
+
+                        <a href="{{ route('guest.publikasi') }}" class="rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <x-guest::ui.icon name="article" />
+                                </div>
+                                <h4 class="font-bold text-slate-900">Publikasi</h4>
+                            </div>
+                            <p class="text-sm text-slate-500">Lihat berita, pengumuman, dan dokumen publik terbaru dari kelurahan.</p>
+                        </a>
+
+                        <a href="{{ route('guest.umkm') }}" class="rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <x-guest::ui.icon name="storefront" />
+                                </div>
+                                <h4 class="font-bold text-slate-900">Direktori UMKM</h4>
+                            </div>
+                            <p class="text-sm text-slate-500">Temukan usaha lokal yang sudah terdata di sistem kelurahan.</p>
+                        </a>
+
+                        <a href="{{ route('guest.pengaduan') }}" class="rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                            <div class="flex items-center gap-3 mb-3">
+                                <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <x-guest::ui.icon name="campaign" />
+                                </div>
+                                <h4 class="font-bold text-slate-900">Pengaduan Warga</h4>
+                            </div>
+                            <p class="text-sm text-slate-500">Kirim laporan atau aspirasi warga melalui formulir online yang tersimpan di sistem.</p>
+                        </a>
+                    </div>
+                </x-guest::ui.card>
+
+                <x-guest::ui.card padding="lg" class="bg-primary ">
+                    <h3 class="text-2xl font-bold mb-3">Masih Perlu Bantuan?</h3>
+                    <p class=" leading-7 mb-6">
+                        Jika Anda belum menemukan informasi yang dicari, silakan hubungi petugas melalui kontak resmi
+                        di samping atau gunakan formulir pengaduan agar permintaan Anda masuk ke sistem.
+                    </p>
+                    <div class="flex flex-wrap gap-3">
+                        @if ($kelurahan?->no_telp)
+                            <x-guest::ui.button href="tel:{{ preg_replace('/\D+/', '', $kelurahan->no_telp) }}" variant="secondary"
+                                class="bg-white text-primary hover:bg-slate-100">
+                                Telepon Sekarang
+                            </x-guest::ui.button>
+                        @endif
+                        @if ($kelurahan?->email)
+                            <x-guest::ui.button href="mailto:{{ $kelurahan->email }}" variant="outline"
+                                class="border-white/30 text-white hover:bg-white/10">
+                                Kirim Email
+                            </x-guest::ui.button>
+                        @endif
+                    </div>
+                </x-guest::ui.card>
+            </section>
         </div>
     </main>
-
 </x-guest::layout.app>

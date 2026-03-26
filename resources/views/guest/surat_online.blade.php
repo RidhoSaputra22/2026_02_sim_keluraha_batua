@@ -1,161 +1,130 @@
 <x-guest::layout.app title="Surat Online">
-
-    {{-- HERO SECTION --}}
-    <x-guest::ui.hero size="xl" background="gradient">
+    <x-guest::ui.hero size="lg" background="white">
         <x-slot:title>
-            Layanan Surat <span class="text-primary">Mandiri Online</span>
+            Persyaratan <span class="text-primary">Layanan Surat</span>
         </x-slot:title>
 
         <x-slot:subtitle>
-            Urus administrasi kependudukan lebih cepat, mudah, dan transparan dari mana saja tanpa perlu mengantre di
-            kantor kelurahan.
+            Cari tahu persyaratan resmi untuk berbagai layanan surat yang tersedia di Kelurahan Batua Raya. Pastikan Anda datang dengan berkas lengkap sesuai kebutuhan layanan yang dipilih.
         </x-slot:subtitle>
 
         <x-slot:actions>
-            <x-guest::ui.search-bar placeholder="Cari layanan surat (cth: Surat Domisili...)" button-text="Cari" action="#">
-                <div class="flex flex-wrap justify-center gap-2 mt-4">
-                    <span class="text-xs font-medium text-slate-500 uppercase tracking-wide">Populer:</span>
-                    <a class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                        href="#">Domisili</a>
-                    <a class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                        href="#">SKU</a>
-                    <a class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
-                        href="#">SKTM</a>
-                </div>
-            </x-guest::ui.search-bar>
+            <x-guest::ui.search-bar action="{{ route('guest.surat-online') }}"
+                placeholder="Cari nama layanan surat atau kata kunci persyaratan..." button-text="Cari"
+                value="{{ request('q') }}" />
         </x-slot:actions>
     </x-guest::ui.hero>
 
-    {{-- MAIN CONTENT --}}
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {{-- Services Grid --}}
-            <div class="lg:col-span-2 space-y-8">
-                <div class="flex items-end justify-between">
-                    <div>
-                        <h2 class="text-2xl font-bold text-slate-900">Pilih Jenis Layanan</h2>
-                        <p class="text-slate-500">Pilih dokumen yang ingin Anda ajukan hari ini.</p>
-                    </div>
-                    <a class="text-sm font-semibold text-primary hover:underline flex items-center gap-1" href="#">
-                        Lihat Semua
-                        <x-guest::ui.icon name="arrow_forward" size="sm" />
-                    </a>
-                </div>
+            <div class="lg:col-span-2 space-y-6">
+                <x-guest::ui.section-header title="Daftar Layanan Surat"
+                    subtitle="Klik layanan untuk melihat rincian persyaratan, estimasi, biaya, dan catatan tambahan."
+                    size="md" />
 
-                @php
-                $services = [
-                ['icon' => 'home', 'title' => 'Surat Keterangan Domisili', 'desc' => 'Pernyataan resmi tempat tinggal
-                penduduk di wilayah kelurahan.'],
-                ['icon' => 'storefront', 'title' => 'SKU (Keterangan Usaha)', 'desc' => 'Surat bukti kepemilikan usaha
-                untuk keperluan perbankan/izin.'],
-                ['icon' => 'personal_injury', 'title' => 'Surat Kematian', 'desc' => 'Pelaporan peristiwa kematian untuk
-                pemutakhiran data kependudukan.'],
-                ['icon' => 'local_shipping', 'title' => 'Pindah Datang', 'desc' => 'Pengurusan administrasi perpindahan
-                penduduk antar wilayah.'],
-                ['icon' => 'receipt_long', 'title' => 'SKTM (Keterangan Tidak Mampu)', 'desc' => 'Dokumen pendukung
-                untuk bantuan sosial atau biaya pendidikan.'],
-                ['icon' => 'favorite', 'title' => 'Pengantar Nikah', 'desc' => 'Syarat awal administrasi pendaftaran
-                pernikahan di KUA/Catatan Sipil.'],
-                ];
-                @endphp
+                @forelse ($layananSurat as $layanan)
+                    <details class="rounded-2xl border border-slate-200 bg-white overflow-hidden"
+                        {{ $activeLayananSlug === $layanan->slug || (!$activeLayananSlug && $loop->first) ? 'open' : '' }}>
+                        <summary class="list-none cursor-pointer p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex items-start gap-4">
+                                <div class="w-14 h-14 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+                                    <x-guest::ui.icon name="{{ $layanan->icon ?: 'description' }}" />
+                                </div>
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900">{{ $layanan->nama }}</h3>
+                                    <p class="text-sm text-slate-500 mt-2">{{ $layanan->deskripsi ?: 'Persyaratan layanan dapat dicek pada panel berikut.' }}</p>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-500">
+                                {{ $layanan->persyaratans->count() }} persyaratan
+                            </div>
+                        </summary>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    @foreach($services as $svc)
-                    <x-guest::ui.card variant="bordered" padding="md"
-                        class="group hover:border-primary/50 hover:shadow-md transition-all">
-                        <div
-                            class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
-                            <x-guest::ui.icon name="{{ $svc['icon'] }}" />
+                        <div class="px-6 pb-6 border-t border-slate-100">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                                <x-guest::ui.card variant="bordered" padding="md">
+                                    <div class="text-sm text-slate-500">Estimasi</div>
+                                    <div class="text-lg font-bold text-slate-900 mt-1">{{ $layanan->estimasi_layanan ?: 'Menyesuaikan verifikasi petugas' }}</div>
+                                </x-guest::ui.card>
+                                <x-guest::ui.card variant="bordered" padding="md">
+                                    <div class="text-sm text-slate-500">Biaya</div>
+                                    <div class="text-lg font-bold text-slate-900 mt-1">{{ $layanan->biaya ?: 'Belum diinformasikan' }}</div>
+                                </x-guest::ui.card>
+                                <x-guest::ui.card variant="bordered" padding="md">
+                                    <div class="text-sm text-slate-500">Kontak</div>
+                                    <div class="text-lg font-bold text-slate-900 mt-1">{{ $layanan->kontak_petugas ?: 'Hubungi loket kelurahan' }}</div>
+                                </x-guest::ui.card>
+                            </div>
+
+                            <div class="mt-8">
+                                <h4 class="text-lg font-bold text-slate-900 mb-4">Persyaratan yang Harus Disiapkan</h4>
+                                <div class="space-y-3">
+                                    @forelse ($layanan->persyaratans as $syarat)
+                                        <div class="rounded-2xl border border-slate-100 p-4 flex items-start gap-3">
+                                            <div class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center mt-0.5">
+                                                <x-guest::ui.icon name="{{ $syarat->is_required ? 'check_circle' : 'info' }}" size="sm" />
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-slate-900">{{ $syarat->nama }}</p>
+                                                @if ($syarat->keterangan)
+                                                    <p class="text-sm text-slate-500 mt-1">{{ $syarat->keterangan }}</p>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <p class="text-sm text-slate-500">Belum ada persyaratan yang dipublikasikan.</p>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            @if ($layanan->catatan)
+                                <div class="mt-8 rounded-2xl bg-amber-50 border border-amber-100 p-5">
+                                    <h5 class="font-bold text-slate-900 mb-2">Catatan Tambahan</h5>
+                                    <p class="text-sm text-slate-600 leading-6">{{ $layanan->catatan }}</p>
+                                </div>
+                            @endif
                         </div>
-                        <h3 class="text-lg font-bold text-slate-900 mb-2">{{ $svc['title'] }}</h3>
-                        <p class="text-sm text-slate-500 mb-6">{{ $svc['desc'] }}</p>
-                        <x-guest::ui.button variant="outline"
-                            class="w-full group-hover:bg-primary group-hover:text-white group-hover:border-primary">
-                            Buat Sekarang
-                        </x-guest::ui.button>
+                    </details>
+                @empty
+                    <x-guest::ui.card variant="bordered" padding="lg" class="text-center">
+                        <x-guest::ui.icon name="description" size="xl" color="text-slate-300" class="mb-4" />
+                        <p class="text-lg font-semibold text-slate-900">Belum ada layanan surat yang dipublikasikan.</p>
+                        <p class="text-sm text-slate-500 mt-2">Admin dapat menambahkan layanan dan daftar persyaratannya dari panel website publik.</p>
                     </x-guest::ui.card>
-                    @endforeach
-                </div>
+                @endforelse
             </div>
 
-            {{-- Sidebar Widgets --}}
-            <div class="space-y-6 ">
-                {{-- Tracking Widget --}}
-                <x-guest::ui.card variant="bordered" padding="lg" class=" top-24">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="w-10 h-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                            <x-guest::ui.icon name="track_changes" />
+            <div class="space-y-6">
+                <x-guest::ui.card variant="bordered" padding="lg">
+                    <h3 class="text-xl font-bold text-slate-900 mb-4">Cara Menggunakan Halaman Ini</h3>
+                    <div class="space-y-4 text-sm text-slate-600">
+                        <div class="flex items-start gap-3">
+                            <x-guest::ui.icon name="search" size="sm" color="text-primary" class="mt-1" />
+                            <p>Cari nama layanan surat yang Anda butuhkan.</p>
                         </div>
-                        <h3 class="font-bold text-slate-900">Lacak Status</h3>
-                    </div>
-                    <p class="text-sm text-slate-500 mb-4">Masukkan ID pengajuan untuk melihat progress dokumen Anda.
-                    </p>
-                    <div class="space-y-3">
-                        <x-guest::ui.input name="tracking_id" label="ID Pengajuan" placeholder="CONTOH: REQ-2023-XXXX" />
-                        <x-guest::ui.button class="w-full shadow-lg shadow-primary/20">Cek Status Pengajuan</x-guest::ui.button>
-                    </div>
-
-                    <div class="mt-8 pt-8 border-t border-slate-100">
-                        <h4 class="text-sm font-bold text-slate-900 mb-4">Mengapa Menggunakan Online?</h4>
-                        <ul class="space-y-3">
-                            @foreach(['Proses verifikasi lebih cepat', 'Pantau status secara real-time', 'Dokumen
-                            digital ber-QR Code'] as $benefit)
-                            <li class="flex items-start gap-2 text-sm text-slate-600">
-                                <x-guest::ui.icon name="check_circle" size="sm" color="text-primary" class="mt-0.5" />
-                                {{ $benefit }}
-                            </li>
-                            @endforeach
-                        </ul>
+                        <div class="flex items-start gap-3">
+                            <x-guest::ui.icon name="fact_check" size="sm" color="text-primary" class="mt-1" />
+                            <p>Periksa semua persyaratan dan pastikan berkas lengkap sebelum datang ke kantor.</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <x-guest::ui.icon name="support_agent" size="sm" color="text-primary" class="mt-1" />
+                            <p>Jika ragu, hubungi kontak petugas yang tercantum pada layanan terkait.</p>
+                        </div>
                     </div>
                 </x-guest::ui.card>
 
-                {{-- Help Banner --}}
-                <div
-                    class="bg-gradient-to-br from-primary to-blue-700 rounded-xl p-6 text-white overflow-hidden relative group">
-                    <div
-                        class="absolute -right-4 -bottom-4 opacity-20 transform group-hover:scale-110 transition-transform">
-                        <x-guest::ui.icon name="support_agent" class="!text-[8rem]" />
-                    </div>
-                    <h4 class="text-lg font-bold mb-2 relative z-10">Butuh Bantuan?</h4>
-                    <p class="text-sm text-white/80 mb-4 relative z-10">Hubungi petugas pelayanan kami melalui WhatsApp
-                        untuk panduan lebih lanjut.</p>
-                    <x-guest::ui.button variant="secondary" class="bg-white text-primary hover:bg-slate-100 relative z-10">
-                        Chat Sekarang
+                <x-guest::ui.card padding="lg" class="bg-primary ">
+                    <h3 class="text-xl font-bold mb-2">Butuh Bantuan?</h3>
+                    <p class=" text-sm leading-6 mb-5">
+                        Jika persyaratan belum jelas, silakan datang ke kantor kelurahan atau buka halaman kontak untuk
+                        informasi layanan lebih lanjut.
+                    </p>
+                    <x-guest::ui.button href="{{ route('guest.kontak') }}" variant="secondary"
+                        class="bg-white text-primary hover:bg-slate-100">
+                        Hubungi Kelurahan
                     </x-guest::ui.button>
-                </div>
+                </x-guest::ui.card>
             </div>
         </div>
-
-        {{-- HOW-TO GUIDE --}}
-        <section class="mt-24">
-            <x-guest::ui.section-header title="3 Langkah Mudah" subtitle="Panduan pengajuan surat online tanpa ribet."
-                size="lg" />
-
-            @php
-            $steps = [
-            ['icon' => 'edit_note', 'num' => '1', 'title' => 'Isi Formulir', 'desc' => 'Lengkapi data diri dan unggah
-            dokumen pendukung yang diperlukan.'],
-            ['icon' => 'verified_user', 'num' => '2', 'title' => 'Verifikasi Data', 'desc' => 'Petugas kelurahan akan
-            meninjau dan memvalidasi pengajuan Anda.'],
-            ['icon' => 'cloud_download', 'num' => '3', 'title' => 'Unduh Dokumen', 'desc' => 'Setelah disetujui, surat
-            dapat langsung diunduh dalam format PDF atau diambil.'],
-            ];
-            @endphp
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-12 relative">
-                <div class="hidden md:block absolute top-12 left-0 w-full h-0.5 bg-slate-200 z-0"></div>
-                @foreach($steps as $step)
-                <div class="relative z-10 text-center">
-                    <div
-                        class="w-24 h-24 bg-white border-4 border-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl ring-8 ring-background-light">
-                        <x-guest::ui.icon name="{{ $step['icon'] }}" size="xl" color="text-primary" />
-                    </div>
-                    <h4 class="text-lg font-bold text-slate-900 mb-2">{{ $step['num'] }}. {{ $step['title'] }}</h4>
-                    <p class="text-sm text-slate-500 max-w-xs mx-auto">{{ $step['desc'] }}</p>
-                </div>
-                @endforeach
-            </div>
-        </section>
     </main>
-
 </x-guest::layout.app>

@@ -22,7 +22,7 @@ class DataUmumSeeder extends Seeder
 {
     public function run(): void
     {
-        $kelurahan = Kelurahan::where('nama', 'Batua')->first();
+        $kelurahan = Kelurahan::first();
         $petugasId = User::whereHas('role', fn($q) => $q->where('name', 'admin'))->first()?->id;
         $now = now();
 

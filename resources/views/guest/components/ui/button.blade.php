@@ -12,6 +12,7 @@
 'variant' => 'primary', // primary, secondary, outline, ghost
 'size' => 'md', // sm, md, lg
 'type' => 'button',
+'href' => null,
 'icon' => null,
 'iconPosition' => 'right', // left, right
 'loading' => false,
@@ -37,6 +38,19 @@ $sizeClasses = [
 $classes = $baseClasses . ' ' . $variantClasses[$variant] . ' ' . $sizeClasses[$size];
 @endphp
 
+@if($href)
+<a href="{{ $href }}" class="{{ $classes }}" {{ $attributes->merge(['class' => '']) }}>
+    @if($icon && $iconPosition === 'left' && !$loading)
+    <x-guest::ui.icon :name="$icon" size="sm" color="inherit" />
+    @endif
+
+    {{ $slot }}
+
+    @if($icon && $iconPosition === 'right' && !$loading)
+    <x-guest::ui.icon :name="$icon" size="sm" color="inherit" />
+    @endif
+</a>
+@else
 <button type="{{ $type }}" class="{{ $classes }}" {{ $attributes->merge(['class' => '']) }}
     {{ $loading ? 'disabled' : '' }}>
     @if($loading)
@@ -58,3 +72,4 @@ $classes = $baseClasses . ' ' . $variantClasses[$variant] . ' ' . $sizeClasses[$
     <x-guest::ui.icon :name="$icon" size="sm" color="inherit" />
     @endif
 </button>
+@endif
