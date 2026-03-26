@@ -79,7 +79,8 @@ class PublicWebsiteTest extends TestCase
         $this->get(route('guest.welcome'))
             ->assertOk()
             ->assertSee($berita->judul)
-            ->assertSee($layanan->nama);
+            ->assertSee($dokumen->judul)
+            ->assertSee('Taman Kelurahan');
 
         $this->get(route('guest.surat-online'))
             ->assertOk()

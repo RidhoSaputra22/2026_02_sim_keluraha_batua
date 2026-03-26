@@ -36,6 +36,7 @@ class DatabaseSeeder extends Seeder
             PendudukKeluargaSeeder::class,      // 15 keluarga, ~50 penduduk, KTP tercetak
             RtRwPengurusSeeder::class,          // Pengurus RT/RW
             DataUmumSeeder::class,              // UMKM, sekolah, faskes, tempat ibadah, dll.
+            WebsiteGuestSeeder::class,          // Konten website publik: berita, dokumen, layanan surat, wisata
         ]);
 
         echo '✅ Database seeding completed successfully.'.PHP_EOL;
