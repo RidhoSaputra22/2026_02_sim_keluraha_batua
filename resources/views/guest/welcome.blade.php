@@ -7,28 +7,29 @@
                 src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUC9Hwtv_EXSKYSAlBT4bHA7FQMlbje-rVBN6IoULW4hXdJtYK4wRVoGDkxXvj0EqHiuMEryN7T73OHY51E6Ohpos84Sb6PKodwGkqDigsKsRIJlb3jpiNKh3EWK7MANm5wN-dRDQuhwip0xvSAN7HX8i5QC34rVmFRc0QLlk0ct07U4oKQvd2TwctczmS9aRP1aMYOecH0BF9BXwZ8esnksvNjv1cE5-y3HjaDCJjvoej0k93Ezz1Wa4wivGeFgdwrWdIB-S6bhp-" />
             <div class="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/40"></div>
         </div>
-        <div class="relative z-10 max-w-4xl px-4 text-center text-white">
+        <div class="relative z-10 max-w-7xl px-4 text-center text-white">
             <h1 class="text-5xl font-extrabold mb-6 leading-tight">
                 Selamat Datang di Website Resmi <br />
                 <span class="text-yellow-300">Kelurahan Batua Raya</span>
-                </h1>
+            </h1>
             <p class="text-xl mb-10 opacity-90 font-light max-w-2xl mx-auto">
                 Akses informasi publik, layanan administrasi, dan kabar terkini lingkungan Kelurahan secara cepat,
                 transparan, dan akuntabel.
             </p>
 
-            <x-guest::ui.search-bar placeholder="Cari layanan, berita, atau informasi publik..." button-text="CARI" action="#">
+            <x-guest::ui.search-bar action="{{ route('guest.search') }}"
+                placeholder="Cari layanan, berita, dokumen, UMKM, atau wisata..." button-text="CARI">
                 <div class="mt-4 flex flex-wrap items-center     justify-center gap-2 text-sm">
                     <span class="opacity-80">Populer:</span>
-                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full" href="#">Cek
-                        KTP</a>
-                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full" href="#">Izin
-                        Usaha</a>
-                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full" href="#">Bantuan
-                        Sosial</a>
-                        </div>
-                    </x-guest::ui.search-bar>
+                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
+                        href="{{ route('guest.search', ['q' => 'cek ktp']) }}">Cek KTP</a>
+                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
+                        href="{{ route('guest.search', ['q' => 'izin usaha']) }}">Izin Usaha</a>
+                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
+                        href="{{ route('guest.search', ['q' => 'surat online']) }}">Surat Online</a>
                 </div>
+            </x-guest::ui.search-bar>
+        </div>
     </section>
 
     {{-- LAYANAN UNGGULAN --}}
@@ -36,21 +37,23 @@
         <x-guest::ui.section-header title="Layanan Unggulan"
             subtitle="Pilih jenis layanan masyarakat yang Anda butuhkan di bawah ini." size="md" />
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <x-guest::ui.card variant="bordered" padding="lg"
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <a href="/layanan/administrasi-kependudukan">
+                <x-guest::ui.card variant="bordered" padding="lg"
                 class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                 <div
                     class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
                     <x-guest::ui.icon name="badge" size="lg" color="text-primary group-hover:text-white" />
-                    </div>
+                </div>
                 <h3 class="text-xl font-bold mb-3 text-slate-900">Adm. Kependudukan</h3>
                 <p class="text-slate-500 text-sm leading-relaxed mb-6">Pengurusan KTP, KK, Akta Kelahiran, dan Surat
                     Pindah domisili.</p>
                 <div class="flex items-center text-primary font-bold text-sm">
                     LIHAT DETAIL
                     <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
-                    </div>
-                </x-guest::ui.card>
+                </div>
+            </x-guest::ui.card>
+            </a>
 
             <x-guest::ui.card variant="bordered" padding="lg"
                 class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
@@ -65,28 +68,16 @@
                     LIHAT DETAIL
                     <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
                 </div>
-                    </x-guest::ui.card>
-
-            <x-guest::ui.card variant="bordered" padding="lg"
-                class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
-                <div
-                    class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
-                    <x-guest::ui.icon name="volunteer_activism" size="lg" color="text-primary group-hover:text-white" />
-                </div>
-                <h3 class="text-xl font-bold mb-3 text-slate-900">Bantuan Sosial</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">Informasi dan pendaftaran bantuan sosial, BPJS
-                    PBI, dan BLT.</p>
-                <div class="flex items-center text-primary font-bold text-sm">
-                    LIHAT DETAIL
-                    <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
-                </div>
             </x-guest::ui.card>
 
+
+
             <x-guest::ui.card variant="bordered" padding="lg"
                 class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                 <div
                     class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
-                    <x-guest::ui.icon name="report_problem" size="lg" color="text-primary group-hover:text-white" />
+                    <x-guest::ui.icon name="report_problem" size="lg"
+                        color="text-primary group-hover:text-white" />
                 </div>
                 <h3 class="text-xl font-bold mb-3 text-slate-900">Pengaduan</h3>
                 <p class="text-slate-500 text-sm leading-relaxed mb-6">Sampaikan keluhan dan laporan warga terkait
@@ -104,9 +95,11 @@
             <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
                 <div>
                     <h2 class="text-3xl font-bold text-slate-900">Berita & Informasi Terkini</h2>
-                    <p class="text-slate-500 mt-2">Konten ini ditarik langsung dari modul berita dan publikasi yang dikelola admin.</p>
+                    <p class="text-slate-500 mt-2">Konten ini ditarik langsung dari modul berita dan publikasi yang
+                        dikelola admin.</p>
                 </div>
-                <a href="{{ route('guest.publikasi') }}" class="text-primary font-semibold hover:underline">Lihat semua publikasi</a>
+                <a href="{{ route('guest.publikasi') }}" class="text-primary font-semibold hover:underline">Lihat semua
+                    publikasi</a>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -126,12 +119,14 @@
                             <x-guest::ui.badge variant="primary" size="sm" class="mb-3">
                                 {{ \App\Models\Berita::kategoriOptions()[$item->kategori] ?? ucfirst($item->kategori) }}
                             </x-guest::ui.badge>
-                            <div class="text-sm text-slate-400 mb-3">{{ $item->published_at?->translatedFormat('d F Y') }}</div>
+                            <div class="text-sm text-slate-400 mb-3">
+                                {{ $item->published_at?->translatedFormat('d F Y') }}</div>
                             <h3 class="text-xl font-bold text-slate-900 leading-snug mb-3">{{ $item->judul }}</h3>
                             <p class="text-sm text-slate-500 leading-6 mb-5">
                                 {{ $item->ringkasan ?: \Illuminate\Support\Str::limit(strip_tags($item->isi), 140) }}
                             </p>
-                            <x-guest::ui.button href="{{ route('guest.berita.show', $item) }}" variant="ghost" class="!px-0">
+                            <x-guest::ui.button href="{{ route('guest.berita.show', $item) }}" variant="ghost"
+                                class="!px-0">
                                 Baca selengkapnya
                             </x-guest::ui.button>
                         </div>
@@ -139,7 +134,8 @@
                 @empty
                     <div class="lg:col-span-3">
                         <x-guest::ui.card variant="bordered" padding="lg" class="text-center">
-                            <x-guest::ui.icon name="newspaper" size="xl" color="text-slate-300" class="mb-4" />
+                            <x-guest::ui.icon name="newspaper" size="xl" color="text-slate-300"
+                                class="mb-4" />
                             <p class="text-lg font-semibold text-slate-900">Belum ada berita yang dipublikasikan.</p>
                         </x-guest::ui.card>
                     </div>
@@ -152,15 +148,16 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2">
                 <x-guest::ui.section-header title="Rekomendasi Kelurahan"
-                    subtitle="Sorotan cepat untuk destinasi lokal dan dokumen yang sering dibutuhkan warga." size="md" />
+                    subtitle="Sorotan cepat untuk destinasi lokal dan dokumen yang sering dibutuhkan warga."
+                    size="md" />
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     @forelse ($destinasiUnggulan as $destinasi)
                         <x-guest::ui.card variant="bordered" padding="none" class="overflow-hidden h-full">
                             <div class="aspect-[16/10] bg-slate-100">
                                 @if ($destinasi->gambar)
-                                    <img src="{{ asset('storage/' . $destinasi->gambar) }}" alt="{{ $destinasi->nama }}"
-                                        class="w-full h-full object-cover">
+                                    <img src="{{ asset('storage/' . $destinasi->gambar) }}"
+                                        alt="{{ $destinasi->nama }}" class="w-full h-full object-cover">
                                 @else
                                     <div class="w-full h-full flex items-center justify-center bg-primary/5">
                                         <x-guest::ui.icon name="place" size="xl" color="text-primary" />
@@ -174,7 +171,9 @@
                                 <h3 class="text-lg font-bold text-slate-900 mb-2">{{ $destinasi->nama }}</h3>
                                 <p class="text-sm text-slate-500 leading-6">{{ $destinasi->ringkasan }}</p>
                                 <div class="mt-5">
-                                    <x-guest::ui.button href="{{ route('guest.parawisata', ['q' => $destinasi->nama]) }}" variant="outline">
+                                    <x-guest::ui.button
+                                        href="{{ route('guest.parawisata', ['q' => $destinasi->nama]) }}"
+                                        variant="outline">
                                         Lihat di Halaman Wisata
                                     </x-guest::ui.button>
                                 </div>
@@ -192,14 +191,16 @@
                 <x-guest::ui.card variant="bordered" padding="lg" class="h-full">
                     <div class="flex items-center justify-between gap-3 mb-6">
                         <h3 class="text-xl font-bold text-slate-900">Dokumen Terbaru</h3>
-                        <a href="{{ route('guest.publikasi') }}" class="text-sm text-primary font-semibold hover:underline">Lihat semua</a>
+                        <a href="{{ route('guest.publikasi') }}"
+                            class="text-sm text-primary font-semibold hover:underline">Lihat semua</a>
                     </div>
 
                     <div class="space-y-4">
                         @forelse ($dokumenPublik as $dokumen)
                             <div class="rounded-2xl border border-slate-100 p-4">
                                 <div class="flex items-start gap-3">
-                                    <div class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <div
+                                        class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                         <x-guest::ui.icon name="description" />
                                     </div>
                                     <div class="flex-1 min-w-0">
@@ -212,7 +213,8 @@
                                     </div>
                                 </div>
                                 <div class="mt-4">
-                                    <x-guest::ui.button href="{{ route('guest.publikasi.download', $dokumen) }}" variant="outline" class="w-full">
+                                    <x-guest::ui.button href="{{ route('guest.publikasi.download', $dokumen) }}"
+                                        variant="outline" class="w-full">
                                         Unduh Dokumen
                                     </x-guest::ui.button>
                                 </div>

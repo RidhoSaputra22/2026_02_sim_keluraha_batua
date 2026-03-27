@@ -5,6 +5,7 @@ use App\Http\Controllers\Guest\GuestController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [GuestController::class, 'welcome'])->name('guest.welcome');
+Route::get('/pencarian', [GuestController::class, 'globalSearch'])->name('guest.search');
 Route::get('/profil', [GuestController::class, 'profil'])->name('guest.profil');
 Route::get('/data-kelurahan', [GuestController::class, 'dataKelurahan'])->name('guest.data-kelurahan');
 Route::get('/cek-data', [GuestController::class, 'cekData'])->name('guest.cek-data');

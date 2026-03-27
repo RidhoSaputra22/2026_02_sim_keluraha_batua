@@ -36,8 +36,19 @@ $sizeClasses = [
 $containerClasses = $shadow ? 'shadow-xl shadow-primary/10' : 'shadow-sm';
 @endphp
 
-<form action="{{ $action }}" method="{{ $method }}" class="relative w-full mx-auto">
-    @csrf
+@php
+    $httpMethod = strtoupper($method);
+    $formMethod = in_array($httpMethod, ['GET', 'POST'], true) ? $httpMethod : 'POST';
+@endphp
+
+<form action="{{ $action }}" method="{{ $formMethod }}" class="relative w-full mx-auto">
+    @if ($httpMethod !== 'GET')
+        @csrf
+    @endif
+
+    @if (! in_array($httpMethod, ['GET', 'POST'], true))
+        @method($httpMethod)
+    @endif
 
     <div class="flex items-center bg-white p-2 rounded-xl border border-slate-200 {{ $containerClasses }}">
         @if($icon)
