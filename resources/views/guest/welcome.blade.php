@@ -26,7 +26,7 @@
                     <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
                         href="{{ route('guest.search', ['q' => 'izin usaha']) }}">Izin Usaha</a>
                     <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
-                        href="{{ route('guest.search', ['q' => 'surat online']) }}">Surat Online</a>
+                        href="{{ route('guest.search', ['q' => 'administrasi kependudukan']) }}">Administrasi</a>
                 </div>
             </x-guest::ui.search-bar>
         </div>
@@ -38,55 +38,59 @@
             subtitle="Pilih jenis layanan masyarakat yang Anda butuhkan di bawah ini." size="md" />
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <a href="/layanan/administrasi-kependudukan">
+            <a href="{{ route('guest.surat-online') }}" class="block">
                 <x-guest::ui.card variant="bordered" padding="lg"
-                class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
-                <div
-                    class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
-                    <x-guest::ui.icon name="badge" size="lg" color="text-primary group-hover:text-white" />
-                </div>
-                <h3 class="text-xl font-bold mb-3 text-slate-900">Adm. Kependudukan</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">Pengurusan KTP, KK, Akta Kelahiran, dan Surat
-                    Pindah domisili.</p>
-                <div class="flex items-center text-primary font-bold text-sm">
-                    LIHAT DETAIL
-                    <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
-                </div>
-            </x-guest::ui.card>
+                    class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
+                    <div
+                        class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <x-guest::ui.icon name="badge" size="lg" color="text-primary group-hover:text-white" />
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Adm. Kependudukan</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                        Pengurusan KTP, KK, akta, domisili, surat usaha, SKTM, dan surat keterangan warga lainnya.
+                    </p>
+                    <div class="flex items-center text-primary font-bold text-sm">
+                        LIHAT DETAIL
+                        <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
+                    </div>
+                </x-guest::ui.card>
             </a>
 
-            <x-guest::ui.card variant="bordered" padding="lg"
-                class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
-                <div
-                    class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
-                    <x-guest::ui.icon name="store" size="lg" color="text-primary group-hover:text-white" />
-                </div>
-                <h3 class="text-xl font-bold mb-3 text-slate-900">Perizinan Usaha</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">Surat Izin Usaha Mikro (IUMK) dan rekomendasi
-                    usaha lainnya.</p>
-                <div class="flex items-center text-primary font-bold text-sm">
-                    LIHAT DETAIL
-                    <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
-                </div>
-            </x-guest::ui.card>
+            <a href="{{ route('guest.umkm') }}" class="block">
+                <x-guest::ui.card variant="bordered" padding="lg"
+                    class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
+                    <div
+                        class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <x-guest::ui.icon name="store" size="lg" color="text-primary group-hover:text-white" />
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">UMKM & Usaha Warga</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">
+                        Direktori usaha lokal, sektor UMKM, dan kontak pemilik usaha yang terdata di kelurahan.
+                    </p>
+                    <div class="flex items-center text-primary font-bold text-sm">
+                        LIHAT DETAIL
+                        <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
+                    </div>
+                </x-guest::ui.card>
+            </a>
 
-
-
-            <x-guest::ui.card variant="bordered" padding="lg"
-                class="group hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
-                <div
-                    class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
-                    <x-guest::ui.icon name="report_problem" size="lg"
-                        color="text-primary group-hover:text-white" />
-                </div>
-                <h3 class="text-xl font-bold mb-3 text-slate-900">Pengaduan</h3>
-                <p class="text-slate-500 text-sm leading-relaxed mb-6">Sampaikan keluhan dan laporan warga terkait
-                    fasilitas umum atau keamanan.</p>
-                <div class="flex items-center text-primary font-bold text-sm">
-                    LIHAT DETAIL
-                    <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
-                </div>
-            </x-guest::ui.card>
+            <a href="{{ route('guest.pengaduan') }}" class="block">
+                <x-guest::ui.card variant="bordered" padding="lg"
+                    class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
+                    <div
+                        class="w-16 h-16 bg-primary/10 rounded-xl flex items-center justify-center mb-6 group-hover:bg-primary transition-colors">
+                        <x-guest::ui.icon name="report_problem" size="lg"
+                            color="text-primary group-hover:text-white" />
+                    </div>
+                    <h3 class="text-xl font-bold mb-3 text-slate-900">Pengaduan</h3>
+                    <p class="text-slate-500 text-sm leading-relaxed mb-6">Sampaikan keluhan dan laporan warga terkait
+                        fasilitas umum atau keamanan.</p>
+                    <div class="flex items-center text-primary font-bold text-sm">
+                        LIHAT DETAIL
+                        <x-guest::ui.icon name="arrow_forward" size="sm" class="ml-2" />
+                    </div>
+                </x-guest::ui.card>
+            </a>
         </div>
     </section>
 

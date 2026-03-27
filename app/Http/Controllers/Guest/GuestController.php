@@ -90,7 +90,6 @@ class GuestController extends Controller
         return view('guest.search', [
             'search' => $search,
             'results' => $results,
-            'resultGroups' => $resultGroups,
             'summaryCards' => $summaryCards,
             'popularKeywords' => $this->guestPopularKeywords(),
             'shortcutLinks' => $this->guestShortcutLinks(),
@@ -142,7 +141,11 @@ class GuestController extends Controller
 
     public function cekData()
     {
-        return view('guest.cek_data');
+        return view('guest.cek_data', [
+            'totalPenduduk' => Penduduk::count(),
+            'totalKK' => Keluarga::count(),
+            'totalRw' => Rw::count(),
+        ]);
     }
 
     public function cekDataSearch()
@@ -151,22 +154,28 @@ class GuestController extends Controller
             'nik' => ['required', 'string', 'size:16', 'regex:/^\d{16}$/'],
         ]);
 
-        $penduduk = Penduduk::where('nik', $validated['nik'])->first();
+        $penduduk = Penduduk::with(['keluarga', 'rt.rw'])
+            ->where('nik', $validated['nik'])
+            ->first();
 
         if (! $penduduk) {
             return back()->with('error', 'Data dengan NIK tersebut tidak ditemukan.')->withInput();
         }
 
         return back()->with('result', [
-            'nik' => $penduduk->nik,
-            'nama' => $penduduk->nama,
-            'alamat' => $penduduk->alamat,
-            'jenis_kelamin' => $penduduk->jenis_kelamin,
-            'agama' => $penduduk->agama,
-            'status_kawin' => $penduduk->status_kawin,
-            'rt' => $penduduk->rt?->nomor,
-            'rw' => $penduduk->rt?->rw?->nomor,
-        ])->withInput();
+            'nik' => $this->maskSensitiveNumber($penduduk->nik),
+            'nama' => $this->maskSensitiveWords($penduduk->nama),
+            'no_kk' => $this->maskSensitiveNumber($penduduk->keluarga?->no_kk ?: '-'),
+            'alamat' => $this->maskSensitiveWords($penduduk->alamat ?: '-', 2),
+            'jenis_kelamin' => $this->formatPendudukJenisKelamin($penduduk->jenis_kelamin),
+            'agama' => $this->formatPendudukText($penduduk->agama),
+            'status_kawin' => $this->formatPendudukText($penduduk->status_kawin),
+            'pendidikan' => $this->formatPendudukText($penduduk->pendidikan),
+            'pekerjaan' => $this->formatPendudukText($penduduk->pekerjaan),
+            'status_data' => $this->formatPendudukStatus($penduduk->status_data),
+            'rt' => $penduduk->rt?->nomor ?: '-',
+            'rw' => $penduduk->rt?->rw?->nomor ?: '-',
+        ])->withInput()->withFragment('cek-data-result');
     }
 
     public function suratOnline(Request $request)
@@ -387,23 +396,38 @@ class GuestController extends Controller
 
     private function applyGuestLike(Builder $query, array $columns, string $search): void
     {
-        $words = array_values(array_filter(preg_split('/\s+/', trim($search))));
+        $normalizedSearch = Str::lower(trim($search));
+        $words = array_values(array_filter(
+            array_map(static fn (string $word) => Str::lower($word), preg_split('/\s+/', trim($search)) ?: [])
+        ));
 
-        $query->where(function (Builder $outer) use ($columns, $search, $words) {
+        $query->where(function (Builder $outer) use ($columns, $normalizedSearch, $words) {
             foreach ($columns as $column) {
-                $outer->orWhere($column, 'like', "%{$search}%");
+                $this->applyGuestCaseInsensitiveLike($outer, $column, $normalizedSearch, 'or');
             }
 
             if (count($words) > 1) {
                 foreach ($columns as $column) {
                     $outer->orWhere(function (Builder $inner) use ($column, $words) {
                         foreach ($words as $word) {
-                            $inner->where($column, 'like', "%{$word}%");
+                            $this->applyGuestCaseInsensitiveLike($inner, $column, $word);
                         }
                     });
                 }
             }
         });
+    }
+
+    private function applyGuestCaseInsensitiveLike(
+        Builder $query,
+        string $column,
+        string $value,
+        string $boolean = 'and'
+    ): void {
+        $wrappedColumn = $query->getQuery()->getGrammar()->wrap($column);
+        $method = $boolean === 'or' ? 'orWhereRaw' : 'whereRaw';
+
+        $query->{$method}("LOWER({$wrappedColumn}) LIKE ?", ['%' . Str::lower($value) . '%']);
     }
 
     private function matchesGuestSearchText(string $haystack, string $search): bool
@@ -664,7 +688,7 @@ class GuestController extends Controller
                 'action_label' => 'Lihat Publikasi',
                 'keywords' => ['publikasi', 'berita', 'pengumuman', 'dokumen', 'formulir', 'regulasi'],
             ],
-         
+
             [
                 'category' => 'Navigasi Cepat',
                 'icon' => 'storefront',
@@ -732,5 +756,73 @@ class GuestController extends Controller
                 'description' => 'Pencarian usaha lokal berdasarkan nama usaha, pemilik, sektor, dan lokasi.',
             ],
         ];
+    }
+
+    private function formatPendudukText(?string $value): string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' ? $value : '-';
+    }
+
+    private function formatPendudukJenisKelamin(?string $value): string
+    {
+        $normalized = Str::upper(trim((string) $value));
+
+        return match ($normalized) {
+            'L', 'LAKI-LAKI', 'LAKI LAKI' => 'Laki-laki',
+            'P', 'PEREMPUAN' => 'Perempuan',
+            default => $this->formatPendudukText($value),
+        };
+    }
+
+    private function formatPendudukStatus(?string $value): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '-';
+        }
+
+        return Str::headline(str_replace('_', ' ', $value));
+    }
+
+    private function maskSensitiveNumber(?string $value, int $visiblePrefix = 6, int $visibleSuffix = 4): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '' || $value === '-') {
+            return '-';
+        }
+
+        $length = strlen($value);
+
+        if ($length <= ($visiblePrefix + $visibleSuffix)) {
+            return str_repeat('*', max(0, $length - 2)) . substr($value, -2);
+        }
+
+        return substr($value, 0, $visiblePrefix)
+            . str_repeat('*', $length - $visiblePrefix - $visibleSuffix)
+            . substr($value, -$visibleSuffix);
+    }
+
+    private function maskSensitiveWords(?string $value, int $visiblePrefix = 1): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '' || $value === '-') {
+            return '-';
+        }
+
+        return preg_replace_callback('/[\pL\pN]+/u', function (array $matches) use ($visiblePrefix) {
+            $token = $matches[0];
+            $length = mb_strlen($token);
+
+            if ($length <= $visiblePrefix) {
+                return str_repeat('*', $length);
+            }
+
+            return mb_substr($token, 0, $visiblePrefix) . str_repeat('*', $length - $visiblePrefix);
+        }, $value) ?? $value;
     }
 }

@@ -1,16 +1,16 @@
-<x-guest::layout.app title="Surat Online">
+<x-guest::layout.app title="Administrasi Kependudukan">
     <x-guest::ui.hero size="lg" background="white">
         <x-slot:title>
-            Persyaratan <span class="text-primary">Layanan Surat</span>
+            Persyaratan <span class="text-primary">Administrasi Kependudukan</span>
         </x-slot:title>
 
         <x-slot:subtitle>
-            Cari tahu persyaratan resmi untuk berbagai layanan surat yang tersedia di Kelurahan Batua Raya. Pastikan Anda datang dengan berkas lengkap sesuai kebutuhan layanan yang dipilih.
+            Cari tahu persyaratan resmi untuk layanan administrasi kependudukan dan persuratan warga seperti domisili, usaha, SKTM, pengantar nikah, hingga surat keterangan lainnya.
         </x-slot:subtitle>
 
         <x-slot:actions>
             <x-guest::ui.search-bar action="{{ route('guest.surat-online') }}"
-                placeholder="Cari nama layanan surat atau kata kunci persyaratan..." button-text="Cari"
+                placeholder="Cari layanan administrasi, persuratan, atau kata kunci persyaratan..." button-text="Cari"
                 value="{{ request('q') }}" />
         </x-slot:actions>
     </x-guest::ui.hero>
@@ -18,7 +18,7 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 space-y-6">
-                <x-guest::ui.section-header title="Daftar Layanan Surat"
+                <x-guest::ui.section-header title="Daftar Layanan Administrasi"
                     subtitle="Klik layanan untuk melihat rincian persyaratan, estimasi, biaya, dan catatan tambahan."
                     size="md" />
 
@@ -88,7 +88,7 @@
                 @empty
                     <x-guest::ui.card variant="bordered" padding="lg" class="text-center">
                         <x-guest::ui.icon name="description" size="xl" color="text-slate-300" class="mb-4" />
-                        <p class="text-lg font-semibold text-slate-900">Belum ada layanan surat yang dipublikasikan.</p>
+                        <p class="text-lg font-semibold text-slate-900">Belum ada layanan administrasi yang dipublikasikan.</p>
                         <p class="text-sm text-slate-500 mt-2">Admin dapat menambahkan layanan dan daftar persyaratannya dari panel website publik.</p>
                     </x-guest::ui.card>
                 @endforelse
@@ -100,7 +100,7 @@
                     <div class="space-y-4 text-sm text-slate-600">
                         <div class="flex items-start gap-3">
                             <x-guest::ui.icon name="search" size="sm" color="text-primary" class="mt-1" />
-                            <p>Cari nama layanan surat yang Anda butuhkan.</p>
+                            <p>Cari nama layanan administrasi atau persuratan yang Anda butuhkan.</p>
                         </div>
                         <div class="flex items-start gap-3">
                             <x-guest::ui.icon name="fact_check" size="sm" color="text-primary" class="mt-1" />

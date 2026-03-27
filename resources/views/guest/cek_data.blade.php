@@ -1,176 +1,238 @@
 <x-guest::layout.app title="Cek Data">
-
-    {{-- HERO SECTION --}}
     <x-guest::ui.hero size="xl" background="white">
-        <x-slot:title>Layanan Data Kependudukan Digital</x-slot:title>
+        <x-slot:title>
+            Cek <span class="text-primary">Data Kependudukan</span>
+        </x-slot:title>
 
         <x-slot:subtitle>
-            Cek dan perbarui data kependudukan Anda dengan mudah melalui portal layanan digital kami.
+            Masukkan NIK untuk melihat ringkasan data warga yang terdaftar di sistem kelurahan secara cepat, aman, dan mudah dipahami.
         </x-slot:subtitle>
     </x-guest::ui.hero>
 
-    <main class="flex-grow">
+    <section class="bg-white py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <x-guest::ui.stat-card title="Total Penduduk" :value="(string) $totalPenduduk" icon="groups"
+                    description="Data warga terdaftar" color="primary" />
+                <x-guest::ui.stat-card title="Kartu Keluarga" :value="(string) $totalKK" icon="home"
+                    description="Keluarga aktif" color="info" />
+                <x-guest::ui.stat-card title="Wilayah RW" :value="(string) $totalRw" icon="map"
+                    description="Cakupan wilayah kelurahan" color="success" />
+            </div>
+        </div>
+    </section>
 
-        {{-- CEK DATA SECTION --}}
-        <section class="py-12 px-4">
-            <div class="max-w-7xl mx-auto">
-                <x-guest::ui.card variant="bordered" padding="lg">
-                    <x-slot:icon>person_search</x-slot:icon>
-                    <x-slot:title>Cek Data Warga</x-slot:title>
-
-                    <p class="text-slate-500 mb-6">
-                        Masukkan NIK Anda untuk melihat data kependudukan
-                    </p>
-
-                    @if (session('error'))
-                        <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-                            <x-guest::ui.icon name="error" size="sm" class="inline mr-1" />
-                            {{ session('error') }}
+    <section class="border-y border-slate-100 bg-slate-50 py-12" id="cek-data-result">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+                <div class="space-y-6 lg:col-span-7">
+                    <x-guest::ui.card variant="bordered" padding="lg">
+                        <div class="flex items-start gap-4">
+                            <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                <x-guest::ui.icon name="person_search" size="lg" color="text-primary" />
+                            </div>
+                            <div>
+                                <h2 class="text-3xl font-bold text-slate-900">Cek Data Warga</h2>
+                                <p class="mt-2 text-sm leading-6 text-slate-500">
+                                    Masukkan NIK 16 digit untuk melihat ringkasan data identitas, KK, wilayah RT/RW, dan status data kependudukan.
+                                </p>
+                            </div>
                         </div>
-                    @endif
+
+                        @if (session('error'))
+                            <div class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                                <div class="flex items-center gap-2 font-semibold">
+                                    <x-guest::ui.icon name="error" size="sm" color="text-red-600" />
+                                    Data tidak ditemukan
+                                </div>
+                                <p class="mt-2">{{ session('error') }}</p>
+                            </div>
+                        @endif
+
+                        @if (session('result'))
+                            <div class="mt-6 rounded-2xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
+                                <div class="flex items-center gap-2 font-semibold">
+                                    <x-guest::ui.icon name="check_circle" size="sm" color="text-green-600" />
+                                    Data kependudukan berhasil ditemukan
+                                </div>
+                                <p class="mt-2">Silakan cek ringkasan data di panel bawah. Jika ada perbedaan, lanjutkan ke layanan administrasi kependudukan.</p>
+                            </div>
+                        @endif
+
+                        <form class="mt-8 space-y-6" method="POST" action="{{ route('guest.cek-data.search') }}">
+                            @csrf
+
+                            <x-guest::ui.input name="nik" label="NIK (Nomor Induk Kependudukan)"
+                                placeholder="Masukkan 16 digit NIK Anda" icon="badge" :required="true"
+                                :value="old('nik')" :error="$errors->first('nik')" maxlength="16"
+                                inputmode="numeric" pattern="[0-9]{16}" autocomplete="off" />
+
+                            <p class="text-sm text-slate-400">
+                                Pastikan NIK sesuai dengan KTP atau Kartu Keluarga agar pencarian berhasil.
+                            </p>
+
+                            <div class="flex flex-wrap gap-3">
+                                <x-guest::ui.button type="submit" size="lg" icon="search" class="w-full md:w-auto">
+                                    Cek Data
+                                </x-guest::ui.button>
+                                <x-guest::ui.button href="{{ route('guest.surat-online') }}" variant="outline"
+                                    size="lg" class="w-full md:w-auto">
+                                    Layanan Administrasi
+                                </x-guest::ui.button>
+                            </div>
+                        </form>
+                    </x-guest::ui.card>
 
                     @if (session('result'))
-                        <div class="mb-6 p-6 bg-green-50 border border-green-200 rounded-lg">
-                            <h4 class="font-bold text-green-800 mb-4 flex items-center gap-2">
-                                <x-guest::ui.icon name="check_circle" size="sm" color="text-green-600" />
-                                Data Ditemukan
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                @php $result = session('result'); @endphp
-                                <div><span class="font-semibold text-slate-600">NIK:</span> {{ $result['nik'] }}</div>
-                                <div><span class="font-semibold text-slate-600">Nama:</span> {{ $result['nama'] }}</div>
-                                <div><span class="font-semibold text-slate-600">Jenis Kelamin:</span> {{ $result['jenis_kelamin'] }}</div>
-                                <div><span class="font-semibold text-slate-600">Agama:</span> {{ $result['agama'] ?? '-' }}</div>
-                                <div><span class="font-semibold text-slate-600">Status Kawin:</span> {{ $result['status_kawin'] ?? '-' }}</div>
-                                <div><span class="font-semibold text-slate-600">RT/RW:</span> {{ $result['rt'] ?? '-' }}/{{ $result['rw'] ?? '-' }}</div>
-                                <div class="md:col-span-2"><span class="font-semibold text-slate-600">Alamat:</span> {{ $result['alamat'] ?? '-' }}</div>
+                        @php
+                            $result = session('result');
+                            $statusVariant = match (strtolower((string) $result['status_data'])) {
+                                'aktif', 'valid' => 'success',
+                                'proses', 'pending' => 'warning',
+                                'tidak aktif', 'tidak_aktif', 'nonaktif' => 'danger',
+                                default => 'default',
+                            };
+                        @endphp
+
+                        <x-guest::ui.card variant="bordered" padding="lg" >
+                            <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <div>
+                                    <h3 class="text-2xl font-bold text-slate-900">Ringkasan Data Penduduk</h3>
+                                    <p class="mt-2 text-sm text-slate-500">Data di bawah ini merupakan ringkasan hasil pencarian berdasarkan NIK dan sudah disamarkan untuk menjaga privasi warga.</p>
+                                </div>
+                                <div class="min-w-32">
+                                    <x-guest::ui.badge :variant="$statusVariant" size="sm">
+                                    Status Data: {{ $result['status_data'] }}
+                                </x-guest::ui.badge>
+                                </div>
                             </div>
-                        </div>
+
+                            <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Nama Lengkap</div>
+                                    <div class="mt-2 text-lg font-bold text-slate-900">{{ $result['nama'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">NIK</div>
+                                    <div class="mt-2 text-lg font-bold text-slate-900">{{ $result['nik'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Nomor KK</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">{{ $result['no_kk'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">RT / RW</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">RT {{ $result['rt'] }} / RW {{ $result['rw'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Jenis Kelamin</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">{{ $result['jenis_kelamin'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Agama</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">{{ $result['agama'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Status Kawin</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">{{ $result['status_kawin'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Pendidikan</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">{{ $result['pendidikan'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4 md:col-span-2">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Pekerjaan</div>
+                                    <div class="mt-2 text-base font-semibold text-slate-900">{{ $result['pekerjaan'] }}</div>
+                                </div>
+                                <div class="rounded-2xl border border-slate-100 p-4 md:col-span-2">
+                                    <div class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Alamat</div>
+                                    <div class="mt-2 text-base font-semibold leading-7 text-slate-900">{{ $result['alamat'] }}</div>
+                                </div>
+                            </div>
+                        </x-guest::ui.card>
                     @endif
-
-                    <form class="space-y-6" method="POST" action="{{ route('guest.cek-data.search') }}">
-                        @csrf
-
-                        <x-guest::ui.input name="nik" label="NIK (Nomor Induk Kependudukan)"
-                            placeholder="Masukkan 16 Digit NIK Anda" icon="badge" :required="true"
-                            :value="old('nik')" :error="$errors->first('nik')" />
-
-                        <p class="text-sm text-slate-400">
-                            *Pastikan NIK yang Anda masukkan sesuai dengan KTP atau Kartu Keluarga.
-                        </p>
-
-                        <x-slot:footer>
-                            <x-guest::ui.button type="submit" size="lg" icon="search" class="w-full md:w-auto">
-                                Cek Data
-                            </x-guest::ui.button>
-                        </x-slot:footer>
-                    </form>
-                </x-guest::ui.card>
-            </div>
-        </section>
-
-        {{-- DIVIDER --}}
-        <x-guest::ui.divider text="Atau" class="max-w-7xl mx-auto px-4" />
-
-        {{-- FORM INPUT DATA SECTION --}}
-        <section class="pb-12 px-4">
-            <div class="max-w-7xl mx-auto">
-                <x-guest::ui.card variant="bordered" padding="lg">
-                    <x-slot:icon>app_registration</x-slot:icon>
-                    <x-slot:title>Formulir Input Data Mandiri</x-slot:title>
-
-                    <p class="text-slate-500 mb-8">
-                        Lengkapi formulir di bawah ini untuk mengajukan pembaruan data.
-                    </p>
-
-                    <form class="space-y-6" method="POST" action="#">
-                        @csrf
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <x-guest::ui.input name="name" label="Nama Lengkap" placeholder="Sesuai KTP" icon="person"
-                                :required="true" />
-
-                            <x-guest::ui.input name="phone" type="tel" label="Nomor HP (WhatsApp)"
-                                placeholder="Contoh: 081234567890" icon="phone" :required="true" />
-                        </div>
-
-                        <x-guest::ui.select name="category" label="Kategori Data" :options="[
-                                ['value' => 'pindah', 'label' => 'Pindah Datang / Domisili'],
-                                ['value' => 'lahir', 'label' => 'Laporan Kelahiran'],
-                                ['value' => 'mati', 'label' => 'Laporan Kematian'],
-                                ['value' => 'alamat', 'label' => 'Perubahan Alamat'],
-                                ['value' => 'lainnya', 'label' => 'Lain-lain'],
-                            ]" placeholder="Pilih Kategori Pembaruan" :required="true" />
-
-                        <x-guest::ui.textarea name="address" label="Alamat Lengkap"
-                            placeholder="Tuliskan alamat domisili saat ini" rows="4" :required="true" />
-
-                        <x-guest::ui.file-upload name="document" label="Unggah Scan KTP / KK" accept=".jpg,.jpeg,.png,.pdf"
-                            max-size="2MB" description="Format: JPG, PNG, atau PDF" :required="true" />
-
-                        <x-slot:footer>
-                            <div class="flex justify-end gap-4">
-                                <x-guest::ui.button variant="outline" type="button">
-                                    Reset
-                                </x-guest::ui.button>
-                                <x-guest::ui.button type="submit" size="lg" icon="send">
-                                    Kirim Data Mandiri
-                                </x-guest::ui.button>
-                            </div>
-                        </x-slot:footer>
-                    </form>
-                </x-guest::ui.card>
-            </div>
-        </section>
-
-        {{-- INFO SECTION --}}
-        <section class="pb-20 px-4">
-            <div class="max-w-7xl mx-auto">
-                <x-guest::ui.section-header title="Informasi Penting" subtitle="Hal yang perlu Anda ketahui" size="md" />
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <x-guest::ui.card padding="md">
-                        <div class="text-center">
-                            <div
-                                class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <x-guest::ui.icon name="security" size="lg" color="text-primary" />
-                            </div>
-                            <h3 class="font-bold mb-2">Keamanan Data</h3>
-                            <p class="text-sm text-slate-600">
-                                Data Anda aman dan terenkripsi
-                            </p>
-                        </div>
-                    </x-guest::ui.card>
-
-                    <x-guest::ui.card padding="md">
-                        <div class="text-center">
-                            <div
-                                class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <x-guest::ui.icon name="schedule" size="lg" color="text-primary" />
-                            </div>
-                            <h3 class="font-bold mb-2">Proses Cepat</h3>
-                            <p class="text-sm text-slate-600">
-                                Maksimal 3 hari kerja
-                            </p>
-                        </div>
-                    </x-guest::ui.card>
-
-                    <x-guest::ui.card padding="md">
-                        <div class="text-center">
-                            <div
-                                class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <x-guest::ui.icon name="support_agent" size="lg" color="text-primary" />
-                            </div>
-                            <h3 class="font-bold mb-2">Dukungan 24/7</h3>
-                            <p class="text-sm text-slate-600">
-                                Kami siap membantu Anda
-                            </p>
-                        </div>
-                    </x-guest::ui.card>
                 </div>
+
+                <aside class="space-y-6 lg:col-span-5">
+                    <x-guest::ui.card variant="bordered" padding="lg">
+                        <h3 class="text-xl font-bold text-slate-900">Yang Bisa Dicek</h3>
+                        <div class="mt-5 space-y-4 text-sm text-slate-600">
+                            <div class="flex items-start gap-3">
+                                <x-guest::ui.icon name="badge" size="sm" color="text-primary" class="mt-1" />
+                                <p>Identitas dasar warga berdasarkan NIK dan nomor KK.</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <x-guest::ui.icon name="home" size="sm" color="text-primary" class="mt-1" />
+                                <p>Alamat domisili serta wilayah RT/RW tempat warga terdaftar.</p>
+                            </div>
+                            <div class="flex items-start gap-3">
+                                <x-guest::ui.icon name="fact_check" size="sm" color="text-primary" class="mt-1" />
+                                <p>Status data, agama, pendidikan, pekerjaan, dan status perkawinan.</p>
+                            </div>
+                        </div>
+                    </x-guest::ui.card>
+
+                    <x-guest::ui.card padding="lg" class="bg-primary ">
+                        <h3 class="text-xl font-bold">Data Tidak Sesuai?</h3>
+                        <p class="mt-3 text-sm leading-6 ">
+                            Jika data yang muncul berbeda dengan dokumen Anda, lanjutkan ke layanan administrasi kependudukan atau hubungi petugas kelurahan untuk verifikasi.
+                        </p>
+                        <div class="mt-6 flex flex-wrap gap-3">
+                            <x-guest::ui.button href="{{ route('guest.surat-online') }}" variant="secondary"
+                                class="bg-white text-primary hover:bg-slate-100">
+                                Buka Administrasi
+                            </x-guest::ui.button>
+                            <x-guest::ui.button href="{{ route('guest.kontak') }}" variant="outline"
+                                class="border-white/30 text-white hover:bg-white/10">
+                                Hubungi Kelurahan
+                            </x-guest::ui.button>
+                        </div>
+                    </x-guest::ui.card>
+                </aside>
             </div>
         </section>
 
-    </main>
+    <section class="py-16 px-4">
+        <div class="max-w-7xl mx-auto">
+            <x-guest::ui.section-header title="Informasi Penting" subtitle="Hal yang perlu Anda ketahui" size="md" />
 
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                <x-guest::ui.card padding="md">
+                    <div class="text-center">
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                            <x-guest::ui.icon name="security" size="lg" color="text-primary" />
+                        </div>
+                        <h3 class="font-bold mb-2 text-slate-900">Akses Aman</h3>
+                        <p class="text-sm text-slate-600">
+                            Data yang ditampilkan berupa ringkasan untuk membantu verifikasi awal warga.
+                        </p>
+                    </div>
+                </x-guest::ui.card>
+
+                <x-guest::ui.card padding="md">
+                    <div class="text-center">
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                            <x-guest::ui.icon name="schedule" size="lg" color="text-primary" />
+                        </div>
+                        <h3 class="font-bold mb-2 text-slate-900">Cek Cepat</h3>
+                        <p class="text-sm text-slate-600">
+                            Pencarian dilakukan langsung dari data kependudukan yang tersimpan di sistem kelurahan.
+                        </p>
+                    </div>
+                </x-guest::ui.card>
+
+                <x-guest::ui.card padding="md">
+                    <div class="text-center">
+                        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                            <x-guest::ui.icon name="support_agent" size="lg" color="text-primary" />
+                        </div>
+                        <h3 class="font-bold mb-2 text-slate-900">Bantuan Lanjutan</h3>
+                        <p class="text-sm text-slate-600">
+                            Jika ada perbedaan data, petugas kelurahan siap membantu melalui layanan administrasi dan kontak resmi.
+                        </p>
+                    </div>
+                </x-guest::ui.card>
+            </div>
+        </div>
+    </section>
 </x-guest::layout.app>

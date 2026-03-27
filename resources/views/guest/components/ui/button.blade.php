@@ -19,7 +19,7 @@
 ])
 
 @php
-$baseClasses = 'inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all focus:outline-none
+$baseClasses = 'cursor-pointer inline-flex items-center justify-center gap-2 font-semibold rounded-lg transition-all focus:outline-none
 focus:ring-2 focus:ring-offset-2';
 
 $variantClasses = [
