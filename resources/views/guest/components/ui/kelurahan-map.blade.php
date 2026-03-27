@@ -1,94 +1,137 @@
- @push('styles')
-     {{-- Styles for Peta Kelurahan --}}
-     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-     @vite('resources/css/peta.css')
- @endpush
- {{-- Map container with loading overlay & toolbar --}}
+@props([
+    'endpoint',
+    'title' => 'Peta Kelurahan Batua Raya',
+    'subtitle' => 'Pantau batas kelurahan, persebaran RW, dan statistik wilayah langsung dari data peta publik.',
+])
 
- <div class="flex-1 relative">
-     <div id="map" class="w-full"></div>
+<div class="rounded-[2rem] border border-primary/10 bg-white p-6 shadow-xl shadow-primary/5 md:p-8">
+    <div class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+            <h2 class="text-3xl font-extrabold text-slate-900 md:text-4xl">{{ $title }}</h2>
+            <p class="mt-3 max-w-3xl text-base leading-7 text-slate-500">{{ $subtitle }}</p>
+        </div>
 
-     {{-- Loading overlay --}}
-     <div x-show="loading" x-transition
-         class="absolute inset-0 bg-base-100/80 flex items-center justify-center z-10 rounded-l-xl">
-         <div class="text-center">
-             <span class="loading loading-spinner loading-lg text-primary"></span>
-             <p class="mt-2 text-sm text-base-content/60">Memuat peta...</p>
-         </div>
-     </div>
+        <div class="flex flex-wrap gap-2">
+            <span class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+                <span class="material-icons text-base">public</span>
+                API Peta Publik
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
+                <span class="material-icons text-base">layers</span>
+                Semua Layer Aktif
+            </span>
+        </div>
+    </div>
 
-     {{-- Map toolbar buttons --}}
-     <div class="absolute top-3 left-3 z-[10] space-y-3">
-         <div class="flex gap-1.5 ">
-             <button class="btn btn-xs shadow-md" :class="showKelurahan ? 'btn-primary' : 'btn-ghost bg-base-100'"
-                 @click="toggleKelurahan()" title="Batas Kelurahan">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                         d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6z" />
-                 </svg>
-                 Batas
-             </button>
+    <div data-guest-kelurahan-map data-endpoint="{{ $endpoint }}" class="guest-map-shell">
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
+            <div class="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-background-light">
+                <div class="absolute left-4 right-4 top-4 z-[500] flex flex-wrap items-start gap-2">
+                    <div data-layer-toggle-list class="flex flex-wrap gap-2"></div>
+                    <button type="button" data-reset-view class="guest-map-toggle guest-map-toggle-secondary">
+                        Reset View
+                    </button>
+                </div>
 
+                <div data-map-loading
+                    class="absolute inset-0 z-[450] flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                    <div class="text-center">
+                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+                            <span class="material-icons animate-pulse text-3xl">map</span>
+                        </div>
+                        <p class="mt-4 text-lg font-semibold text-slate-900">Memuat peta kelurahan...</p>
+                        <p class="mt-1 text-sm text-slate-500">Mengambil boundary dan polygon RW dari endpoint publik.</p>
+                    </div>
+                </div>
 
+                <div data-map-error
+                    class="pointer-events-none absolute inset-x-4 bottom-4 z-[520] hidden rounded-2xl border border-red-200 bg-white/95 p-4 text-sm text-red-600 shadow-lg shadow-red-100">
+                </div>
 
-             <button class="btn btn-xs btn-ghost bg-base-100 shadow-md" @click="resetZoom()"
-                 title="Kembali ke tampilan awal">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                         d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                 </svg>
-             </button>
+                <div data-map-canvas class="h-[420px] w-full md:h-[560px]"></div>
+            </div>
 
+            <div class="space-y-4">
+                <div class="rounded-[1.5rem] border border-primary/10 bg-background-light p-5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Ringkasan Peta</p>
+                            <h3 class="mt-2 text-xl font-bold text-slate-900">Statistik Wilayah</h3>
+                        </div>
+                        <span data-updated-at
+                            class="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-500">Memuat...</span>
+                    </div>
 
-         </div>
-         <div class=" flex gap-1.5 flex-col ">
-             <button class="btn btn-xs shadow-md text-xs w-min"
-                 :class="showRwLayer ? 'btn-primary' : 'btn-ghost bg-base-100'" @click="toggleRwLayer()"
-                 title="Tampilkan/Sembunyikan Layer RW">
-                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
-                     stroke="currentColor">
-                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                         d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l5.447 2.724A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                 </svg>
-                 RW
-             </button>
-             {{-- Custom Layer dropdown --}}
-             <template x-for="cl in customLayers" :key="cl.id">
-                 <label
-                     class="flex items-center gap-2 cursor-pointer  rounded-sm px-2 py-1.5 transition-colors text-xs w-min  "
-                     :class="cl.visible ? 'bg-primary text-white' : 'bg-white'">
-                     <input type="checkbox" class="checkbox checkbox-xs hidden" :checked="cl.visible"
-                         @change="toggleCustomLayer(cl.id)">
-                     <span class="w-3 h-3 rounded-sm flex-shrink-0 border border-base-300"
-                         :style="'background-color:' + cl.warna"></span>
-                     <span class="text-xs flex-1 truncate" x-text="cl.nama"></span>
+                    <div class="mt-5 grid grid-cols-2 gap-3">
+                        <div class="guest-map-stat-card">
+                            <p class="guest-map-stat-label">Total RW</p>
+                            <p class="guest-map-stat-value" data-summary-value="total_rw">0</p>
+                        </div>
+                        <div class="guest-map-stat-card">
+                            <p class="guest-map-stat-label">Total RT</p>
+                            <p class="guest-map-stat-value" data-summary-value="total_rt">0</p>
+                        </div>
+                        <div class="guest-map-stat-card">
+                            <p class="guest-map-stat-label">Penduduk</p>
+                            <p class="guest-map-stat-value" data-summary-value="total_penduduk">0</p>
+                        </div>
+                        <div class="guest-map-stat-card">
+                            <p class="guest-map-stat-label">UMKM</p>
+                            <p class="guest-map-stat-value" data-summary-value="total_umkm">0</p>
+                        </div>
+                    </div>
 
-                 </label>
-             </template>
-         </div>
-     </div>
- </div>
+                    <div class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
+                        <div class="rounded-2xl border border-white/70 bg-white p-4">
+                            <p class="text-sm text-slate-500">Laki-laki</p>
+                            <p class="mt-2 text-lg font-bold text-slate-900" data-summary-value="laki_laki">0</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/70 bg-white p-4">
+                            <p class="text-sm text-slate-500">Perempuan</p>
+                            <p class="mt-2 text-lg font-bold text-slate-900" data-summary-value="perempuan">0</p>
+                        </div>
+                    </div>
+                </div>
 
- @push('scripts')
-     {{-- Leaflet JS (CDN) + SimPeta engine (Vite bundle) --}}
-     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-     @vite('resources/js/map/index.js')
+                <div class="rounded-[1.5rem] border border-primary/10 bg-white p-5">
+                    <div class="flex items-center justify-between gap-3">
+                        <div>
+                            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Eksplorasi RW</p>
+                            <h3 class="mt-2 text-xl font-bold text-slate-900">Daftar Wilayah</h3>
+                        </div>
+                        <span data-rw-count class="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                            0 wilayah
+                        </span>
+                    </div>
 
-     @php
-         // Pass route URLs to JS — keeps Blade directives out of JS function bodies.
-         $petaRoutes = [
-             'geojsonLayers' => route('peta.geojson.layers'),
-             'stats' => route('peta.stats'),
-         ];
-     @endphp
+                    <div data-rw-list class="mt-5 max-h-[320px] space-y-2 overflow-y-auto pr-1">
+                        <div class="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                            Data RW sedang dimuat...
+                        </div>
+                    </div>
+                </div>
 
-     <script>
-         // ── Server-provided routes ───────────────────────────────
-         window.PETA_ROUTES = @json($petaRoutes);
-     </script>
-     @vite('resources/js/peta/app.js')
- @endpush
+                <div class="rounded-[1.5rem] border border-primary/10 bg-background-light p-5">
+                    <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Legend</p>
+
+                    <div data-layer-legend class="mt-4 space-y-3 text-sm text-slate-600">
+                        <div class="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
+                            Legend layer sedang dimuat...
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex items-center gap-3 text-sm text-slate-600">
+                        <div class="flex items-center gap-3">
+                            <span class="material-icons text-base text-slate-400">ads_click</span>
+                            <span>Gunakan toggle di atas peta untuk menyalakan atau menyembunyikan tiap layer.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@once
+    @vite('resources/js/guest/kelurahan-map.js')
+@endonce
