@@ -9,7 +9,7 @@
         </x-slot:subtitle>
 
         <x-slot:actions>
-            <x-guest::ui.search-bar action="{{ route('guest.surat-online') }}"
+            <x-guest::ui.search-bar action="{{ route('guest.administrasi') }}"
                 placeholder="Cari layanan administrasi, persuratan, atau kata kunci persyaratan..." button-text="Cari"
                 value="{{ request('q') }}" />
         </x-slot:actions>

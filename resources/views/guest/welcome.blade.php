@@ -38,7 +38,7 @@
             subtitle="Pilih jenis layanan masyarakat yang Anda butuhkan di bawah ini." size="md" />
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <a href="{{ route('guest.surat-online') }}" class="block">
+            <a href="{{ route('guest.administrasi') }}" class="block">
                 <x-guest::ui.card variant="bordered" padding="lg"
                     class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                     <div

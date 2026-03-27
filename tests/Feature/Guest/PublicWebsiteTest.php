@@ -82,7 +82,7 @@ class PublicWebsiteTest extends TestCase
             ->assertSee($dokumen->judul)
             ->assertSee('Taman Kelurahan');
 
-        $this->get(route('guest.surat-online'))
+        $this->get(route('guest.administrasi'))
             ->assertOk()
             ->assertSee($layanan->nama)
             ->assertSee('Fotokopi KTP');

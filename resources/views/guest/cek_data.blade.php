@@ -75,7 +75,7 @@
                                 <x-guest::ui.button type="submit" size="lg" icon="search" class="w-full md:w-auto">
                                     Cek Data
                                 </x-guest::ui.button>
-                                <x-guest::ui.button href="{{ route('guest.surat-online') }}" variant="outline"
+                                <x-guest::ui.button href="{{ route('guest.administrasi') }}" variant="outline"
                                     size="lg" class="w-full md:w-auto">
                                     Layanan Administrasi
                                 </x-guest::ui.button>
@@ -178,7 +178,7 @@
                             Jika data yang muncul berbeda dengan dokumen Anda, lanjutkan ke layanan administrasi kependudukan atau hubungi petugas kelurahan untuk verifikasi.
                         </p>
                         <div class="mt-6 flex flex-wrap gap-3">
-                            <x-guest::ui.button href="{{ route('guest.surat-online') }}" variant="secondary"
+                            <x-guest::ui.button href="{{ route('guest.administrasi') }}" variant="secondary"
                                 class="bg-white text-primary hover:bg-slate-100">
                                 Buka Administrasi
                             </x-guest::ui.button>

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Guest;
 
 use App\Http\Controllers\Controller;
+use App\Models\Asrama;
 use App\Models\Berita;
+use App\Models\Kontrakan;
 use App\Models\DestinasiWisata;
 use App\Models\DokumenPublik;
 use App\Models\Faskes;
@@ -12,14 +14,20 @@ use App\Models\Keluarga;
 use App\Models\Kelurahan;
 use App\Models\LayananSurat;
 use App\Models\PegawaiStaff;
+use App\Models\PetaLayer;
+use App\Models\PetaLayerPolygon;
 use App\Models\Penduduk;
 use App\Models\PengaduanWarga;
+use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Sekolah;
 use App\Models\TempatIbadah;
 use App\Models\Umkm;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -118,25 +126,205 @@ class GuestController extends Controller
 
     public function dataKelurahan()
     {
+        $kelurahan = Kelurahan::first();
         $totalPenduduk = Penduduk::count();
         $totalKK = Keluarga::count();
-        $totalLakiLaki = Penduduk::where('jenis_kelamin', 'Laki-laki')->count();
-        $totalPerempuan = Penduduk::where('jenis_kelamin', 'Perempuan')->count();
+        $totalLakiLaki = Penduduk::whereIn('jenis_kelamin', ['L', 'Laki-laki'])->count();
+        $totalPerempuan = Penduduk::whereIn('jenis_kelamin', ['P', 'Perempuan'])->count();
         $totalRw = Rw::count();
+        $totalRt = Rt::count();
+        $totalUmkm = Umkm::count();
         $totalFaskes = Faskes::count();
         $totalSekolah = Sekolah::count();
         $totalTempatIbadah = TempatIbadah::count();
+        $totalLayanan = LayananSurat::active()->count();
+        $totalDokumen = DokumenPublik::published()->count();
+        $totalBerita = Berita::published()->count();
+        $avgAnggotaKeluarga = round((float) Keluarga::avg('jumlah_anggota_keluarga'), 1);
+
+        $komposisiGender = collect([
+            [
+                'label' => 'Laki-laki',
+                'value' => $totalLakiLaki,
+                'color' => 'bg-slate-900',
+            ],
+            [
+                'label' => 'Perempuan',
+                'value' => $totalPerempuan,
+                'color' => 'bg-primary',
+            ],
+        ])->filter(fn (array $item) => $item['value'] > 0)
+            ->map(fn (array $item) => [
+                ...$item,
+                'percentage' => $totalPenduduk > 0 ? (int) round(($item['value'] / $totalPenduduk) * 100) : 0,
+            ])
+            ->values();
+
+        $komposisiAgama = Penduduk::query()
+            ->get(['agama'])
+            ->groupBy(fn (Penduduk $penduduk) => filled($penduduk->agama) ? $penduduk->agama : 'Belum diisi')
+            ->map(function ($items, string $label) use ($totalPenduduk) {
+                $total = $items->count();
+
+                return [
+                    'label' => $label,
+                    'value' => $total,
+                    'percentage' => $totalPenduduk > 0 ? (int) round(($total / $totalPenduduk) * 100) : 0,
+                ];
+            })
+            ->sortByDesc('value')
+            ->take(3)
+            ->values();
+
+        $statusPenduduk = Penduduk::query()
+            ->get(['status_data'])
+            ->groupBy(fn (Penduduk $penduduk) => filled($penduduk->status_data) ? $penduduk->status_data : 'Belum diisi')
+            ->map(function ($items, string $label) use ($totalPenduduk) {
+                $total = $items->count();
+
+                return [
+                    'label' => $label,
+                    'value' => $total,
+                    'percentage' => $totalPenduduk > 0 ? (int) round(($total / $totalPenduduk) * 100) : 0,
+                ];
+            })
+            ->sortByDesc('value')
+            ->values();
+
+        $rwHighlights = Rw::query()
+            ->leftJoin('rts', 'rws.id', '=', 'rts.rw_id')
+            ->leftJoin('penduduks', 'rts.id', '=', 'penduduks.rt_id')
+            ->selectRaw('rws.id, rws.nomor, COUNT(DISTINCT rts.id) as total_rt, COUNT(penduduks.id) as total_penduduk')
+            ->groupBy('rws.id', 'rws.nomor')
+            ->orderByDesc('total_penduduk')
+            ->orderBy('rws.nomor')
+            ->get()
+            ->map(fn ($rw) => [
+                'label' => 'RW '.str_pad((string) $rw->nomor, 2, '0', STR_PAD_LEFT),
+                'nomor' => (int) $rw->nomor,
+                'total_rt' => (int) $rw->total_rt,
+                'total_penduduk' => (int) $rw->total_penduduk,
+            ]);
+
+        $chartRwHighlights = $rwHighlights->take(6)->values();
+        $chartRwMax = max(1, (int) $chartRwHighlights->max('total_penduduk'));
+
+        $usiaPenduduk = Penduduk::query()
+            ->get(['nik'])
+            ->map(fn (Penduduk $penduduk) => $this->parsePendudukBirthDateFromNik($penduduk->nik)?->age)
+            ->filter(fn ($umur) => is_int($umur))
+            ->values();
+
+        $sebaranUmur = collect($this->guestAgeRanges())
+            ->map(function (array $range) use ($usiaPenduduk, $totalPenduduk) {
+                $total = $usiaPenduduk
+                    ->filter(function (int $umur) use ($range) {
+                        if ($umur < $range['min']) {
+                            return false;
+                        }
+
+                        return $range['max'] === null || $umur <= $range['max'];
+                    })
+                    ->count();
+
+                return [
+                    ...$range,
+                    'value' => $total,
+                    'percentage' => $totalPenduduk > 0 ? (int) round(($total / $totalPenduduk) * 100) : 0,
+                ];
+            })
+            ->values();
+
+        $chartUmurMax = max(1, (int) $sebaranUmur->max('value'));
+        $cakupanDataUmur = $usiaPenduduk->count();
+        $kelompokUmurTerbesar = $sebaranUmur->sortByDesc('value')->first();
+        $usiaProduktif = $usiaPenduduk->filter(fn (int $umur) => $umur >= 18 && $umur <= 59)->count();
+        $usiaLansia = $usiaPenduduk->filter(fn (int $umur) => $umur >= 60)->count();
+
+        $layananUnggulan = LayananSurat::active()
+            ->withCount('persyaratans')
+            ->ordered()
+            ->take(4)
+            ->get();
+
+        $dokumenPublik = DokumenPublik::latestPublished()->take(3)->get();
+        $laporanPublik = DokumenPublik::latestPublished()
+            ->where('kategori', 'laporan')
+            ->first();
 
         return view('guest.data_kelurahan', compact(
+            'kelurahan',
             'totalPenduduk',
             'totalKK',
             'totalLakiLaki',
             'totalPerempuan',
             'totalRw',
+            'totalRt',
+            'totalUmkm',
             'totalFaskes',
             'totalSekolah',
             'totalTempatIbadah',
+            'totalLayanan',
+            'totalDokumen',
+            'totalBerita',
+            'avgAnggotaKeluarga',
+            'komposisiGender',
+            'komposisiAgama',
+            'statusPenduduk',
+            'rwHighlights',
+            'chartRwHighlights',
+            'chartRwMax',
+            'sebaranUmur',
+            'chartUmurMax',
+            'cakupanDataUmur',
+            'kelompokUmurTerbesar',
+            'usiaProduktif',
+            'usiaLansia',
+            'layananUnggulan',
+            'dokumenPublik',
+            'laporanPublik',
         ));
+    }
+
+    public function dataKelurahanMap(): JsonResponse
+    {
+        $kelurahan = Kelurahan::first();
+        $layers = collect($this->guestActiveMapLayers());
+        $kelurahanGeojson = $layers->firstWhere('layer_type', 'kelurahan')['geojson'] ?? $this->emptyGuestFeatureCollection('kelurahan');
+        $rwGeojson = $layers->firstWhere('layer_type', 'rw')['geojson'] ?? $this->emptyGuestFeatureCollection('rw');
+
+        if ($layers->filter(fn (array $layer) => ($layer['feature_count'] ?? 0) > 0)->isEmpty()) {
+            return response()->json([
+                'message' => 'Data peta kelurahan belum tersedia.',
+            ], 404);
+        }
+
+        return response()->json([
+            'kelurahan' => [
+                'profile' => [
+                    'nama' => $kelurahan?->nama,
+                    'luas_area' => $kelurahan?->luas_area,
+                    'alamat_kantor' => $kelurahan?->alamat_kantor,
+                ],
+                'geojson' => $kelurahanGeojson,
+            ],
+            'rw' => [
+                'geojson' => $rwGeojson,
+            ],
+            'layers' => $layers->values()->all(),
+            'summary' => [
+                'total_penduduk' => Penduduk::count(),
+                'total_kk' => Keluarga::count(),
+                'total_rw' => Rw::count(),
+                'total_rt' => Rt::count(),
+                'total_umkm' => Umkm::count(),
+                'laki_laki' => Penduduk::whereIn('jenis_kelamin', ['L', 'Laki-laki'])->count(),
+                'perempuan' => Penduduk::whereIn('jenis_kelamin', ['P', 'Perempuan'])->count(),
+            ],
+            'meta' => [
+                'updated_at' => now()->toIso8601String(),
+            ],
+        ]);
     }
 
     public function cekData()
@@ -178,7 +366,7 @@ class GuestController extends Controller
         ])->withInput()->withFragment('cek-data-result');
     }
 
-    public function suratOnline(Request $request)
+    public function administrasi(Request $request)
     {
         $query = LayananSurat::with('persyaratans')->active()->ordered();
 
@@ -192,7 +380,7 @@ class GuestController extends Controller
 
         $layananSurat = $query->get();
 
-        return view('guest.surat_online', [
+        return view('guest.administrasi', [
             'layananSurat' => $layananSurat,
             'activeLayananSlug' => $request->get('layanan'),
         ]);
@@ -510,7 +698,7 @@ class GuestController extends Controller
                         $item->deskripsi ?: $item->catatan ?: "Tersedia {$item->persyaratans_count} persyaratan layanan.",
                         140
                     ),
-                    'url' => route('guest.surat-online', [
+                    'url' => route('guest.administrasi', [
                         'q' => $item->nama,
                         'layanan' => $item->slug,
                     ]),
@@ -674,7 +862,7 @@ class GuestController extends Controller
                 'title' => 'Surat Online & Persyaratan',
                 'subtitle' => 'Layanan domisili, usaha, dan administrasi',
                 'description' => 'Cari persyaratan resmi surat domisili, surat usaha, dan layanan administrasi kelurahan.',
-                'url' => route('guest.surat-online'),
+                'url' => route('guest.administrasi'),
                 'action_label' => 'Buka Surat Online',
                 'keywords' => ['surat', 'surat online', 'surat domisili', 'izin usaha', 'pelayanan', 'persyaratan'],
             ],
@@ -730,6 +918,458 @@ class GuestController extends Controller
                 'keywords' => ['pengaduan', 'lapor', 'laporan', 'keluhan', 'aspirasi', 'aduan'],
             ],
         ];
+    }
+
+    private function guestKelurahanGeojsonCollection(): array
+    {
+        $collection = $this->emptyGuestFeatureCollection('kelurahan');
+        $kelLayer = PetaLayer::where('slug', PetaLayer::LAYER_BATAS_KELURAHAN)->first();
+
+        if (! $kelLayer) {
+            return $collection;
+        }
+
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('plp.polygon');
+        $rows = DB::select(
+            "SELECT plp.id, plp.nama, plp.kelurahan_id, {$geojsonSelect}
+             FROM peta_layer_polygons plp
+             WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
+             ORDER BY plp.id",
+            [$kelLayer->id]
+        );
+
+        if (empty($rows)) {
+            return $collection;
+        }
+
+        $collection['features'] = collect($rows)
+            ->map(fn ($row) => [
+                'type' => 'Feature',
+                'properties' => [
+                    'id' => $row->kelurahan_id ?? $row->id,
+                    'nama' => $row->nama,
+                ],
+                'geometry' => json_decode($row->geojson, true),
+            ])
+            ->values()
+            ->all();
+
+        return $collection;
+    }
+
+    private function guestRwGeojsonCollection(): array
+    {
+        $collection = $this->emptyGuestFeatureCollection('rw');
+        $rwLayer = PetaLayer::where('slug', PetaLayer::LAYER_WILAYAH_RW)->first();
+
+        if (! $rwLayer) {
+            return $collection;
+        }
+
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('plp.polygon');
+        $rows = DB::select(
+            "SELECT plp.id, plp.nama, plp.warna, plp.rw_id, {$geojsonSelect}
+             FROM peta_layer_polygons plp
+             WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
+             ORDER BY plp.nama",
+            [$rwLayer->id]
+        );
+
+        if (empty($rows)) {
+            return $collection;
+        }
+
+        $rwStats = $this->guestRwMapStats();
+
+        $collection['features'] = collect($rows)
+            ->map(function ($row, int $index) use ($rwStats) {
+                $stats = $rwStats[(int) ($row->rw_id ?? 0)] ?? [];
+                $label = $stats['label'] ?? $row->nama ?? 'RW';
+
+                return [
+                    'type' => 'Feature',
+                    'properties' => array_merge(
+                        [
+                            'id' => $index + 1,
+                            'label' => $label,
+                            'rw' => $label,
+                            'nomor' => $stats['nomor'] ?? null,
+                            'warna' => $row->warna ?: '#E4121B',
+                            'polygon_id' => $row->id,
+                            'rw_id' => $row->rw_id,
+                        ],
+                        $stats
+                    ),
+                    'geometry' => json_decode($row->geojson, true),
+                ];
+            })
+            ->values()
+            ->all();
+
+        return $collection;
+    }
+
+    private function guestRwMapStats(): array
+    {
+        return Rw::with('rts')
+            ->orderBy('nomor')
+            ->get()
+            ->mapWithKeys(function (Rw $rw) {
+                $rtIds = $rw->rts->pluck('id')->all();
+                $label = 'RW '.str_pad((string) $rw->nomor, 2, '0', STR_PAD_LEFT);
+
+                return [
+                    $rw->id => [
+                        'nomor' => (int) $rw->nomor,
+                        'label' => $label,
+                        'total_penduduk' => Penduduk::whereIn('rt_id', $rtIds)->count(),
+                        'total_kk' => Keluarga::whereIn('rt_id', $rtIds)->count(),
+                        'total_rt' => count($rtIds),
+                        'total_umkm' => Umkm::whereIn('rt_id', $rtIds)->count(),
+                        'laki_laki' => Penduduk::whereIn('rt_id', $rtIds)->whereIn('jenis_kelamin', ['L', 'Laki-laki'])->count(),
+                        'perempuan' => Penduduk::whereIn('rt_id', $rtIds)->whereIn('jenis_kelamin', ['P', 'Perempuan'])->count(),
+                    ],
+                ];
+            })
+            ->all();
+    }
+
+    private function emptyGuestFeatureCollection(string $name): array
+    {
+        return [
+            'type' => 'FeatureCollection',
+            'name' => $name,
+            'crs' => [
+                'type' => 'name',
+                'properties' => ['name' => 'urn:ogc:def:crs:OGC:1.3:CRS84'],
+            ],
+            'features' => [],
+        ];
+    }
+
+    private function guestActiveMapLayers(): array
+    {
+        return PetaLayer::active()
+            ->ordered()
+            ->get()
+            ->map(function (PetaLayer $layer) {
+                $layerType = match ($layer->slug) {
+                    PetaLayer::LAYER_BATAS_KELURAHAN => 'kelurahan',
+                    PetaLayer::LAYER_WILAYAH_RW => 'rw',
+                    default => 'custom',
+                };
+
+                $geojson = match ($layerType) {
+                    'kelurahan' => $this->guestKelurahanGeojsonCollection(),
+                    'rw' => $this->guestRwGeojsonCollection(),
+                    default => $layer->jenis === PetaLayer::JENIS_POINT
+                        ? $this->guestPointLayerCollection($layer)
+                        : $this->guestLayerFeatureCollection($layer),
+                };
+
+                return [
+                    'id' => $layer->id,
+                    'nama' => $layer->nama,
+                    'slug' => $layer->slug,
+                    'deskripsi' => $layer->deskripsi,
+                    'jenis' => $layer->jenis,
+                    'warna' => $layer->warna,
+                    'fill_opacity' => $layer->fill_opacity,
+                    'stroke_width' => $layer->stroke_width,
+                    'pattern_type' => $layer->pattern_type,
+                    'sort_order' => $layer->sort_order,
+                    'layer_type' => $layerType,
+                    'feature_count' => count($geojson['features'] ?? []),
+                    'geojson' => $geojson,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function guestLayerFeatureCollection(PetaLayer $layer): array
+    {
+        $collection = $this->emptyGuestFeatureCollection($layer->slug);
+        $geojsonSelect = PetaLayerPolygon::geojsonSelectExpression('plp.polygon');
+        $rows = DB::select(
+            "SELECT plp.id, plp.nama, plp.deskripsi, plp.warna, {$geojsonSelect}
+             FROM peta_layer_polygons plp
+             WHERE plp.peta_layer_id = ? AND plp.polygon IS NOT NULL
+             ORDER BY plp.sort_order, plp.id",
+            [$layer->id]
+        );
+
+        if (empty($rows)) {
+            return $collection;
+        }
+
+        $collection['features'] = collect($rows)
+            ->map(fn ($row) => [
+                'type' => 'Feature',
+                'properties' => [
+                    'id' => $row->id,
+                    'nama' => $row->nama,
+                    'deskripsi' => $row->deskripsi,
+                    'warna' => $row->warna ?: $layer->warna,
+                ],
+                'geometry' => json_decode($row->geojson, true),
+            ])
+            ->values()
+            ->all();
+
+        return $collection;
+    }
+
+    private function guestPointLayerCollection(PetaLayer $layer): array
+    {
+        $collection = $this->emptyGuestFeatureCollection($layer->slug);
+
+        $features = match ($layer->slug) {
+            PetaLayer::LAYER_SEKOLAH => Sekolah::query()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('nama_sekolah')
+                ->get()
+                ->map(fn (Sekolah $item) => $this->guestPointFeature(
+                    layer: $layer,
+                    id: $item->id,
+                    name: $item->nama_sekolah,
+                    description: collect([$item->jenjang, $item->status, $item->alamat])->filter()->implode(' • '),
+                    latitude: $item->latitude,
+                    longitude: $item->longitude,
+                    extraProperties: [
+                        'kategori' => 'Sekolah',
+                        'jenjang' => $item->jenjang,
+                        'status' => $item->status,
+                        'alamat' => $item->alamat,
+                    ],
+                ))
+                ->filter()
+                ->values()
+                ->all(),
+
+            PetaLayer::LAYER_FASKES => Faskes::query()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('nama_rs')
+                ->get()
+                ->map(fn (Faskes $item) => $this->guestPointFeature(
+                    layer: $layer,
+                    id: $item->id,
+                    name: $item->nama_rs,
+                    description: collect([$item->jenis, $item->kelas, $item->alamat])->filter()->implode(' • '),
+                    latitude: $item->latitude,
+                    longitude: $item->longitude,
+                    extraProperties: [
+                        'kategori' => 'Fasilitas Kesehatan',
+                        'jenis' => $item->jenis,
+                        'kelas' => $item->kelas,
+                        'alamat' => $item->alamat,
+                    ],
+                ))
+                ->filter()
+                ->values()
+                ->all(),
+
+            PetaLayer::LAYER_TEMPAT_IBADAH => TempatIbadah::query()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('nama')
+                ->get()
+                ->map(fn (TempatIbadah $item) => $this->guestPointFeature(
+                    layer: $layer,
+                    id: $item->id,
+                    name: $item->nama,
+                    description: collect([$item->tempat_ibadah, $item->alamat])->filter()->implode(' • '),
+                    latitude: $item->latitude,
+                    longitude: $item->longitude,
+                    extraProperties: [
+                        'kategori' => 'Tempat Ibadah',
+                        'jenis' => $item->tempat_ibadah,
+                        'alamat' => $item->alamat,
+                    ],
+                ))
+                ->filter()
+                ->values()
+                ->all(),
+
+            PetaLayer::LAYER_KONTRAKAN_KOST => Kontrakan::query()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('nama')
+                ->get()
+                ->map(fn (Kontrakan $item) => $this->guestPointFeature(
+                    layer: $layer,
+                    id: $item->id,
+                    name: $item->nama ?: 'Kontrakan & Kost',
+                    description: collect([$item->jenis_unit, $item->pemilik, $item->alamat])->filter()->implode(' • '),
+                    latitude: $item->latitude,
+                    longitude: $item->longitude,
+                    extraProperties: [
+                        'kategori' => 'Kontrakan & Kost',
+                        'jenis' => $item->jenis_unit,
+                        'pemilik' => $item->pemilik,
+                        'alamat' => $item->alamat,
+                    ],
+                ))
+                ->filter()
+                ->values()
+                ->all(),
+
+            PetaLayer::LAYER_ASRAMA => Asrama::query()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('nama')
+                ->get()
+                ->map(fn (Asrama $item) => $this->guestPointFeature(
+                    layer: $layer,
+                    id: $item->id,
+                    name: $item->nama,
+                    description: collect([$item->jenis, $item->alamat])->filter()->implode(' • '),
+                    latitude: $item->latitude,
+                    longitude: $item->longitude,
+                    extraProperties: [
+                        'kategori' => 'Asrama',
+                        'jenis' => $item->jenis,
+                        'alamat' => $item->alamat,
+                    ],
+                ))
+                ->filter()
+                ->values()
+                ->all(),
+
+            PetaLayer::LAYER_DATA_USAHA => Umkm::query()
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->orderBy('nama_ukm')
+                ->get()
+                ->map(fn (Umkm $item) => $this->guestPointFeature(
+                    layer: $layer,
+                    id: $item->id,
+                    name: $item->nama_ukm ?: 'UMKM Warga',
+                    description: collect([$item->nama_pemilik, $item->sektor_umkm, $item->alamat])->filter()->implode(' • '),
+                    latitude: $item->latitude,
+                    longitude: $item->longitude,
+                    extraProperties: [
+                        'kategori' => 'Data Usaha',
+                        'pemilik' => $item->nama_pemilik,
+                        'sektor' => $item->sektor_umkm,
+                        'alamat' => $item->alamat,
+                    ],
+                ))
+                ->filter()
+                ->values()
+                ->all(),
+
+            default => [],
+        };
+
+        $collection['features'] = $features;
+
+        return $collection;
+    }
+
+    private function guestPointFeature(
+        PetaLayer $layer,
+        int|string $id,
+        string $name,
+        ?string $description,
+        mixed $latitude,
+        mixed $longitude,
+        array $extraProperties = []
+    ): ?array {
+        if (! is_numeric($latitude) || ! is_numeric($longitude)) {
+            return null;
+        }
+
+        return [
+            'type' => 'Feature',
+            'properties' => array_merge(
+                [
+                    'id' => $id,
+                    'nama' => $name,
+                    'deskripsi' => $description,
+                    'warna' => $layer->warna ?: '#E4121B',
+                    'layer_slug' => $layer->slug,
+                    'layer_name' => $layer->nama,
+                ],
+                $extraProperties
+            ),
+            'geometry' => [
+                'type' => 'Point',
+                'coordinates' => [(float) $longitude, (float) $latitude],
+            ],
+        ];
+    }
+
+    private function guestAgeRanges(): array
+    {
+        return [
+            [
+                'label' => '0-5',
+                'title' => 'Balita',
+                'min' => 0,
+                'max' => 5,
+            ],
+            [
+                'label' => '6-12',
+                'title' => 'Anak',
+                'min' => 6,
+                'max' => 12,
+            ],
+            [
+                'label' => '13-17',
+                'title' => 'Remaja',
+                'min' => 13,
+                'max' => 17,
+            ],
+            [
+                'label' => '18-35',
+                'title' => 'Dewasa Awal',
+                'min' => 18,
+                'max' => 35,
+            ],
+            [
+                'label' => '36-59',
+                'title' => 'Dewasa',
+                'min' => 36,
+                'max' => 59,
+            ],
+            [
+                'label' => '60+',
+                'title' => 'Lansia',
+                'min' => 60,
+                'max' => null,
+            ],
+        ];
+    }
+
+    private function parsePendudukBirthDateFromNik(?string $nik): ?Carbon
+    {
+        $nik = preg_replace('/\D+/', '', (string) $nik);
+
+        if (strlen($nik) < 12) {
+            return null;
+        }
+
+        $tanggalSegment = substr($nik, 6, 6);
+        $hari = (int) substr($tanggalSegment, 0, 2);
+        $bulan = (int) substr($tanggalSegment, 2, 2);
+        $tahun = (int) substr($tanggalSegment, 4, 2);
+
+        if ($hari > 40) {
+            $hari -= 40;
+        }
+
+        $tahunPenuh = $tahun > (int) now()->format('y')
+            ? 1900 + $tahun
+            : 2000 + $tahun;
+
+        if (! checkdate($bulan, $hari, $tahunPenuh)) {
+            return null;
+        }
+
+        return Carbon::create($tahunPenuh, $bulan, $hari)->startOfDay();
     }
 
     private function guestSearchScopes(): array

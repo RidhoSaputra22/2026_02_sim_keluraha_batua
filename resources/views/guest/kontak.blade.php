@@ -45,7 +45,7 @@
                     <h3 class="text-2xl font-bold text-slate-900 mb-6">Akses Layanan Cepat</h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <a href="{{ route('guest.surat-online') }}" class="rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                        <a href="{{ route('guest.administrasi') }}" class="rounded-2xl border border-slate-200 p-5 hover:border-primary/30 hover:bg-primary/5 transition-colors">
                             <div class="flex items-center gap-3 mb-3">
                                 <div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
                                     <x-guest::ui.icon name="description" />
