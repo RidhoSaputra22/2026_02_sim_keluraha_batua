@@ -1,0 +1,133 @@
+<?php
+
+namespace App\Http\Controllers\Shared\DataUmum;
+
+use App\Http\Controllers\Concerns\HasWilayahScope;
+use App\Http\Controllers\Concerns\SyncsWithPetaLayer;
+use App\Http\Controllers\Controller;
+use App\Models\Kelurahan;
+use App\Models\PetaLayer;
+use App\Models\TempatIbadah;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+
+class TempatIbadahController extends Controller
+{
+    use HasWilayahScope, SyncsWithPetaLayer;
+
+    protected function petaLayerSlug(): string
+    {
+        return PetaLayer::LAYER_TEMPAT_IBADAH;
+    }
+
+    protected function petaPolygonNama(Model $model): string
+    {
+        return $model->nama;
+    }
+
+    public function index(Request $request)
+    {
+        $query = TempatIbadah::with(['kelurahan', 'rt', 'rw']);
+
+        $this->applyWilayahScopeByRtOrRw($query);
+
+        if ($search = $request->get('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('nama', 'like', "%{$search}%")
+                    ->orWhere('tempat_ibadah', 'like', "%{$search}%")
+                    ->orWhere('alamat', 'like', "%{$search}%")
+                    ->orWhere('pengurus', 'like', "%{$search}%");
+            });
+        }
+
+        if ($jenis = $request->get('tempat_ibadah')) {
+            $query->where('tempat_ibadah', $jenis);
+        }
+
+        $tempatIbadahList = $query->orderBy('nama')->paginate(15)->withQueryString();
+        $jenisList = TempatIbadah::distinct()->whereNotNull('tempat_ibadah')->pluck('tempat_ibadah');
+
+        return view('data-umum.tempat-ibadah.index', compact('tempatIbadahList', 'jenisList'));
+    }
+
+    public function create()
+    {
+        $kelurahanList = Kelurahan::orderBy('nama')->get();
+        $rwList        = $this->wilayahRwList();
+        $rtList        = $this->wilayahRtList();
+
+        return view('data-umum.tempat-ibadah.create', compact('kelurahanList', 'rwList', 'rtList'));
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'kelurahan_id'  => ['required', 'exists:kelurahans,id'],
+            'tempat_ibadah' => ['required', 'string', 'max:100'],
+            'nama'          => ['required', 'string', 'max:255'],
+            'alamat'        => ['nullable', 'string', 'max:500'],
+            'rt_id'         => $this->rtIdRules(),
+            'rw_id'         => $this->rwIdRules(),
+            'pengurus'      => ['nullable', 'string', 'max:255'],
+            'latitude'      => ['nullable', 'numeric'],
+            'longitude'     => ['nullable', 'numeric'],
+        ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
+
+        $tempatIbadah = TempatIbadah::create($validated);
+
+        $this->syncPetaPolygon($tempatIbadah, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
+
+        return redirect()->route('data-umum.tempat-ibadah.index')
+            ->with('success', 'Data tempat ibadah berhasil ditambahkan.');
+    }
+
+    public function edit(TempatIbadah $tempatIbadah)
+    {
+        $this->authorizeWilayahByRtOrRwId($tempatIbadah->rt_id, $tempatIbadah->rw_id);
+
+        $kelurahanList = Kelurahan::orderBy('nama')->get();
+        $rwList        = $this->wilayahRwList();
+        $rtList        = $this->wilayahRtList();
+
+        return view('data-umum.tempat-ibadah.edit', compact('tempatIbadah', 'kelurahanList', 'rwList', 'rtList'));
+    }
+
+    public function update(Request $request, TempatIbadah $tempatIbadah)
+    {
+        $this->authorizeWilayahByRtOrRwId($tempatIbadah->rt_id, $tempatIbadah->rw_id);
+
+        $validated = $request->validate([
+            'kelurahan_id'  => ['required', 'exists:kelurahans,id'],
+            'tempat_ibadah' => ['required', 'string', 'max:100'],
+            'nama'          => ['required', 'string', 'max:255'],
+            'alamat'        => ['nullable', 'string', 'max:500'],
+            'rt_id'         => $this->rtIdRules(),
+            'rw_id'         => $this->rwIdRules(),
+            'pengurus'      => ['nullable', 'string', 'max:255'],
+            'latitude'      => ['nullable', 'numeric'],
+            'longitude'     => ['nullable', 'numeric'],
+        ]);
+
+        $validated = $this->normalizeWilayahInput($validated);
+
+        $tempatIbadah->update($validated);
+
+        $this->syncPetaPolygon($tempatIbadah, $validated['latitude'] ?? null, $validated['longitude'] ?? null);
+
+        return redirect()->route('data-umum.tempat-ibadah.index')
+            ->with('success', 'Data tempat ibadah berhasil diperbarui.');
+    }
+
+    public function destroy(TempatIbadah $tempatIbadah)
+    {
+        $this->authorizeWilayahByRtOrRwId($tempatIbadah->rt_id, $tempatIbadah->rw_id);
+
+        $this->removePetaPolygon($tempatIbadah);
+        $tempatIbadah->delete();
+
+        return redirect()->route('data-umum.tempat-ibadah.index')
+            ->with('success', 'Data tempat ibadah berhasil dihapus.');
+    }
+}

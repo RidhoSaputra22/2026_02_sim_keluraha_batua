@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +21,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Support the new authenticated/internal Blade structure under resources/views/user
+        // while keeping existing controller/view names unchanged.
+        View::prependLocation(resource_path('views/user'));
+
+        Blade::anonymousComponentPath(resource_path('views/user/components'));
+
         Blade::anonymousComponentPath(
             resource_path('views/guest/components'),
             'guest'
