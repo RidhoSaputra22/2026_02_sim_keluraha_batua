@@ -434,7 +434,7 @@
     </section>
 
     <section class="pb-20 bg-white">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" x-data="petaApp()">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <x-guest::ui.kelurahan-map
                 :endpoint="route('guest.api.peta-kelurahan')"
                 :title="'Peta Wilayah ' . ($kelurahan?->nama ?? 'Kelurahan')"

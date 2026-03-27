@@ -1,6 +1,18 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import MapEngine from "../map/MapEngine";
 import "../../css/guest-map.css";
+
+if (!globalThis.L) {
+    globalThis.L = L;
+}
+
+const GUEST_MAP_FALLBACK_CENTER = [-5.1477, 119.4327];
+const GUEST_MAP_FALLBACK_ZOOM = 13;
+const GUEST_MAP_TILE_URL =
+    "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
+const GUEST_MAP_TILE_ATTRIBUTION =
+    "&copy; OpenStreetMap contributors &copy; CARTO";
 
 function formatNumber(value) {
     return new Intl.NumberFormat("id-ID").format(Number(value) || 0);
@@ -106,6 +118,16 @@ function getGeometryKind(target = {}) {
     return "polygon";
 }
 
+function createGuestMapId() {
+    if (typeof globalThis.crypto?.randomUUID === "function") {
+        return `guest-kelurahan-map-${globalThis.crypto.randomUUID()}`;
+    }
+
+    return `guest-kelurahan-map-${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`;
+}
+
 class GuestKelurahanMap {
     constructor(root) {
         this.root = root;
@@ -124,7 +146,13 @@ class GuestKelurahanMap {
             ),
         );
         this.resetViewButton = root.querySelector("[data-reset-view]");
+        this.fixedLayerToggleButtons = new Map(
+            Array.from(root.querySelectorAll("[data-toggle-layer]")).map(
+                (node) => [node.dataset.toggleLayer, node],
+            ),
+        );
 
+        this.engine = null;
         this.map = null;
         this.payload = null;
         this.kelurahanLayer = null;
@@ -194,31 +222,56 @@ class GuestKelurahanMap {
     }
 
     initMap() {
-        this.map = L.map(this.canvas, {
-            zoomControl: false,
-            scrollWheelZoom: false,
-            attributionControl: true,
-        });
+        if (!this.canvas) {
+            throw new Error("Container peta guest tidak ditemukan.");
+        }
+
+        if (!this.canvas.id) {
+            this.canvas.id = createGuestMapId();
+        }
+
+        this.engine = new MapEngine(this.canvas.id, {
+            center: GUEST_MAP_FALLBACK_CENTER,
+            zoom: GUEST_MAP_FALLBACK_ZOOM,
+            zoomPosition: "bottomright",
+            useSvgRenderer: true,
+            baseLayers: false,
+        }).init();
+
+        this.map = this.engine.map;
+
+        if (!this.map) {
+            throw new Error("MapEngine guest gagal diinisialisasi.");
+        }
+
+        this.map.scrollWheelZoom?.disable();
 
         [
             ["guest-map-overlay-pane", 410],
             ["guest-map-rw-pane", 420],
             ["guest-map-boundary-pane", 430],
             ["guest-map-point-pane", 440],
-        ].forEach(([name, zIndex]) => {
-            this.map.createPane(name);
-            this.map.getPane(name).style.zIndex = String(zIndex);
-        });
+        ].forEach(([name, zIndex]) => this.ensurePane(name, zIndex));
 
-        L.control.zoom({ position: "bottomright" }).addTo(this.map);
+        L.tileLayer(GUEST_MAP_TILE_URL, {
+            maxZoom: 20,
+            attribution: GUEST_MAP_TILE_ATTRIBUTION,
+        }).addTo(this.map);
+    }
 
-        L.tileLayer(
-            "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-            {
-                maxZoom: 20,
-                attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
-            },
-        ).addTo(this.map);
+    ensurePane(name, zIndex) {
+        if (!this.map) {
+            return;
+        }
+
+        const pane = this.map.getPane(name) ?? this.map.createPane(name);
+        pane.style.zIndex = String(zIndex);
+    }
+
+    getRendererOptions() {
+        return this.engine?.svgRenderer
+            ? { renderer: this.engine.svgRenderer }
+            : {};
     }
 
     renderAllLayers() {
@@ -306,6 +359,7 @@ class GuestKelurahanMap {
 
         return L.geoJSON(kelurahanGeojson, {
             pane: "guest-map-boundary-pane",
+            ...this.getRendererOptions(),
             style: {
                 color,
                 weight: Math.max(Number(layerMeta.stroke_width ?? 3), 2.4),
@@ -341,6 +395,7 @@ class GuestKelurahanMap {
             },
             {
                 pane: "guest-map-rw-pane",
+                ...this.getRendererOptions(),
                 style: (feature) => this.getRwStyle(feature, layerMeta),
                 onEachFeature: (feature, layer) =>
                     this.attachRwFeatureHandlers(feature, layer),
@@ -357,12 +412,16 @@ class GuestKelurahanMap {
 
         return L.geoJSON(geojson, {
             pane: this.getPaneName(layerMeta.layer_type, geometryKind),
+            ...this.getRendererOptions(),
             style: (feature) =>
                 this.getCustomLayerStyle(layerMeta, feature, false),
             pointToLayer: (feature, latlng) =>
                 L.circleMarker(
                     latlng,
-                    this.getCustomLayerStyle(layerMeta, feature, false),
+                    {
+                        ...this.getRendererOptions(),
+                        ...this.getCustomLayerStyle(layerMeta, feature, false),
+                    },
                 ),
             onEachFeature: (feature, layer) =>
                 this.attachCustomFeatureHandlers(layerMeta, feature, layer),
@@ -728,11 +787,31 @@ class GuestKelurahanMap {
     }
 
     bindControls() {
+        this.fixedLayerToggleButtons.forEach((button, key) => {
+            button.addEventListener("click", () => this.toggleLayer(key));
+        });
+
         this.resetViewButton?.addEventListener("click", () => this.resetView());
     }
 
+    getLayerEntry(key) {
+        if (this.layerRegistry.has(key)) {
+            return this.layerRegistry.get(key);
+        }
+
+        if (key === "kelurahan" && this.kelurahanLayerKey) {
+            return this.layerRegistry.get(this.kelurahanLayerKey);
+        }
+
+        if (key === "rw" && this.rwLayerKey) {
+            return this.layerRegistry.get(this.rwLayerKey);
+        }
+
+        return null;
+    }
+
     toggleLayer(key) {
-        const entry = this.layerRegistry.get(key);
+        const entry = this.getLayerEntry(key);
 
         if (!entry || !entry.hasFeatures || !entry.leafletLayer) {
             return;
@@ -743,7 +822,7 @@ class GuestKelurahanMap {
     }
 
     setLayerVisibility(key, visible) {
-        const entry = this.layerRegistry.get(key);
+        const entry = this.getLayerEntry(key);
 
         if (!entry || !entry.hasFeatures || !entry.leafletLayer) {
             return;
@@ -757,7 +836,7 @@ class GuestKelurahanMap {
             this.map.removeLayer(entry.leafletLayer);
         }
 
-        if (key === this.rwLayerKey && !entry.visible) {
+        if (entry.key === this.rwLayerKey && !entry.visible) {
             this.clearActiveRwState();
         }
 
@@ -765,8 +844,13 @@ class GuestKelurahanMap {
     }
 
     syncLayerToggleButtons() {
-        this.layerToggleButtons.forEach((button, key) => {
-            const entry = this.layerRegistry.get(key);
+        const buttonGroups = [
+            ...this.fixedLayerToggleButtons.entries(),
+            ...this.layerToggleButtons.entries(),
+        ];
+
+        buttonGroups.forEach(([key, button]) => {
+            const entry = this.getLayerEntry(key);
             const isActive = Boolean(
                 entry?.hasFeatures && entry?.visible !== false,
             );
@@ -822,10 +906,17 @@ class GuestKelurahanMap {
         const bounds = layer.getBounds?.();
 
         if (bounds?.isValid()) {
-            this.map.fitBounds(bounds.pad(0.2), {
-                padding: [24, 24],
-                maxZoom,
-            });
+            if (this.engine) {
+                this.engine.fitBounds(bounds.pad(0.2), {
+                    padding: [24, 24],
+                    maxZoom,
+                });
+            } else {
+                this.map.fitBounds(bounds.pad(0.2), {
+                    padding: [24, 24],
+                    maxZoom,
+                });
+            }
         } else if (typeof layer.getLatLng === "function") {
             this.map.setView(layer.getLatLng(), maxZoom);
         }
@@ -858,7 +949,10 @@ class GuestKelurahanMap {
 
         if (!fallbackLayers.length) {
             if (this.map) {
-                this.map.setView([-5.1477, 119.4327], 13);
+                this.map.setView(
+                    GUEST_MAP_FALLBACK_CENTER,
+                    GUEST_MAP_FALLBACK_ZOOM,
+                );
             }
             return;
         }
@@ -866,11 +960,20 @@ class GuestKelurahanMap {
         const bounds = L.featureGroup(fallbackLayers).getBounds();
 
         if (bounds.isValid()) {
-            this.map.fitBounds(bounds.pad(0.08), {
-                padding: [28, 28],
-            });
+            if (this.engine) {
+                this.engine.fitBounds(bounds.pad(0.08), {
+                    padding: [28, 28],
+                });
+            } else {
+                this.map.fitBounds(bounds.pad(0.08), {
+                    padding: [28, 28],
+                });
+            }
         } else {
-            this.map.setView([-5.1477, 119.4327], 13);
+            this.map.setView(
+                GUEST_MAP_FALLBACK_CENTER,
+                GUEST_MAP_FALLBACK_ZOOM,
+            );
         }
 
         this.clearActiveRwState();
@@ -881,7 +984,7 @@ class GuestKelurahanMap {
         this.errorBox?.classList.add("hidden");
 
         window.requestAnimationFrame(() => {
-            this.map?.invalidateSize();
+            this.engine?.invalidateSize();
         });
     }
 

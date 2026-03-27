@@ -11,6 +11,7 @@ export default defineConfig({
                 "resources/css/guest.css",
                 "resources/css/peta.css",
                 "resources/js/map/index.js",
+                "resources/js/guest/kelurahan-map.js",
                 "resources/js/peta/app.js",
                 "resources/js/peta/layer-form.js",
                 "resources/js/peta/layer-polygon-editor.js",

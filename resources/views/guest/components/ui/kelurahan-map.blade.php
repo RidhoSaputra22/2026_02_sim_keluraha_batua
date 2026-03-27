@@ -18,7 +18,7 @@
             </span>
             <span class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-700">
                 <span class="material-icons text-base">layers</span>
-                Semua Layer Aktif
+                Layer Kelurahan & RW
             </span>
         </div>
     </div>
@@ -26,8 +26,13 @@
     <div data-guest-kelurahan-map data-endpoint="{{ $endpoint }}" class="guest-map-shell">
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_360px]">
             <div class="relative overflow-hidden rounded-[1.75rem] border border-slate-200 bg-background-light">
-                <div class="absolute left-4 right-4 top-4 z-[500] flex flex-wrap items-start gap-2">
-                    <div data-layer-toggle-list class="flex flex-wrap gap-2"></div>
+                <div class="absolute left-4 top-4 z-[500] flex flex-wrap gap-2">
+                    <button type="button" data-toggle-layer="kelurahan" class="guest-map-toggle is-active">
+                        Batas Kelurahan
+                    </button>
+                    <button type="button" data-toggle-layer="rw" class="guest-map-toggle is-active">
+                        Layer RW
+                    </button>
                     <button type="button" data-reset-view class="guest-map-toggle guest-map-toggle-secondary">
                         Reset View
                     </button>
@@ -114,16 +119,18 @@
                 <div class="rounded-[1.5rem] border border-primary/10 bg-background-light p-5">
                     <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Legend</p>
 
-                    <div data-layer-legend class="mt-4 space-y-3 text-sm text-slate-600">
-                        <div class="rounded-2xl border border-dashed border-slate-200 p-4 text-sm text-slate-500">
-                            Legend layer sedang dimuat...
+                    <div class="mt-4 space-y-3 text-sm text-slate-600">
+                        <div class="flex items-center gap-3">
+                            <span class="h-3 w-8 rounded-full border-2 border-dashed border-primary"></span>
+                            <span>Batas resmi kelurahan</span>
                         </div>
-                    </div>
-
-                    <div class="mt-4 flex items-center gap-3 text-sm text-slate-600">
+                        <div class="flex items-center gap-3">
+                            <span class="h-3 w-8 rounded-full bg-primary/30 ring-1 ring-primary/30"></span>
+                            <span>Polygon wilayah RW</span>
+                        </div>
                         <div class="flex items-center gap-3">
                             <span class="material-icons text-base text-slate-400">ads_click</span>
-                            <span>Gunakan toggle di atas peta untuk menyalakan atau menyembunyikan tiap layer.</span>
+                            <span>Klik RW di peta atau daftar untuk fokus ke wilayah.</span>
                         </div>
                     </div>
                 </div>
