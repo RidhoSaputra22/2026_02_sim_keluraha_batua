@@ -1,5 +1,6 @@
 <x-guest::layout.app title="Cek Data">
-    <x-guest::ui.hero size="xl" background="gradient">
+
+    <x-guest::ui.hero size="xl" background="gradient" class="overflow-hidden">
         <x-slot:title>
             Cek <span class="text-primary">Data Kependudukan</span>
         </x-slot:title>
@@ -9,7 +10,7 @@
         </x-slot:subtitle>
     </x-guest::ui.hero>
 
-    <section class="bg-white py-8  ">
+    <section class="border-y border-slate-100 bg-slate-50 py-8 -mt-24" id="cek-data-stats">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <x-guest::ui.stat-card title="Total Penduduk" :value="(string) $totalPenduduk" icon="groups"
@@ -24,8 +25,10 @@
         </div>
     </section>
 
-    <section class="border-y border-slate-100 bg-slate-50 py-12" id="cek-data-result">
+    <section class=" bg-slate-50 py-12" id="cek-data-result">
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
             <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
                 <div class="space-y-6 lg:col-span-7">
                     <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-right" data-aos-delay="80">
