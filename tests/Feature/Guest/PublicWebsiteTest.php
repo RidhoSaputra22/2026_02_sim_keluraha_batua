@@ -37,6 +37,15 @@ class PublicWebsiteTest extends TestCase
             'published_at' => now(),
         ]);
 
+        $beritaTerkait = Berita::create([
+            'judul' => 'Jadwal Kerja Bakti RW 04',
+            'kategori' => 'kegiatan',
+            'ringkasan' => 'Agenda kerja bakti mingguan untuk warga.',
+            'isi' => 'Isi berita kerja bakti warga.',
+            'is_published' => true,
+            'published_at' => now()->subHour(),
+        ]);
+
         Berita::create([
             'judul' => 'Draft Internal',
             'kategori' => 'berita',
@@ -100,7 +109,10 @@ class PublicWebsiteTest extends TestCase
 
         $this->get(route('guest.berita.show', $berita))
             ->assertOk()
-            ->assertSee('Isi berita kegiatan bersih lingkungan.');
+            ->assertSee('Isi berita kegiatan bersih lingkungan.')
+            ->assertSee('Bagikan Informasi')
+            ->assertSee('Salin Link')
+            ->assertSee($beritaTerkait->judul);
     }
 
     public function test_guest_can_submit_pengaduan(): void

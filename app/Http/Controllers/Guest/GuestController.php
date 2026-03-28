@@ -485,6 +485,16 @@ class GuestController extends Controller
             ->take(3)
             ->get();
 
+        if ($relatedBerita->count() < 3) {
+            $tambahanBerita = Berita::latestPublished()
+                ->where('id', '!=', $berita->id)
+                ->whereNotIn('id', $relatedBerita->pluck('id'))
+                ->take(3 - $relatedBerita->count())
+                ->get();
+
+            $relatedBerita = $relatedBerita->concat($tambahanBerita)->values();
+        }
+
         return view('guest.berita_show', compact('berita', 'relatedBerita'));
     }
 
