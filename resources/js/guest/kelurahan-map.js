@@ -13,6 +13,9 @@ const GUEST_MAP_TILE_URL =
     "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const GUEST_MAP_TILE_ATTRIBUTION =
     "&copy; OpenStreetMap contributors &copy; CARTO";
+const GUEST_MAP_SATELLITE_TILE_URL =
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const GUEST_MAP_SATELLITE_TILE_ATTRIBUTION = "&copy; Esri";
 
 function formatNumber(value) {
     return new Intl.NumberFormat("id-ID").format(Number(value) || 0);
@@ -199,6 +202,7 @@ class GuestKelurahanMap {
         this.rwLabelLayer = null;
         this.highlightedRwLayer = null;
         this.rwTooltipRegistry = new Map();
+        this.baseLayerControl = null;
     }
 
     async init() {
@@ -288,10 +292,7 @@ class GuestKelurahanMap {
             ["guest-map-point-pane", 440],
         ].forEach(([name, zIndex]) => this.ensurePane(name, zIndex));
 
-        L.tileLayer(GUEST_MAP_TILE_URL, {
-            maxZoom: 20,
-            attribution: GUEST_MAP_TILE_ATTRIBUTION,
-        }).addTo(this.map);
+        this.addBaseLayerControl();
     }
 
     ensurePane(name, zIndex) {
@@ -301,6 +302,38 @@ class GuestKelurahanMap {
 
         const pane = this.map.getPane(name) ?? this.map.createPane(name);
         pane.style.zIndex = String(zIndex);
+    }
+
+    addBaseLayerControl() {
+        if (!this.map) {
+            return;
+        }
+
+        const petaLayer = L.tileLayer(GUEST_MAP_TILE_URL, {
+            maxZoom: 20,
+            attribution: GUEST_MAP_TILE_ATTRIBUTION,
+        });
+
+        const satelitLayer = L.tileLayer(GUEST_MAP_SATELLITE_TILE_URL, {
+            maxZoom: 19,
+            attribution: GUEST_MAP_SATELLITE_TILE_ATTRIBUTION,
+        });
+
+        petaLayer.addTo(this.map);
+
+        this.baseLayerControl = L.control
+            .layers(
+                {
+                    Peta: petaLayer,
+                    Satelit: satelitLayer,
+                },
+                null,
+                {
+                    position: "topright",
+                    collapsed: false,
+                },
+            )
+            .addTo(this.map);
     }
 
     getRendererOptions() {

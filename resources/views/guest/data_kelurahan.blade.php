@@ -14,7 +14,10 @@
             [
                 'label' => 'Kepala Keluarga',
                 'value' => number_format($totalKK),
-                'meta' => ($avgAnggotaKeluarga > 0 ? number_format($avgAnggotaKeluarga, 1, ',', '.') . ' rata-rata anggota/KK' : 'Data keluarga aktif'),
+                'meta' =>
+                    $avgAnggotaKeluarga > 0
+                        ? number_format($avgAnggotaKeluarga, 1, ',', '.') . ' rata-rata anggota/KK'
+                        : 'Data keluarga aktif',
                 'icon' => 'home',
             ],
             [
@@ -35,16 +38,24 @@
             [
                 'title' => 'Kependudukan',
                 'icon' => 'people',
-                'description' => 'Informasi demografi warga, komposisi gender, status data, dan struktur keluarga yang tercatat di sistem.',
+                'description' =>
+                    'Informasi demografi warga, komposisi gender, status data, dan struktur keluarga yang tercatat di sistem.',
                 'headline' => number_format($totalPenduduk) . ' jiwa',
-                'detail' => number_format($totalKK) . ' KK • ' . number_format($totalLakiLaki) . ' laki-laki • ' . number_format($totalPerempuan) . ' perempuan',
+                'detail' =>
+                    number_format($totalKK) .
+                    ' KK • ' .
+                    number_format($totalLakiLaki) .
+                    ' laki-laki • ' .
+                    number_format($totalPerempuan) .
+                    ' perempuan',
                 'href' => route('guest.cek-data'),
                 'link' => 'Cek data warga',
             ],
             [
                 'title' => 'Lahan & Wilayah',
                 'icon' => 'map',
-                'description' => 'Gambaran struktur wilayah administratif, cakupan RW/RT, dan profil kelurahan yang dikelola secara digital.',
+                'description' =>
+                    'Gambaran struktur wilayah administratif, cakupan RW/RT, dan profil kelurahan yang dikelola secara digital.',
                 'headline' => number_format($totalRw) . ' RW / ' . number_format($totalRt) . ' RT',
                 'detail' => $luasKelurahan ?: 'Profil luas wilayah tersedia di data kelurahan',
                 'href' => route('guest.profil'),
@@ -53,9 +64,14 @@
             [
                 'title' => 'Administrasi',
                 'icon' => 'description',
-                'description' => 'Akses cepat ke layanan surat, arsip publik, berita, dan kanal pelayanan administrasi kelurahan.',
+                'description' =>
+                    'Akses cepat ke layanan surat, arsip publik, berita, dan kanal pelayanan administrasi kelurahan.',
                 'headline' => number_format($totalLayanan) . ' layanan aktif',
-                'detail' => number_format($totalDokumen) . ' dokumen publik • ' . number_format($totalBerita) . ' berita terbit',
+                'detail' =>
+                    number_format($totalDokumen) .
+                    ' dokumen publik • ' .
+                    number_format($totalBerita) .
+                    ' berita terbit',
                 'href' => route('guest.administrasi'),
                 'link' => 'Buka layanan administrasi',
             ],
@@ -103,11 +119,7 @@
     @endphp
 
     <x-guest::ui.hero size="xl" background="gradient" class="overflow-hidden">
-        <x-slot:badge>
-            <x-guest::ui.badge variant="primary" size="lg" icon="dashboard">
-                Dashboard Publik Kelurahan
-            </x-guest::ui.badge>
-        </x-slot:badge>
+
 
         <x-slot:title>
             Pusat Data &amp; Informasi Kelurahan
@@ -118,23 +130,7 @@
             untuk pelayanan publik yang lebih baik.
         </x-slot:subtitle>
 
-        <x-slot:actions>
-            <div class="w-full max-w-5xl">
-                <x-guest::ui.search-bar action="{{ route('guest.search') }}"
-                    placeholder="Cari data kependudukan, layanan, dokumen, atau statistik..."
-                    button-text="Cari Data">
-                    <div class="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm text-slate-500">
-                        <span>Populer:</span>
-                        @foreach ($popularLinks as $item)
-                            <a href="{{ $item['href'] }}"
-                                class="rounded-full border border-slate-200 bg-white/90 px-4 py-1.5 text-slate-600 transition hover:border-primary/30 hover:text-primary">
-                                {{ $item['label'] }}
-                            </a>
-                        @endforeach
-                    </div>
-                </x-guest::ui.search-bar>
-            </div>
-        </x-slot:actions>
+
     </x-guest::ui.hero>
 
     <section class="relative z-10 -mt-10 pb-10 md:-mt-14">
@@ -187,7 +183,7 @@
 
             <div class="grid gap-6 xl:grid-cols-3">
                 <div class="space-y-6 xl:col-span-2">
-                    <x-guest::ui.card variant="bordered" padding="lg" >
+                    <x-guest::ui.card variant="bordered" padding="lg">
                         <div class="mb-8 flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-xl font-bold text-slate-900">Sebaran Penduduk per RW</h3>
@@ -212,9 +208,10 @@
                                 <div class="relative z-10 flex h-full items-end gap-3 md:gap-5">
                                     @foreach ($chartRwHighlights as $rw)
                                         @php
-                                            $barHeight = $chartRwMax > 0
-                                                ? max(18, (int) round(($rw['total_penduduk'] / $chartRwMax) * 100))
-                                                : 18;
+                                            $barHeight =
+                                                $chartRwMax > 0
+                                                    ? max(18, (int) round(($rw['total_penduduk'] / $chartRwMax) * 100))
+                                                    : 18;
                                         @endphp
                                         <div class="flex h-full flex-1 flex-col items-center justify-end gap-4">
                                             <div class="flex h-full w-full items-end justify-center">
@@ -251,7 +248,8 @@
                                 <div class="rounded-2xl bg-white p-4">
                                     <p class="text-sm text-slate-500">Rata-rata per RW</p>
                                     <p class="mt-2 text-lg font-bold text-slate-900">
-                                        {{ $totalRw > 0 ? number_format($totalPenduduk / $totalRw, 1, ',', '.') : '0' }} jiwa
+                                        {{ $totalRw > 0 ? number_format($totalPenduduk / $totalRw, 1, ',', '.') : '0' }}
+                                        jiwa
                                     </p>
                                 </div>
                             </div>
@@ -272,7 +270,8 @@
                                 </p>
                             </div>
                             <x-guest::ui.badge variant="info" size="sm">
-                                {{ number_format($cakupanDataUmur) }}/{{ number_format($totalPenduduk) }} data terpetakan
+                                {{ number_format($cakupanDataUmur) }}/{{ number_format($totalPenduduk) }} data
+                                terpetakan
                             </x-guest::ui.badge>
                         </div>
 
@@ -289,9 +288,10 @@
                                 <div class="relative z-10 flex h-full items-end gap-3 md:gap-4">
                                     @foreach ($sebaranUmur as $item)
                                         @php
-                                            $barHeight = $chartUmurMax > 0
-                                                ? max(14, (int) round(($item['value'] / $chartUmurMax) * 100))
-                                                : 14;
+                                            $barHeight =
+                                                $chartUmurMax > 0
+                                                    ? max(14, (int) round(($item['value'] / $chartUmurMax) * 100))
+                                                    : 14;
                                         @endphp
                                         <div class="flex h-full flex-1 flex-col items-center justify-end gap-4">
                                             <div class="flex h-full w-full items-end justify-center">
@@ -345,7 +345,8 @@
                         @else
                             <div class="rounded-2xl border border-dashed border-slate-200 bg-white p-10 text-center">
                                 <x-guest::ui.icon name="equalizer" size="xl" color="text-slate-300" />
-                                <p class="mt-4 text-lg font-semibold text-slate-900">Belum ada data umur yang bisa dihitung.</p>
+                                <p class="mt-4 text-lg font-semibold text-slate-900">Belum ada data umur yang bisa
+                                    dihitung.</p>
                             </div>
                         @endif
                     </x-guest::ui.card>
@@ -354,7 +355,8 @@
                 <div class="space-y-6">
                     <x-guest::ui.card variant="bordered" padding="lg">
                         <h3 class="text-xl font-bold text-slate-900">Komposisi Gender</h3>
-                        <p class="mt-2 text-sm text-slate-500">Distribusi jenis kelamin dari warga yang sudah terdata.</p>
+                        <p class="mt-2 text-sm text-slate-500">Distribusi jenis kelamin dari warga yang sudah terdata.
+                        </p>
 
                         <div class="mt-6 space-y-5">
                             @forelse ($komposisiGender as $item)
@@ -362,9 +364,11 @@
                                     <div class="flex items-center justify-between gap-3">
                                         <div>
                                             <p class="font-semibold text-slate-900">{{ $item['label'] }}</p>
-                                            <p class="text-sm text-slate-500">{{ number_format($item['value']) }} jiwa</p>
+                                            <p class="text-sm text-slate-500">{{ number_format($item['value']) }} jiwa
+                                            </p>
                                         </div>
-                                        <span class="text-sm font-semibold text-slate-900">{{ $item['percentage'] }}%</span>
+                                        <span
+                                            class="text-sm font-semibold text-slate-900">{{ $item['percentage'] }}%</span>
                                     </div>
                                     <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
                                         <div class="h-full rounded-full {{ $item['color'] }}"
@@ -377,40 +381,7 @@
                         </div>
                     </x-guest::ui.card>
 
-                    <x-guest::ui.card variant="bordered" padding="lg">
-                        <h3 class="text-xl font-bold text-slate-900">Status Data & Agama</h3>
-                        <p class="mt-2 text-sm text-slate-500">Membantu memantau kualitas data kependudukan yang aktif.</p>
 
-                        <div class="mt-6 space-y-4">
-                            @forelse ($statusPenduduk as $item)
-                                <div class="rounded-2xl border border-slate-100 p-4">
-                                    <div class="flex items-center justify-between gap-3">
-                                        <div>
-                                            <p class="font-semibold text-slate-900">{{ $item['label'] }}</p>
-                                            <p class="text-sm text-slate-500">{{ number_format($item['value']) }} data</p>
-                                        </div>
-                                        <x-guest::ui.badge variant="info" size="sm">{{ $item['percentage'] }}%</x-guest::ui.badge>
-                                    </div>
-                                </div>
-                            @empty
-                                <p class="text-sm text-slate-500">Belum ada status data yang bisa ditampilkan.</p>
-                            @endforelse
-                        </div>
-
-                        <div class="mt-6 border-t border-slate-100 pt-6">
-                            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400">Agama Tercatat</p>
-                            <div class="mt-4 space-y-3">
-                                @forelse ($komposisiAgama as $item)
-                                    <div class="flex items-center justify-between text-sm">
-                                        <span class="font-medium text-slate-700">{{ $item['label'] }}</span>
-                                        <span class="text-slate-500">{{ number_format($item['value']) }} warga</span>
-                                    </div>
-                                @empty
-                                    <p class="text-sm text-slate-500">Belum ada data agama yang tercatat.</p>
-                                @endforelse
-                            </div>
-                        </div>
-                    </x-guest::ui.card>
 
                     <x-guest::ui.card variant="bordered" padding="lg">
                         <h3 class="text-xl font-bold text-slate-900">Fasilitas & Jejaring</h3>
@@ -435,9 +406,17 @@
 
     <section class="pb-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <x-guest::ui.kelurahan-map
-                :endpoint="route('guest.api.peta-kelurahan')"
-                :title="'Peta Wilayah ' . ($kelurahan?->nama ?? 'Kelurahan')"
+            <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-slate-900 md:text-4xl">Peta Kelurahan</h2>
+                    <p class="mt-3 max-w-2xl text-base leading-7 text-slate-500">
+                            Eksplorasi batas kelurahan, wilayah RW, dan seluruh layer aktif melalui peta interaktif yang diambil langsung dari endpoint data peta publik.
+                    </p>
+                </div>
+
+
+            </div>
+            <x-guest::ui.kelurahan-map :endpoint="route('guest.api.peta-kelurahan')" :title="'Peta Wilayah ' . ($kelurahan?->nama ?? 'Kelurahan')"
                 subtitle="Eksplorasi batas kelurahan, wilayah RW, dan seluruh layer aktif melalui peta interaktif yang diambil langsung dari endpoint data peta publik." />
         </div>
     </section>

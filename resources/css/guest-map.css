@@ -156,7 +156,7 @@
     border: none !important;
     box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12) !important;
     overflow: hidden;
-    border-radius: 1rem !important;
+    border-radius: 5px !important;
 }
 
 .guest-map-shell .leaflet-control-zoom a {
@@ -180,6 +180,38 @@
     margin: 0 0.75rem 0.75rem 0;
     color: #64748b;
     font-size: 11px;
+}
+
+.guest-map-shell .leaflet-control-layers {
+    border: none !important;
+    border-radius: 5px !important;
+    overflow: hidden;
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12) !important;
+}
+
+.guest-map-shell .leaflet-control-layers-expanded {
+    min-width: 8.5rem;
+    padding: 0.8rem 0.9rem !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    color: #0f172a !important;
+    font-size: 0.875rem !important;
+}
+
+.guest-map-shell .leaflet-control-layers-base label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #334155;
+    font-weight: 600;
+}
+
+.guest-map-shell .leaflet-control-layers-base label + label {
+    margin-top: 0.5rem;
+}
+
+.guest-map-shell .leaflet-control-layers-selector {
+    margin: 0;
+    accent-color: #e4121b;
 }
 
 .guest-map-shell .leaflet-popup-content-wrapper {

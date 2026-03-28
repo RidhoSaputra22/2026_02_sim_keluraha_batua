@@ -1,5 +1,5 @@
 <x-guest::layout.app title="Cek Data">
-    <x-guest::ui.hero size="xl" background="white">
+    <x-guest::ui.hero size="xl" background="gradient">
         <x-slot:title>
             Cek <span class="text-primary">Data Kependudukan</span>
         </x-slot:title>
@@ -9,7 +9,7 @@
         </x-slot:subtitle>
     </x-guest::ui.hero>
 
-    <section class="bg-white py-8">
+    <section class="bg-white py-8  ">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <x-guest::ui.stat-card title="Total Penduduk" :value="(string) $totalPenduduk" icon="groups"
