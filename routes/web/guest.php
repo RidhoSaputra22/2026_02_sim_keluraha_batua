@@ -12,6 +12,7 @@ Route::get('/api/guest/peta-kelurahan', [GuestController::class, 'dataKelurahanM
 Route::get('/cek-data', [GuestController::class, 'cekData'])->name('guest.cek-data');
 Route::post('/cek-data', [GuestController::class, 'cekDataSearch'])->name('guest.cek-data.search');
 Route::get('/administrasi', [GuestController::class, 'administrasi'])->name('guest.administrasi');
+Route::get('/administrasi/{layananSurat:slug}', [GuestController::class, 'showAdministrasi'])->name('guest.administrasi.show');
 Route::get('/publikasi', [GuestController::class, 'publikasi'])->name('guest.publikasi');
 Route::get('/publikasi/{berita:slug}', [GuestController::class, 'showBerita'])->name('guest.berita.show');
 Route::get('/dokumen-publik/{dokumenPublik:slug}/unduh', [GuestController::class, 'downloadDokumenPublik'])->name('guest.publikasi.download');

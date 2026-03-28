@@ -5,19 +5,19 @@ namespace App\Http\Controllers\Guest;
 use App\Http\Controllers\Controller;
 use App\Models\Asrama;
 use App\Models\Berita;
-use App\Models\Kontrakan;
 use App\Models\DestinasiWisata;
 use App\Models\DokumenPublik;
 use App\Models\Faskes;
 use App\Models\JenisUsaha;
 use App\Models\Keluarga;
 use App\Models\Kelurahan;
+use App\Models\Kontrakan;
 use App\Models\LayananSurat;
 use App\Models\PegawaiStaff;
-use App\Models\PetaLayer;
-use App\Models\PetaLayerPolygon;
 use App\Models\Penduduk;
 use App\Models\PengaduanWarga;
+use App\Models\PetaLayer;
+use App\Models\PetaLayerPolygon;
 use App\Models\Rt;
 use App\Models\Rw;
 use App\Models\Sekolah;
@@ -368,13 +368,21 @@ class GuestController extends Controller
 
     public function administrasi(Request $request)
     {
-        $query = LayananSurat::with('persyaratans')->active()->ordered();
+        $search = trim((string) $request->get('q'));
+        $query = LayananSurat::withCount('persyaratans')->active()->ordered();
 
-        if ($search = trim((string) $request->get('q'))) {
+        if ($search !== '') {
             $query->where(function ($builder) use ($search) {
                 $builder->where('nama', 'like', "%{$search}%")
                     ->orWhere('deskripsi', 'like', "%{$search}%")
-                    ->orWhere('biaya', 'like', "%{$search}%");
+                    ->orWhere('biaya', 'like', "%{$search}%")
+                    ->orWhere('estimasi_layanan', 'like', "%{$search}%")
+                    ->orWhere('catatan', 'like', "%{$search}%");
+
+                $builder->orWhereHas('persyaratans', function (Builder $relation) use ($search) {
+                    $relation->where('nama', 'like', "%{$search}%")
+                        ->orWhere('keterangan', 'like', "%{$search}%");
+                });
             });
         }
 
@@ -382,7 +390,26 @@ class GuestController extends Controller
 
         return view('guest.administrasi', [
             'layananSurat' => $layananSurat,
-            'activeLayananSlug' => $request->get('layanan'),
+            'search' => $search,
+        ]);
+    }
+
+    public function showAdministrasi(LayananSurat $layananSurat)
+    {
+        abort_unless($layananSurat->is_active, 404);
+
+        $layananSurat->load('persyaratans');
+
+        $layananLainnya = LayananSurat::query()
+            ->active()
+            ->ordered()
+            ->whereKeyNot($layananSurat->getKey())
+            ->take(4)
+            ->get();
+
+        return view('guest.administrasi_show', [
+            'layananSurat' => $layananSurat,
+            'layananLainnya' => $layananLainnya,
         ]);
     }
 
@@ -555,7 +582,7 @@ class GuestController extends Controller
     {
         $validated = $request->validate([
             'subjek' => ['required', 'string', 'max:255'],
-            'kategori' => ['required', 'in:' . implode(',', array_keys(PengaduanWarga::kategoriOptions()))],
+            'kategori' => ['required', 'in:'.implode(',', array_keys(PengaduanWarga::kategoriOptions()))],
             'isi_laporan' => ['required', 'string'],
             'nama' => ['required', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
@@ -615,7 +642,7 @@ class GuestController extends Controller
         $wrappedColumn = $query->getQuery()->getGrammar()->wrap($column);
         $method = $boolean === 'or' ? 'orWhereRaw' : 'whereRaw';
 
-        $query->{$method}("LOWER({$wrappedColumn}) LIKE ?", ['%' . Str::lower($value) . '%']);
+        $query->{$method}("LOWER({$wrappedColumn}) LIKE ?", ['%'.Str::lower($value).'%']);
     }
 
     private function matchesGuestSearchText(string $haystack, string $search): bool
@@ -685,8 +712,8 @@ class GuestController extends Controller
             ->get()
             ->map(function (LayananSurat $item) {
                 $subtitle = collect([
-                    $item->estimasi_layanan ? 'Estimasi ' . $item->estimasi_layanan : null,
-                    $item->biaya ? 'Biaya ' . $item->biaya : null,
+                    $item->estimasi_layanan ? 'Estimasi '.$item->estimasi_layanan : null,
+                    $item->biaya ? 'Biaya '.$item->biaya : null,
                 ])->filter()->implode(' • ');
 
                 return [
@@ -698,11 +725,8 @@ class GuestController extends Controller
                         $item->deskripsi ?: $item->catatan ?: "Tersedia {$item->persyaratans_count} persyaratan layanan.",
                         140
                     ),
-                    'url' => route('guest.administrasi', [
-                        'q' => $item->nama,
-                        'layanan' => $item->slug,
-                    ]),
-                    'action_label' => 'Lihat Persyaratan',
+                    'url' => route('guest.administrasi.show', $item),
+                    'action_label' => 'Lihat Detail',
                 ];
             })
             ->toArray();
@@ -816,16 +840,16 @@ class GuestController extends Controller
                     'title' => $item->nama_ukm ?: 'Usaha Warga',
                     'subtitle' => collect([
                         $item->jenisUsaha?->nama,
-                        $item->nama_pemilik ? 'Pemilik: ' . $item->nama_pemilik : null,
+                        $item->nama_pemilik ? 'Pemilik: '.$item->nama_pemilik : null,
                     ])->filter()->implode(' • '),
                     'description' => Str::limit(collect([
                         $item->sektor_umkm,
                         $item->alamat,
-                        $status ? 'Status: ' . $status : null,
+                        $status ? 'Status: '.$status : null,
                     ])->filter()->implode(' • '), 140),
                     'url' => route('guest.umkm', ['q' => $item->nama_ukm]),
                     'action_label' => 'Lihat Direktori',
-                    'secondary_url' => $item->no_hp ? 'https://wa.me/' . preg_replace('/\D+/', '', $item->no_hp) : null,
+                    'secondary_url' => $item->no_hp ? 'https://wa.me/'.preg_replace('/\D+/', '', $item->no_hp) : null,
                     'secondary_label' => $item->no_hp ? 'WhatsApp' : null,
                 ];
             })
@@ -1026,7 +1050,7 @@ class GuestController extends Controller
                 $label = 'RW '.str_pad((string) $rw->nomor, 2, '0', STR_PAD_LEFT);
                 $ketua = $rw->pengurus->first()?->penduduk?->nama ?? '-';
                 $luasArea = $rw->luas_area
-                    ? number_format((float) $rw->luas_area, 2, ',', '.') . ' m²'
+                    ? number_format((float) $rw->luas_area, 2, ',', '.').' m²'
                     : '-';
 
                 return [
@@ -1457,12 +1481,12 @@ class GuestController extends Controller
         $length = strlen($value);
 
         if ($length <= ($visiblePrefix + $visibleSuffix)) {
-            return str_repeat('*', max(0, $length - 2)) . substr($value, -2);
+            return str_repeat('*', max(0, $length - 2)).substr($value, -2);
         }
 
         return substr($value, 0, $visiblePrefix)
-            . str_repeat('*', $length - $visiblePrefix - $visibleSuffix)
-            . substr($value, -$visibleSuffix);
+            .str_repeat('*', $length - $visiblePrefix - $visibleSuffix)
+            .substr($value, -$visibleSuffix);
     }
 
     private function maskSensitiveWords(?string $value, int $visiblePrefix = 1): string
@@ -1481,7 +1505,7 @@ class GuestController extends Controller
                 return str_repeat('*', $length);
             }
 
-            return mb_substr($token, 0, $visiblePrefix) . str_repeat('*', $length - $visiblePrefix);
+            return mb_substr($token, 0, $visiblePrefix).str_repeat('*', $length - $visiblePrefix);
         }, $value) ?? $value;
     }
 }
