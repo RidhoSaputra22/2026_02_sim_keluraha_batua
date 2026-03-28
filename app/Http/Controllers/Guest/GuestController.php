@@ -1011,12 +1011,23 @@ class GuestController extends Controller
 
     private function guestRwMapStats(): array
     {
-        return Rw::with('rts')
+        return Rw::with([
+            'rts',
+            'pengurus' => function ($query) {
+                $query->whereHas('jabatan', function (Builder $jabatanQuery) {
+                    $jabatanQuery->where('nama', 'Ketua RW');
+                })->with('penduduk');
+            },
+        ])
             ->orderBy('nomor')
             ->get()
             ->mapWithKeys(function (Rw $rw) {
                 $rtIds = $rw->rts->pluck('id')->all();
                 $label = 'RW '.str_pad((string) $rw->nomor, 2, '0', STR_PAD_LEFT);
+                $ketua = $rw->pengurus->first()?->penduduk?->nama ?? '-';
+                $luasArea = $rw->luas_area
+                    ? number_format((float) $rw->luas_area, 2, ',', '.') . ' m²'
+                    : '-';
 
                 return [
                     $rw->id => [
@@ -1028,6 +1039,14 @@ class GuestController extends Controller
                         'total_umkm' => Umkm::whereIn('rt_id', $rtIds)->count(),
                         'laki_laki' => Penduduk::whereIn('rt_id', $rtIds)->whereIn('jenis_kelamin', ['L', 'Laki-laki'])->count(),
                         'perempuan' => Penduduk::whereIn('rt_id', $rtIds)->whereIn('jenis_kelamin', ['P', 'Perempuan'])->count(),
+                        'profil_rw' => [
+                            'foto' => $rw->foto,
+                            'luas_area' => $luasArea,
+                            'no_telp' => $rw->no_telp,
+                            'alamat_sekretariat' => $rw->alamat_sekretariat,
+                            'deskripsi' => $rw->deskripsi,
+                            'ketua' => $ketua,
+                        ],
                     ],
                 ];
             })

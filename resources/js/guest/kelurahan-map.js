@@ -8,7 +8,7 @@ if (!globalThis.L) {
 }
 
 const GUEST_MAP_FALLBACK_CENTER = [-5.1477, 119.4327];
-const GUEST_MAP_FALLBACK_ZOOM = 13;
+const GUEST_MAP_FALLBACK_ZOOM = 30;
 const GUEST_MAP_TILE_URL =
     "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const GUEST_MAP_TILE_ATTRIBUTION =
@@ -128,6 +128,35 @@ function createGuestMapId() {
         .slice(2, 8)}`;
 }
 
+function getStorageAssetUrl(path, fallback = "/logo.png") {
+    const value = String(path ?? "").trim();
+
+    if (!value) {
+        return fallback;
+    }
+
+    if (
+        value.startsWith("/") ||
+        value.startsWith("http://") ||
+        value.startsWith("https://") ||
+        value.startsWith("//")
+    ) {
+        return value;
+    }
+
+    return `/storage/${value.replace(/^\/+/, "")}`;
+}
+
+function toPercentage(value, total) {
+    const safeTotal = Number(total) || 0;
+
+    if (safeTotal <= 0) {
+        return 0;
+    }
+
+    return Math.round(((Number(value) || 0) / safeTotal) * 100);
+}
+
 class GuestKelurahanMap {
     constructor(root) {
         this.root = root;
@@ -165,6 +194,11 @@ class GuestKelurahanMap {
         this.layerEntries = [];
         this.layerRegistry = new Map();
         this.layerToggleButtons = new Map();
+        this.rwColorMap = {};
+        this.rwNameLayerMap = {};
+        this.rwLabelLayer = null;
+        this.highlightedRwLayer = null;
+        this.rwTooltipRegistry = new Map();
     }
 
     async init() {
@@ -244,7 +278,8 @@ class GuestKelurahanMap {
             throw new Error("MapEngine guest gagal diinisialisasi.");
         }
 
-        this.map.scrollWheelZoom?.disable();
+        this.map.scrollWheelZoom?.enable();
+        this.map.touchZoom?.enable();
 
         [
             ["guest-map-overlay-pane", 410],
@@ -284,10 +319,19 @@ class GuestKelurahanMap {
         this.layerToggleButtons.clear();
         this.rwFeatureLayers.clear();
         this.rwFeatures = [];
+        this.rwColorMap = {};
+        this.rwNameLayerMap = {};
+        this.highlightedRwLayer = null;
+        this.rwTooltipRegistry.clear();
         this.kelurahanLayer = null;
         this.rwLayer = null;
         this.kelurahanLayerKey = null;
         this.rwLayerKey = null;
+
+        if (this.map && this.rwLabelLayer) {
+            this.map.removeLayer(this.rwLabelLayer);
+        }
+        this.rwLabelLayer = null;
 
         layers.forEach((layerMeta) => {
             const entry = this.buildLayerEntry(layerMeta);
@@ -312,7 +356,15 @@ class GuestKelurahanMap {
 
             this.layerEntries.push(entry);
             this.layerRegistry.set(entry.key, entry);
+
+            if (layerMeta.layer_type === "custom") {
+                this.applyCustomLayerPattern(entry);
+            }
         });
+
+        this.applyRwPatterns();
+        this.bringCustomToFront();
+        this.kelurahanLayer?.bringToFront?.();
     }
 
     buildLayerEntry(layerMeta = {}) {
@@ -360,6 +412,7 @@ class GuestKelurahanMap {
         return L.geoJSON(kelurahanGeojson, {
             pane: "guest-map-boundary-pane",
             ...this.getRendererOptions(),
+            interactive: false,
             style: {
                 color,
                 weight: Math.max(Number(layerMeta.stroke_width ?? 3), 2.4),
@@ -381,11 +434,20 @@ class GuestKelurahanMap {
             return null;
         }
 
+        this.rwLabelLayer = L.layerGroup().addTo(this.map);
+
         this.rwFeatures = [...rwGeojson.features].sort((left, right) => {
             const leftNumber = Number(left?.properties?.nomor ?? 0);
             const rightNumber = Number(right?.properties?.nomor ?? 0);
 
             return leftNumber - rightNumber;
+        });
+
+        this.rwFeatures.forEach((feature) => {
+            const rwName = getRwName(feature?.properties);
+            const color = feature?.properties?.warna || getLayerColor(layerMeta);
+
+            this.rwColorMap[rwName] = color;
         });
 
         return L.geoJSON(
@@ -511,31 +573,41 @@ class GuestKelurahanMap {
 
     attachRwFeatureHandlers(feature, layer) {
         const featureId = getFeatureId(feature.properties);
+        const rwName = getRwName(feature.properties);
         this.rwFeatureLayers.set(featureId, layer);
+        this.rwNameLayerMap[rwName] = layer;
 
         layer.bindPopup(this.buildRwPopup(feature.properties), {
-            closeButton: false,
+            closeButton: true,
             className: "guest-map-popup-wrap",
+            maxWidth: 340,
+            autoPan: true,
         });
 
+        this.registerRwTooltip(layer, feature.properties);
+
+        this.addRwLabel(layer, rwName);
+
         layer.on("mouseover", () => {
-            if (this.activeFeatureId === featureId) {
+            if (
+                this.activeFeatureId === featureId ||
+                this.highlightedRwLayer === layer
+            ) {
                 return;
             }
 
-            layer.setStyle({
-                weight: 2.2,
-                fillOpacity: 0.38,
-                color: "#0F172A",
-            });
+            this.highlightRwLayer(layer);
         });
 
         layer.on("mouseout", () => {
-            if (this.activeFeatureId === featureId) {
+            if (
+                this.activeFeatureId === featureId ||
+                this.highlightedRwLayer === layer
+            ) {
                 return;
             }
 
-            this.rwLayer?.resetStyle(layer);
+            this.restoreRwLayer(layer);
         });
 
         layer.on("click", () => {
@@ -544,10 +616,22 @@ class GuestKelurahanMap {
     }
 
     attachCustomFeatureHandlers(layerMeta, feature, layer) {
+        const title = feature?.properties?.nama || layerMeta?.nama || "Layer Peta";
+        const description = feature?.properties?.deskripsi || "";
+
         layer.bindPopup(this.buildLayerPopup(layerMeta, feature.properties), {
             closeButton: false,
             className: "guest-map-popup-wrap",
         });
+
+        layer.bindTooltip(
+            `<strong>${escapeHtml(title)}</strong>${description ? `<br>${escapeHtml(description)}` : ""}`,
+            {
+                sticky: true,
+                direction: "top",
+                opacity: 0.95,
+            },
+        );
 
         layer.on("mouseover", () => {
             if (typeof layer.setStyle === "function") {
@@ -555,6 +639,11 @@ class GuestKelurahanMap {
                     this.getCustomLayerStyle(layerMeta, feature, true),
                 );
             }
+
+            try {
+                layer.bringToFront?.();
+                this.kelurahanLayer?.bringToFront?.();
+            } catch (_) {}
         });
 
         layer.on("mouseout", () => {
@@ -563,6 +652,8 @@ class GuestKelurahanMap {
                     this.getCustomLayerStyle(layerMeta, feature, false),
                 );
             }
+
+            this.reapplyCustomPattern(layerMeta, layer);
         });
 
         layer.on("click", () => {
@@ -570,27 +661,264 @@ class GuestKelurahanMap {
         });
     }
 
+    buildRwTooltip(properties = {}) {
+        const rwName = escapeHtml(getRwName(properties));
+        const luasArea = escapeHtml(properties?.profil_rw?.luas_area || "-");
+        const description = escapeHtml(
+            properties?.profil_rw?.deskripsi || properties?.deskripsi || "",
+        );
+        const stats = [
+            `Penduduk: <strong>${formatNumber(properties.total_penduduk)}</strong> jiwa`,
+            `KK: <strong>${formatNumber(properties.total_kk)}</strong>`,
+            `UMKM: <strong>${formatNumber(properties.total_umkm)}</strong>`,
+        ];
+
+        return (
+            `<strong>${rwName}</strong>` +
+            `<p>Area: ${luasArea}</p>` +
+            (description ? `<br>${description}` : "") +
+            `<hr style="margin:4px 0;border-color:rgba(0,0,0,.15)">` +
+            `<div style="line-height:1.5">${stats.join("<br>")}</div>`
+        );
+    }
+
+    registerRwTooltip(layer, properties = {}) {
+        const tooltipConfig = {
+            content: this.buildRwTooltip(properties),
+            options: {
+                sticky: true,
+                direction: "top",
+                opacity: 0.95,
+            },
+        };
+
+        this.rwTooltipRegistry.set(layer, tooltipConfig);
+        this.resumeRwTooltip(layer);
+    }
+
+    suspendRwTooltip(layer) {
+        if (!layer) {
+            return;
+        }
+
+        try {
+            layer.closeTooltip?.();
+            layer.unbindTooltip?.();
+        } catch (_) {}
+    }
+
+    resumeRwTooltip(layer) {
+        if (!layer || layer.getTooltip?.()) {
+            return;
+        }
+
+        const tooltipConfig = this.rwTooltipRegistry.get(layer);
+
+        if (!tooltipConfig) {
+            return;
+        }
+
+        layer.bindTooltip(tooltipConfig.content, tooltipConfig.options);
+    }
+
+    addRwLabel(layer, rwName) {
+        if (!this.rwLabelLayer) {
+            return;
+        }
+
+        const center = layer.getBounds?.().getCenter?.();
+
+        if (!center) {
+            return;
+        }
+
+        const label = L.marker(center, {
+            pane: "guest-map-rw-pane",
+            icon: L.divIcon({
+                className: "rw-label",
+                html: `<span>${escapeHtml(rwName)}</span>`,
+                iconSize: [50, 18],
+                iconAnchor: [25, 9],
+            }),
+            interactive: false,
+        });
+
+        this.rwLabelLayer.addLayer(label);
+    }
+
+    applyRwPatterns() {
+        if (!this.rwLayer || !this.engine?.patterns) {
+            return;
+        }
+
+        this.engine.patterns.applyRwPatterns(
+            this.rwColorMap,
+            this.rwNameLayerMap,
+        );
+    }
+
+    applyCustomLayerPattern(entry) {
+        if (
+            !entry?.leafletLayer ||
+            entry.geometryKind === "point" ||
+            entry.meta?.pattern_type === "solid" ||
+            !this.engine?.patterns
+        ) {
+            return;
+        }
+
+        this.engine.patterns.applyCustomLayerPattern(
+            String(entry.meta?.slug || entry.key),
+            entry.meta.pattern_type,
+            getLayerColor(entry.meta),
+            clampNumber(entry.meta.fill_opacity ?? 0.3, 0.16, 0.7),
+            entry.leafletLayer,
+        );
+    }
+
+    reapplyCustomPattern(layerMeta, layer) {
+        if (
+            !layer ||
+            typeof layer.getLatLng === "function" ||
+            layerMeta?.pattern_type === "solid" ||
+            !this.engine?.patterns
+        ) {
+            return;
+        }
+
+        this.engine.patterns.applyToLayer(
+            layer,
+            `custom-${String(layerMeta?.slug || layerMeta?.id || "layer")}`,
+        );
+    }
+
+    getRwLayerBaseStyle(layer) {
+        const layerMeta = this.getLayerEntry(this.rwLayerKey)?.meta ?? {};
+        return this.getRwStyle(layer?.feature, layerMeta);
+    }
+
+    highlightRwLayer(layer) {
+        const rwName = getRwName(layer?.feature?.properties);
+        const color =
+            layer?.feature?.properties?.warna ||
+            this.rwColorMap[rwName] ||
+            "#6b7280";
+
+        layer.setStyle({
+            color: "#0F172A",
+            weight: 3.4,
+            fillColor: color,
+            fillOpacity: 0.5,
+            opacity: 1,
+        });
+
+        try {
+            layer.bringToFront?.();
+            this.kelurahanLayer?.bringToFront?.();
+        } catch (_) {}
+    }
+
+    restoreRwLayer(layer) {
+        if (!layer) {
+            return;
+        }
+
+        layer.setStyle(this.getRwLayerBaseStyle(layer));
+
+        if (this.engine?.patterns) {
+            const patternId = `hatch-${getRwName(layer?.feature?.properties).replace(/\s/g, "-")}`;
+            this.engine.patterns.applyToLayer(layer, patternId);
+        }
+
+        try {
+            layer.bringToBack?.();
+        } catch (_) {}
+
+        this.bringCustomToFront();
+        this.kelurahanLayer?.bringToFront?.();
+    }
+
+    bringCustomToFront() {
+        this.layerEntries
+            .filter(
+                (entry) =>
+                    entry?.meta?.layer_type === "custom" &&
+                    entry?.visible &&
+                    entry?.leafletLayer,
+            )
+            .reverse()
+            .forEach((entry) => {
+                try {
+                    entry.leafletLayer.bringToFront?.();
+                    entry.leafletLayer.eachLayer?.((child) =>
+                        child.bringToFront?.(),
+                    );
+                } catch (_) {}
+            });
+    }
+
     buildRwPopup(properties = {}) {
+        const totalPenduduk = Number(properties.total_penduduk) || 0;
+        const totalLakiLaki = Number(properties.laki_laki) || 0;
+        const totalPerempuan = Number(properties.perempuan) || 0;
+        const persenLakiLaki = toPercentage(totalLakiLaki, totalPenduduk);
+        const persenPerempuan = toPercentage(totalPerempuan, totalPenduduk);
+        const foto = getStorageAssetUrl(properties?.profil_rw?.foto);
+        const ketua = properties?.profil_rw?.ketua || "-";
+        const luasArea = properties?.profil_rw?.luas_area || "-";
+        const subtitle =
+            ketua && ketua !== "-"
+                ? `Ketua RW: ${ketua}`
+                : "Statistik wilayah RW pada peta publik";
+
         return `
-            <div class="guest-map-popup">
-                <div class="guest-map-popup-title">${escapeHtml(getRwName(properties))}</div>
-                <div class="guest-map-popup-subtitle">Statistik wilayah RW pada peta publik</div>
-                <div class="guest-map-popup-grid">
-                    <div class="guest-map-popup-card">
-                        <div class="guest-map-popup-card-label">Penduduk</div>
-                        <div class="guest-map-popup-card-value">${formatNumber(properties.total_penduduk)} jiwa</div>
+            <div class="w-full max-w-[19rem] rounded-md bg-white p-4 text-slate-900">
+                <div class="flex items-center gap-3 pr-8">
+                    <div class="h-[3.75rem] w-[3.75rem] shrink-0 overflow-hidden rounded-md border border-slate-200/80 bg-[radial-gradient(circle_at_top,_rgba(228,18,27,0.16),_transparent_60%),linear-gradient(180deg,_#ffffff_0%,_#f8fafc_100%)] shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
+                        <img class="block h-full w-full object-cover" src="${escapeHtml(foto)}" alt="${escapeHtml(getRwName(properties))}">
                     </div>
-                    <div class="guest-map-popup-card">
-                        <div class="guest-map-popup-card-label">Kepala Keluarga</div>
-                        <div class="guest-map-popup-card-value">${formatNumber(properties.total_kk)} KK</div>
+                    <div class="min-w-0 flex-1">
+                        <div class="text-base leading-tight font-extrabold text-slate-900">${escapeHtml(getRwName(properties))}</div>
+                        <div class="mt-1 text-sm leading-snug text-slate-500">${escapeHtml(subtitle)}</div>
+                        <div class="mt-1 text-xs text-slate-700">Luas: <strong class="font-extrabold text-slate-900">${escapeHtml(luasArea)}</strong></div>
                     </div>
-                    <div class="guest-map-popup-card">
-                        <div class="guest-map-popup-card-label">RT Aktif</div>
-                        <div class="guest-map-popup-card-value">${formatNumber(properties.total_rt)} RT</div>
+                </div>
+
+                <div class="my-4 h-px bg-slate-200"></div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="rounded-md bg-gradient-to-b from-slate-50 to-slate-100 px-3 py-3">
+                        <div class="text-[8px] font-semibold uppercase tracking-[0.02em] text-slate-500">Penduduk</div>
+                        <div class="mt-1 text-lg leading-tight font-extrabold text-slate-900">${formatNumber(totalPenduduk)} jiwa</div>
                     </div>
-                    <div class="guest-map-popup-card">
-                        <div class="guest-map-popup-card-label">UMKM</div>
-                        <div class="guest-map-popup-card-value">${formatNumber(properties.total_umkm)} unit</div>
+                    <div class="rounded-md bg-gradient-to-b from-slate-50 to-slate-100 px-3 py-3">
+                        <div class="text-[8px] font-semibold uppercase tracking-[0.02em] text-slate-500">Kepala Keluarga</div>
+                        <div class="mt-1 text-lg leading-tight font-extrabold text-slate-900">${formatNumber(properties.total_kk)} KK</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 flex flex-wrap gap-2">
+                    <span class="inline-flex min-h-6 items-center justify-center rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700 px-3 py-1 text-xs font-bold leading-none text-white">RT ${formatNumber(properties.total_rt)}</span>
+                    <span class="inline-flex min-h-6 items-center justify-center rounded-full bg-gradient-to-r from-pink-500 to-pink-600 px-3 py-1 text-xs font-bold leading-none text-white">UMKM ${formatNumber(properties.total_umkm)}</span>
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex items-center justify-between gap-3 text-[13px] text-slate-700">
+                        <span>Laki-laki (${formatNumber(totalLakiLaki)})</span>
+                        <span>${formatNumber(persenLakiLaki)}%</span>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-gradient-to-r from-indigo-50 to-slate-50">
+                        <span class="block h-full rounded-full bg-gradient-to-r from-indigo-600 to-indigo-700" style="width:${persenLakiLaki}%"></span>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <div class="flex items-center justify-between gap-3 text-[13px] text-slate-700">
+                        <span>Perempuan (${formatNumber(totalPerempuan)})</span>
+                        <span>${formatNumber(persenPerempuan)}%</span>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-gradient-to-r from-pink-50 to-slate-50">
+                        <span class="block h-full rounded-full bg-gradient-to-r from-pink-500 to-pink-300" style="width:${persenPerempuan}%"></span>
                     </div>
                 </div>
             </div>
@@ -605,12 +933,12 @@ class GuestKelurahanMap {
             `Objek ini berasal dari layer ${getLayerLabel(layerMeta)}.`;
 
         return `
-            <div class="guest-map-popup">
-                <div class="guest-map-popup-title">${escapeHtml(title)}</div>
-                <div class="guest-map-popup-subtitle">${escapeHtml(subtitle)}</div>
-                <div class="guest-map-popup-card" style="margin-top:0.75rem;">
-                    <div class="guest-map-popup-card-label">Keterangan</div>
-                    <div class="guest-map-popup-card-value">${escapeHtml(description)}</div>
+            <div class="w-full max-w-[18rem] rounded-md bg-white p-4 text-slate-900">
+                <div class="text-base leading-tight font-extrabold text-slate-900">${escapeHtml(title)}</div>
+                <div class="mt-1 text-sm leading-snug text-slate-500">${escapeHtml(md)}</div>
+                <div class="mt-3 rounded-md bg-slate-50 px-3 py-3">
+                    <div class="text-[11px] font-semibold uppercase tracking-[0.02em] text-slate-500">Keterangan</div>
+                    <div class="mt-1 text-sm leading-relaxed font-medium text-slate-800">${escapeHtml(description)}</div>
                 </div>
             </div>
         `;
@@ -836,6 +1164,14 @@ class GuestKelurahanMap {
             this.map.removeLayer(entry.leafletLayer);
         }
 
+        if (entry.key === this.rwLayerKey && this.rwLabelLayer) {
+            if (entry.visible) {
+                this.rwLabelLayer.addTo(this.map);
+            } else {
+                this.map.removeLayer(this.rwLabelLayer);
+            }
+        }
+
         if (entry.key === this.rwLayerKey && !entry.visible) {
             this.clearActiveRwState();
         }
@@ -874,18 +1210,17 @@ class GuestKelurahanMap {
         }
 
         this.activeFeatureId = String(featureId);
+        this.highlightedRwLayer = layer;
 
         this.rwFeatureLayers.forEach((item, id) => {
             if (id === this.activeFeatureId) {
-                item.setStyle({
-                    color: "#0F172A",
-                    weight: 2.4,
-                    fillOpacity: 0.44,
-                });
+                this.suspendRwTooltip(item);
+                this.highlightRwLayer(item);
                 return;
             }
 
-            this.rwLayer?.resetStyle(item);
+            this.resumeRwTooltip(item);
+            this.restoreRwLayer(item);
         });
 
         this.rwList?.querySelectorAll("[data-feature-id]").forEach((node) => {
@@ -895,6 +1230,8 @@ class GuestKelurahanMap {
             );
         });
 
+        this.bringCustomToFront();
+        this.kelurahanLayer?.bringToFront?.();
         this.focusLayerObject(layer, openPopup, 16);
     }
 
@@ -928,9 +1265,13 @@ class GuestKelurahanMap {
 
     clearActiveRwState() {
         this.activeFeatureId = null;
+        this.highlightedRwLayer = null;
         this.map?.closePopup();
 
-        this.rwFeatureLayers.forEach((layer) => this.rwLayer?.resetStyle(layer));
+        this.rwFeatureLayers.forEach((layer) => {
+            this.resumeRwTooltip(layer);
+            this.restoreRwLayer(layer);
+        });
         this.rwList?.querySelectorAll("[data-feature-id]").forEach((node) => {
             node.classList.remove("is-active");
         });
