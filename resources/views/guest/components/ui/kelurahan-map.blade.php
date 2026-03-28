@@ -4,7 +4,7 @@
     'subtitle' => 'Pantau batas kelurahan, persebaran RW, dan statistik wilayah langsung dari data peta publik.',
 ])
 
-<div class="rounded-md border border-primary/10 bg-white p-6 shadow-xl shadow-primary/5 md:p-8">
+<div {{ $attributes->merge(['data-aos' => 'fade-up'])->class(['rounded-md border border-primary/10 bg-white p-6 shadow-xl shadow-primary/5 md:p-8']) }}>
 
     <div data-guest-kelurahan-map data-endpoint="{{ $endpoint }}" class="guest-map-shell">
         <div class="">

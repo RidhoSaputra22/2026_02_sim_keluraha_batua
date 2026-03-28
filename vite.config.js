@@ -9,6 +9,7 @@ export default defineConfig({
                 "resources/css/app.css",
                 "resources/js/app.js",
                 "resources/css/guest.css",
+                "resources/js/guest/app.js",
                 "resources/css/peta.css",
                 "resources/js/map/index.js",
                 "resources/js/guest/kelurahan-map.js",

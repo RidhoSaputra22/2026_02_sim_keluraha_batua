@@ -13,11 +13,13 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                 <x-guest::ui.stat-card title="Total Penduduk" :value="(string) $totalPenduduk" icon="groups"
-                    description="Data warga terdaftar" color="primary" />
+                    description="Data warga terdaftar" color="primary" :counter-value="$totalPenduduk"
+                    data-aos-delay="60" />
                 <x-guest::ui.stat-card title="Kartu Keluarga" :value="(string) $totalKK" icon="home"
-                    description="Keluarga aktif" color="info" />
+                    description="Keluarga aktif" color="info" :counter-value="$totalKK" data-aos-delay="140" />
                 <x-guest::ui.stat-card title="Wilayah RW" :value="(string) $totalRw" icon="map"
-                    description="Cakupan wilayah kelurahan" color="success" />
+                    description="Cakupan wilayah kelurahan" color="success" :counter-value="$totalRw"
+                    data-aos-delay="220" />
             </div>
         </div>
     </section>
@@ -26,7 +28,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
                 <div class="space-y-6 lg:col-span-7">
-                    <x-guest::ui.card variant="bordered" padding="lg">
+                    <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-right" data-aos-delay="80">
                         <div class="flex items-start gap-4">
                             <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                 <x-guest::ui.icon name="person_search" size="lg" color="text-primary" />
@@ -94,7 +96,7 @@
                             };
                         @endphp
 
-                        <x-guest::ui.card variant="bordered" padding="lg" >
+                        <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-up" data-aos-delay="120">
                             <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <div>
                                     <h3 class="text-2xl font-bold text-slate-900">Ringkasan Data Penduduk</h3>
@@ -154,7 +156,7 @@
                 </div>
 
                 <aside class="space-y-6 lg:col-span-5">
-                    <x-guest::ui.card variant="bordered" padding="lg">
+                    <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-left" data-aos-delay="100">
                         <h3 class="text-xl font-bold text-slate-900">Yang Bisa Dicek</h3>
                         <div class="mt-5 space-y-4 text-sm text-slate-600">
                             <div class="flex items-start gap-3">
@@ -172,7 +174,7 @@
                         </div>
                     </x-guest::ui.card>
 
-                    <x-guest::ui.card padding="lg" class="bg-primary ">
+                    <x-guest::ui.card padding="lg" class="bg-primary " data-aos="fade-left" data-aos-delay="180">
                         <h3 class="text-xl font-bold">Data Tidak Sesuai?</h3>
                         <p class="mt-3 text-sm leading-6 ">
                             Jika data yang muncul berbeda dengan dokumen Anda, lanjutkan ke layanan administrasi kependudukan atau hubungi petugas kelurahan untuk verifikasi.
@@ -197,7 +199,7 @@
             <x-guest::ui.section-header title="Informasi Penting" subtitle="Hal yang perlu Anda ketahui" size="md" />
 
             <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <x-guest::ui.card padding="md">
+                <x-guest::ui.card padding="md" data-aos="fade-up" data-aos-delay="60">
                     <div class="text-center">
                         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                             <x-guest::ui.icon name="security" size="lg" color="text-primary" />
@@ -209,7 +211,7 @@
                     </div>
                 </x-guest::ui.card>
 
-                <x-guest::ui.card padding="md">
+                <x-guest::ui.card padding="md" data-aos="fade-up" data-aos-delay="140">
                     <div class="text-center">
                         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                             <x-guest::ui.icon name="schedule" size="lg" color="text-primary" />
@@ -221,7 +223,7 @@
                     </div>
                 </x-guest::ui.card>
 
-                <x-guest::ui.card padding="md">
+                <x-guest::ui.card padding="md" data-aos="fade-up" data-aos-delay="220">
                     <div class="text-center">
                         <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
                             <x-guest::ui.icon name="support_agent" size="lg" color="text-primary" />

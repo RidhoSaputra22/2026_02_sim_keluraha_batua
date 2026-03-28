@@ -8,12 +8,14 @@
             [
                 'label' => 'Total Penduduk',
                 'value' => number_format($totalPenduduk),
+                'counter_value' => $totalPenduduk,
                 'meta' => 'jiwa terdata',
                 'icon' => 'people',
             ],
             [
                 'label' => 'Kepala Keluarga',
                 'value' => number_format($totalKK),
+                'counter_value' => $totalKK,
                 'meta' =>
                     $avgAnggotaKeluarga > 0
                         ? number_format($avgAnggotaKeluarga, 1, ',', '.') . ' rata-rata anggota/KK'
@@ -23,12 +25,15 @@
             [
                 'label' => 'Cakupan Wilayah',
                 'value' => number_format($totalRw) . ' RW',
+                'counter_value' => $totalRw,
+                'counter_suffix' => ' RW',
                 'meta' => number_format($totalRt) . ' RT aktif',
                 'icon' => 'map',
             ],
             [
                 'label' => 'Arsip & Layanan',
                 'value' => number_format($totalDokumen + $totalLayanan),
+                'counter_value' => $totalDokumen + $totalLayanan,
                 'meta' => number_format($totalDokumen) . ' dokumen, ' . number_format($totalLayanan) . ' layanan',
                 'icon' => 'folder',
             ],
@@ -78,10 +83,15 @@
         ];
 
         $facilityStats = [
-            ['label' => 'UMKM', 'value' => number_format($totalUmkm), 'icon' => 'store'],
-            ['label' => 'Sekolah', 'value' => number_format($totalSekolah), 'icon' => 'school'],
-            ['label' => 'Faskes', 'value' => number_format($totalFaskes), 'icon' => 'local_hospital'],
-            ['label' => 'Tempat Ibadah', 'value' => number_format($totalTempatIbadah), 'icon' => 'account_balance'],
+            ['label' => 'UMKM', 'value' => number_format($totalUmkm), 'counter_value' => $totalUmkm, 'icon' => 'store'],
+            ['label' => 'Sekolah', 'value' => number_format($totalSekolah), 'counter_value' => $totalSekolah, 'icon' => 'school'],
+            ['label' => 'Faskes', 'value' => number_format($totalFaskes), 'counter_value' => $totalFaskes, 'icon' => 'local_hospital'],
+            [
+                'label' => 'Tempat Ibadah',
+                'value' => number_format($totalTempatIbadah),
+                'counter_value' => $totalTempatIbadah,
+                'icon' => 'account_balance',
+            ],
         ];
 
         $popularLinks = [
@@ -138,11 +148,18 @@
             <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 @foreach ($headlineStats as $stat)
                     <x-guest::ui.card variant="bordered" padding="lg"
-                        class="h-full bg-white/95 shadow-xl shadow-primary/5 backdrop-blur">
+                        class="h-full bg-white/95 shadow-xl shadow-primary/5 backdrop-blur"
+                        data-aos="fade-up" data-aos-delay="{{ 60 + ($loop->index * 80) }}">
                         <div class="flex items-start justify-between gap-4">
                             <div>
                                 <p class="text-sm font-medium text-slate-500">{{ $stat['label'] }}</p>
-                                <p class="mt-3 text-3xl font-extrabold text-slate-900">{{ $stat['value'] }}</p>
+                                <p class="mt-3 text-3xl font-extrabold text-slate-900">
+                                    <span data-counter data-counter-end="{{ $stat['counter_value'] }}"
+                                        data-counter-suffix="{{ $stat['counter_suffix'] ?? '' }}"
+                                        data-counter-duration="700">
+                                        {{ $stat['value'] }}
+                                    </span>
+                                </p>
                                 <p class="mt-2 text-sm text-slate-500">{{ $stat['meta'] }}</p>
                             </div>
                             <div
@@ -160,7 +177,7 @@
 
     <section class="py-20 ">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" data-aos="fade-up">
                 <div>
                     <h2 class="text-3xl font-extrabold text-slate-900 md:text-4xl">Highlight Statistik</h2>
                     <p class="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -183,7 +200,7 @@
 
             <div class="grid gap-6 xl:grid-cols-3">
                 <div class="space-y-6 xl:col-span-2">
-                    <x-guest::ui.card variant="bordered" padding="lg">
+                    <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-right" data-aos-delay="80">
                         <div class="mb-8 flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-xl font-bold text-slate-900">Sebaran Penduduk per RW</h3>
@@ -216,7 +233,9 @@
                                         <div class="flex h-full flex-1 flex-col items-center justify-end gap-4">
                                             <div class="flex h-full w-full items-end justify-center">
                                                 <div class="relative w-full max-w-[90px] rounded-t-md bg-gradient-to-t from-primary to-[#ff6b70] shadow-lg shadow-primary/20"
-                                                    style="height: {{ $barHeight }}%;">
+                                                    data-stat-grow data-grow-axis="y"
+                                                    data-grow-delay="{{ 80 + ($loop->index * 90) }}"
+                                                    style="height: {{ $barHeight }}%; --stat-target: {{ $barHeight }}%;">
                                                     <span
                                                         class="absolute -top-10 left-1/2 -translate-x-1/2 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold whitespace-nowrap text-white">
                                                         {{ number_format($rw['total_penduduk']) }} jiwa
@@ -242,14 +261,23 @@
                                 <div class="rounded-2xl bg-white p-4">
                                     <p class="text-sm text-slate-500">Penduduk tertinggi</p>
                                     <p class="mt-2 text-lg font-bold text-slate-900">
-                                        {{ number_format($chartRwHighlights->first()['total_penduduk'] ?? 0) }} jiwa
+                                        <span data-counter
+                                            data-counter-end="{{ $chartRwHighlights->first()['total_penduduk'] ?? 0 }}"
+                                            data-counter-suffix=" jiwa" data-counter-duration="720">
+                                            {{ number_format($chartRwHighlights->first()['total_penduduk'] ?? 0) }} jiwa
+                                        </span>
                                     </p>
                                 </div>
                                 <div class="rounded-2xl bg-white p-4">
                                     <p class="text-sm text-slate-500">Rata-rata per RW</p>
                                     <p class="mt-2 text-lg font-bold text-slate-900">
-                                        {{ $totalRw > 0 ? number_format($totalPenduduk / $totalRw, 1, ',', '.') : '0' }}
-                                        jiwa
+                                        <span data-counter
+                                            data-counter-end="{{ $totalRw > 0 ? round($totalPenduduk / $totalRw, 1) : 0 }}"
+                                            data-counter-decimals="1" data-counter-suffix=" jiwa"
+                                            data-counter-duration="720">
+                                            {{ $totalRw > 0 ? number_format($totalPenduduk / $totalRw, 1, ',', '.') : '0' }}
+                                            jiwa
+                                        </span>
                                     </p>
                                 </div>
                             </div>
@@ -261,7 +289,7 @@
                         @endif
                     </x-guest::ui.card>
 
-                    <x-guest::ui.card variant="bordered" padding="lg">
+                    <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-right" data-aos-delay="140">
                         <div class="mb-8 flex items-start justify-between gap-4">
                             <div>
                                 <h3 class="text-xl font-bold text-slate-900">Persebaran Warga Menurut Range Umur</h3>
@@ -296,7 +324,9 @@
                                         <div class="flex h-full flex-1 flex-col items-center justify-end gap-4">
                                             <div class="flex h-full w-full items-end justify-center">
                                                 <div class="relative w-full max-w-[88px] rounded-t-md bg-gradient-to-t from-[#0f172a] via-[#334155] to-[#94a3b8] shadow-lg shadow-slate-900/15"
-                                                    style="height: {{ $barHeight }}%;">
+                                                    data-stat-grow data-grow-axis="y"
+                                                    data-grow-delay="{{ 90 + ($loop->index * 85) }}"
+                                                    style="height: {{ $barHeight }}%; --stat-target: {{ $barHeight }}%;">
                                                     <span
                                                         class="absolute -top-10 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-semibold whitespace-nowrap text-white">
                                                         {{ number_format($item['value']) }} jiwa
@@ -325,14 +355,20 @@
                                 <div class="rounded-2xl bg-white p-4">
                                     <p class="text-sm text-slate-500">Usia produktif</p>
                                     <p class="mt-2 text-lg font-bold text-slate-900">
-                                        {{ number_format($usiaProduktif) }} jiwa
+                                        <span data-counter data-counter-end="{{ $usiaProduktif }}"
+                                            data-counter-suffix=" jiwa" data-counter-duration="720">
+                                            {{ number_format($usiaProduktif) }} jiwa
+                                        </span>
                                     </p>
                                     <p class="mt-1 text-sm text-slate-500">Rentang 18-59 tahun</p>
                                 </div>
                                 <div class="rounded-2xl bg-white p-4">
                                     <p class="text-sm text-slate-500">Lansia</p>
                                     <p class="mt-2 text-lg font-bold text-slate-900">
-                                        {{ number_format($usiaLansia) }} jiwa
+                                        <span data-counter data-counter-end="{{ $usiaLansia }}"
+                                            data-counter-suffix=" jiwa" data-counter-duration="720">
+                                            {{ number_format($usiaLansia) }} jiwa
+                                        </span>
                                     </p>
                                     <p class="mt-1 text-sm text-slate-500">Usia 60 tahun ke atas</p>
                                 </div>
@@ -353,7 +389,7 @@
                 </div>
 
                 <div class="space-y-6">
-                    <x-guest::ui.card variant="bordered" padding="lg">
+                    <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-left" data-aos-delay="120">
                         <h3 class="text-xl font-bold text-slate-900">Komposisi Gender</h3>
                         <p class="mt-2 text-sm text-slate-500">Distribusi jenis kelamin dari warga yang sudah terdata.
                         </p>
@@ -372,7 +408,9 @@
                                     </div>
                                     <div class="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
                                         <div class="h-full rounded-full {{ $item['color'] }}"
-                                            style="width: {{ max(6, $item['percentage']) }}%"></div>
+                                            data-stat-grow data-grow-axis="x"
+                                            data-grow-delay="{{ 80 + ($loop->index * 90) }}"
+                                            style="width: {{ max(6, $item['percentage']) }}%; --stat-target: {{ max(6, $item['percentage']) }}%;"></div>
                                     </div>
                                 </div>
                             @empty
@@ -383,18 +421,24 @@
 
 
 
-                    <x-guest::ui.card variant="bordered" padding="lg">
+                    <x-guest::ui.card variant="bordered" padding="lg" data-aos="fade-left" data-aos-delay="180">
                         <h3 class="text-xl font-bold text-slate-900">Fasilitas & Jejaring</h3>
                         <p class="mt-2 text-sm text-slate-500">Gambaran sarana publik dan aktivitas ekonomi warga.</p>
 
                         <div class="mt-6 grid grid-cols-2 gap-3">
                             @foreach ($facilityStats as $item)
-                                <div class="rounded-2xl bg-background-light p-4">
+                                <div class="rounded-2xl bg-background-light p-4" data-aos="fade-up"
+                                    data-aos-delay="{{ 70 + ($loop->index * 70) }}">
                                     <div class="flex items-center justify-between gap-3">
                                         <p class="text-sm font-medium text-slate-500">{{ $item['label'] }}</p>
                                         <x-guest::ui.icon :name="$item['icon']" size="sm" color="text-primary" />
                                     </div>
-                                    <p class="mt-3 text-2xl font-extrabold text-slate-900">{{ $item['value'] }}</p>
+                                    <p class="mt-3 text-2xl font-extrabold text-slate-900">
+                                        <span data-counter data-counter-end="{{ $item['counter_value'] }}"
+                                            data-counter-duration="680">
+                                            {{ $item['value'] }}
+                                        </span>
+                                    </p>
                                 </div>
                             @endforeach
                         </div>
@@ -406,7 +450,7 @@
 
     <section class="pb-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div class="mb-10 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between" data-aos="fade-up">
                 <div>
                     <h2 class="text-3xl font-extrabold text-slate-900 md:text-4xl">Peta Kelurahan</h2>
                     <p class="mt-3 max-w-2xl text-base leading-7 text-slate-500">
@@ -417,7 +461,8 @@
 
             </div>
             <x-guest::ui.kelurahan-map :endpoint="route('guest.api.peta-kelurahan')" :title="'Peta Wilayah ' . ($kelurahan?->nama ?? 'Kelurahan')"
-                subtitle="Eksplorasi batas kelurahan, wilayah RW, dan seluruh layer aktif melalui peta interaktif yang diambil langsung dari endpoint data peta publik." />
+                subtitle="Eksplorasi batas kelurahan, wilayah RW, dan seluruh layer aktif melalui peta interaktif yang diambil langsung dari endpoint data peta publik."
+                data-aos-delay="100" />
         </div>
     </section>
 

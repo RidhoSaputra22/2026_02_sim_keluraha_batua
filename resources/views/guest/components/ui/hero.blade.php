@@ -43,7 +43,7 @@
     $alignClasses = $centered ? 'text-center' : 'text-left';
 @endphp
 
-<header class="{{ $bgClasses[$background] }} {{ $sizeClasses[$size] }} {{ $attributes->get('class', '') }}">
+<header {{ $attributes->class([$bgClasses[$background], $sizeClasses[$size]]) }}>
     @if($background === 'gradient')
         <div class="absolute inset-0 bg-primary/5 -z-10"></div>
         <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl"></div>
@@ -52,12 +52,12 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 {{ $alignClasses }}">
         @if(isset($badge))
-            <div class="mb-6 {{ $centered ? 'flex justify-center' : '' }}">
+            <div class="mb-6 {{ $centered ? 'flex justify-center' : '' }}" data-aos="fade-down">
                 {{ $badge }}
             </div>
         @endif
 
-        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-4 md:mb-6 leading-tight">
+        <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 mb-4 md:mb-6 leading-tight" data-aos="fade-up">
             @isset($title)
                 {!! $title !!}
             @else
@@ -66,18 +66,20 @@
         </h1>
 
         @if($subtitle || isset($subtitle))
-            <div class="w-24 h-1.5 bg-primary {{ $centered ? 'mx-auto' : '' }} rounded-full mb-6"></div>
-            <p class="text-lg md:text-xl text-slate-600 {{ $centered ? 'max-w-3xl mx-auto' : 'max-w-2xl' }} leading-relaxed">
-                @isset($subtitle)
-                    {{ $subtitle }}
-                @else
-                    {{ $subtitle }}
-                @endisset
-            </p>
+            <div data-aos="fade-up" data-aos-delay="100">
+                <div class="w-24 h-1.5 bg-primary {{ $centered ? 'mx-auto' : '' }} rounded-full mb-6"></div>
+                <p class="text-lg md:text-xl text-slate-600 {{ $centered ? 'max-w-3xl mx-auto' : 'max-w-2xl' }} leading-relaxed">
+                    @isset($subtitle)
+                        {{ $subtitle }}
+                    @else
+                        {{ $subtitle }}
+                    @endisset
+                </p>
+            </div>
         @endif
 
         @isset($actions)
-            <div class="mt-8 md:mt-10 {{ $centered ? 'flex justify-center gap-4' : 'flex gap-4' }}">
+            <div class="mt-8 md:mt-10 {{ $centered ? 'flex justify-center gap-4' : 'flex gap-4' }}" data-aos="fade-up" data-aos-delay="200">
                 {{ $actions }}
             </div>
         @endisset

@@ -17,6 +17,10 @@
     'trend' => null,
     'description' => '',
     'color' => 'primary', // primary, success, warning, danger, info
+    'counterValue' => null,
+    'counterSuffix' => '',
+    'counterDecimals' => 0,
+    'counterDuration' => 850,
 ])
 
 @php
@@ -29,11 +33,22 @@
     ];
 @endphp
 
-<div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-lg transition-shadow">
+<div {{ $attributes->merge(['data-aos' => 'zoom-in'])->class(['bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-lg transition-shadow']) }}>
     <div class="flex items-start justify-between">
         <div class="flex-1">
             <p class="text-sm font-medium text-slate-500 mb-2">{{ $title }}</p>
-            <p class="text-3xl font-bold text-slate-900 mb-1">{{ $value }}</p>
+            <p class="text-3xl font-bold text-slate-900 mb-1">
+                @if (! is_null($counterValue))
+                    <span data-counter data-counter-end="{{ $counterValue }}"
+                        data-counter-decimals="{{ $counterDecimals }}"
+                        data-counter-suffix="{{ $counterSuffix }}"
+                        data-counter-duration="{{ $counterDuration }}">
+                        {{ $value }}
+                    </span>
+                @else
+                    {{ $value }}
+                @endif
+            </p>
 
             @if($description)
                 <p class="text-xs text-slate-500">{{ $description }}</p>

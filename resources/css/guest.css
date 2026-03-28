@@ -39,3 +39,44 @@
 body.font-loaded .material-icons {
   visibility: visible;
 }
+
+[data-counter] {
+    font-variant-numeric: tabular-nums;
+}
+
+body.guest-motion-ready [data-stat-grow] {
+    opacity: 0.4;
+    transition:
+        height 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.72s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.3s ease;
+    will-change: height, width, opacity;
+}
+
+body.guest-motion-ready [data-stat-grow][data-grow-axis="y"]:not(.is-visible) {
+    height: 0 !important;
+}
+
+body.guest-motion-ready [data-stat-grow][data-grow-axis="x"]:not(.is-visible) {
+    width: 0 !important;
+}
+
+body.guest-motion-ready [data-stat-grow].is-visible {
+    opacity: 1;
+}
+
+body.guest-motion-ready [data-stat-grow][data-grow-axis="y"].is-visible {
+    height: var(--stat-target) !important;
+}
+
+body.guest-motion-ready [data-stat-grow][data-grow-axis="x"].is-visible {
+    width: var(--stat-target) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-aos] {
+        opacity: 1 !important;
+        transform: none !important;
+        transition: none !important;
+    }
+}

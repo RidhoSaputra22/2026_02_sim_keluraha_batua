@@ -29,7 +29,7 @@
     ];
 @endphp
 
-<div class="{{ $alignClasses }} mb-12 md:mb-16">
+<div {{ $attributes->merge(['data-aos' => 'fade-up'])->class([$alignClasses, 'mb-12 md:mb-16']) }}>
     <h2 class="{{ $titleSizes[$size] }} font-extrabold text-slate-900 mb-4">
         {{ $title }}
     </h2>

@@ -8,27 +8,29 @@
             <div class="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/40"></div>
         </div>
         <div class="relative z-10 max-w-7xl px-4 text-center text-white">
-            <h1 class="text-5xl font-extrabold mb-6 leading-tight">
+            <h1 class="text-5xl font-extrabold mb-6 leading-tight" data-aos="fade-up">
                 Selamat Datang di Website Resmi <br />
                 <span class="text-yellow-300">Kelurahan Batua Raya</span>
             </h1>
-            <p class="text-xl mb-10 opacity-90 font-light max-w-2xl mx-auto">
+            <p class="text-xl mb-10 opacity-90 font-light max-w-2xl mx-auto" data-aos="fade-up" data-aos-delay="100">
                 Akses informasi publik, layanan administrasi, dan kabar terkini lingkungan Kelurahan secara cepat,
                 transparan, dan akuntabel.
             </p>
 
-            <x-guest::ui.search-bar action="{{ route('guest.search') }}"
-                placeholder="Cari layanan, berita, dokumen, UMKM, atau wisata..." button-text="CARI">
-                <div class="mt-4 flex flex-wrap items-center     justify-center gap-2 text-sm">
-                    <span class="opacity-80">Populer:</span>
-                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
-                        href="{{ route('guest.search', ['q' => 'cek ktp']) }}">Cek KTP</a>
-                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
-                        href="{{ route('guest.search', ['q' => 'izin usaha']) }}">Izin Usaha</a>
-                    <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
-                        href="{{ route('guest.search', ['q' => 'administrasi kependudukan']) }}">Administrasi</a>
-                </div>
-            </x-guest::ui.search-bar>
+            <div data-aos="fade-up" data-aos-delay="200">
+                <x-guest::ui.search-bar action="{{ route('guest.search') }}"
+                    placeholder="Cari layanan, berita, dokumen, UMKM, atau wisata..." button-text="CARI">
+                    <div class="mt-4 flex flex-wrap items-center     justify-center gap-2 text-sm">
+                        <span class="opacity-80">Populer:</span>
+                        <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
+                            href="{{ route('guest.search', ['q' => 'cek ktp']) }}">Cek KTP</a>
+                        <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
+                            href="{{ route('guest.search', ['q' => 'izin usaha']) }}">Izin Usaha</a>
+                        <a class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-3 py-1 rounded-full"
+                            href="{{ route('guest.search', ['q' => 'administrasi kependudukan']) }}">Administrasi</a>
+                    </div>
+                </x-guest::ui.search-bar>
+            </div>
         </div>
     </section>
 
@@ -38,7 +40,7 @@
             subtitle="Pilih jenis layanan masyarakat yang Anda butuhkan di bawah ini." size="md" />
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <a href="{{ route('guest.administrasi') }}" class="block">
+            <a href="{{ route('guest.administrasi') }}" class="block" data-aos="fade-up" data-aos-delay="50">
                 <x-guest::ui.card variant="bordered" padding="lg"
                     class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                     <div
@@ -56,7 +58,7 @@
                 </x-guest::ui.card>
             </a>
 
-            <a href="{{ route('guest.umkm') }}" class="block">
+            <a href="{{ route('guest.umkm') }}" class="block" data-aos="fade-up" data-aos-delay="150">
                 <x-guest::ui.card variant="bordered" padding="lg"
                     class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                     <div
@@ -74,7 +76,7 @@
                 </x-guest::ui.card>
             </a>
 
-            <a href="{{ route('guest.pengaduan') }}" class="block">
+            <a href="{{ route('guest.pengaduan') }}" class="block" data-aos="fade-up" data-aos-delay="250">
                 <x-guest::ui.card variant="bordered" padding="lg"
                     class="group h-full hover:shadow-xl hover:-translate-y-2 transition-all cursor-pointer">
                     <div
@@ -96,7 +98,7 @@
 
     <section class="py-20 bg-slate-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10" data-aos="fade-up">
                 <div>
                     <h2 class="text-3xl font-bold text-slate-900">Berita & Informasi Terkini</h2>
                     <p class="text-slate-500 mt-2">Konten ini ditarik langsung dari modul berita dan publikasi yang
@@ -108,7 +110,8 @@
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 @forelse ($beritaTerkini as $item)
-                    <x-guest::ui.card padding="none" variant="bordered" class="overflow-hidden h-full">
+                    <x-guest::ui.card padding="none" variant="bordered" class="overflow-hidden h-full"
+                        data-aos="fade-up" data-aos-delay="{{ 80 + ($loop->index * 80) }}">
                         <div class="aspect-[16/10] bg-slate-100 overflow-hidden">
                             @if ($item->gambar)
                                 <img src="{{ asset('storage/' . $item->gambar) }}" alt="{{ $item->judul }}"
@@ -136,7 +139,7 @@
                         </div>
                     </x-guest::ui.card>
                 @empty
-                    <div class="lg:col-span-3">
+                    <div class="lg:col-span-3" data-aos="fade-up">
                         <x-guest::ui.card variant="bordered" padding="lg" class="text-center">
                             <x-guest::ui.icon name="newspaper" size="xl" color="text-slate-300"
                                 class="mb-4" />
@@ -157,7 +160,8 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     @forelse ($destinasiUnggulan as $destinasi)
-                        <x-guest::ui.card variant="bordered" padding="none" class="overflow-hidden h-full">
+                        <x-guest::ui.card variant="bordered" padding="none" class="overflow-hidden h-full"
+                            data-aos="fade-up" data-aos-delay="{{ 80 + ($loop->index * 80) }}">
                             <div class="aspect-[16/10] bg-slate-100">
                                 @if ($destinasi->gambar)
                                     <img src="{{ asset('storage/' . $destinasi->gambar) }}"
@@ -184,7 +188,7 @@
                             </div>
                         </x-guest::ui.card>
                     @empty
-                        <x-guest::ui.card variant="bordered" padding="lg" class="md:col-span-2">
+                        <x-guest::ui.card variant="bordered" padding="lg" class="md:col-span-2" data-aos="fade-up">
                             <p class="text-slate-500">Belum ada destinasi unggulan yang dipublikasikan.</p>
                         </x-guest::ui.card>
                     @endforelse
@@ -192,7 +196,7 @@
             </div>
 
             <div>
-                <x-guest::ui.card variant="bordered" padding="lg" class="h-full">
+                <x-guest::ui.card variant="bordered" padding="lg" class="h-full" data-aos="fade-left" data-aos-delay="120">
                     <div class="flex items-center justify-between gap-3 mb-6">
                         <h3 class="text-xl font-bold text-slate-900">Dokumen Terbaru</h3>
                         <a href="{{ route('guest.publikasi') }}"
@@ -235,7 +239,7 @@
     <section class="pb-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="rounded-[2rem] overflow-hidden bg-primary">
             <div class="grid grid-cols-1 lg:grid-cols-3">
-                <div class="lg:col-span-1 bg-primary/90 min-h-[320px]">
+                <div class="lg:col-span-1 bg-primary/90 min-h-[320px]" data-aos="zoom-in">
                     @if ($kelurahan?->foto)
                         <img src="{{ asset('storage/' . $kelurahan->foto) }}" alt="{{ $kelurahan->nama }}"
                             class="w-full h-full object-cover">
@@ -245,7 +249,7 @@
                         </div>
                     @endif
                 </div>
-                <div class="lg:col-span-2 p-8 md:p-12 text-white">
+                <div class="lg:col-span-2 p-8 md:p-12 text-white" data-aos="fade-left" data-aos-delay="120">
                     <h2 class="text-3xl md:text-4xl font-extrabold">Sambutan Lurah</h2>
                     <p class="mt-6 text-lg leading-8 text-white/90">
                         "{{ $kelurahan?->visi ?: 'Mewujudkan pelayanan publik kelurahan yang cepat, terbuka, dan dekat dengan kebutuhan warga.' }}"

@@ -77,6 +77,7 @@
                 <x-guest::ui.stat-card
                     title="Total Penduduk"
                     :value="number_format($totalPenduduk)"
+                    :counter-value="$totalPenduduk"
                     icon="people"
                     description="Jiwa"
                     color="primary"
@@ -85,6 +86,7 @@
                 <x-guest::ui.stat-card
                     title="Jumlah KK"
                     :value="number_format($totalKK)"
+                    :counter-value="$totalKK"
                     icon="home"
                     description="Kepala Keluarga"
                     color="success"
@@ -93,6 +95,7 @@
                 <x-guest::ui.stat-card
                     title="UMKM Aktif"
                     :value="number_format($totalUmkm)"
+                    :counter-value="$totalUmkm"
                     icon="store"
                     description="Unit usaha"
                     color="warning"
@@ -101,6 +104,7 @@
                 <x-guest::ui.stat-card
                     title="Jumlah RW"
                     :value="(string) $totalRw"
+                    :counter-value="$totalRw"
                     icon="landscape"
                     description="Rukun Warga"
                     color="info"

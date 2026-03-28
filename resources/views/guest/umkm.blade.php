@@ -19,11 +19,11 @@
         <section class="py-14 bg-white">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <x-guest::ui.stat-card title="Total UMKM" :value="(string) $totalUmkm" icon="store" description="Unit usaha terdata" color="primary" />
-                    <x-guest::ui.stat-card title="UMKM Aktif" :value="(string) $totalUmkmAktif" icon="verified" description="Status aktif" color="success" />
+                    <x-guest::ui.stat-card title="Total UMKM" :value="(string) $totalUmkm" icon="store" description="Unit usaha terdata" color="primary" :counter-value="$totalUmkm" />
+                    <x-guest::ui.stat-card title="UMKM Aktif" :value="(string) $totalUmkmAktif" icon="verified" description="Status aktif" color="success" :counter-value="$totalUmkmAktif" />
                     @foreach ($topJenisUsaha as $jenis)
                         <x-guest::ui.stat-card :title="$jenis->nama" :value="(string) $jenis->umkms_count" icon="storefront"
-                            description="Unit usaha" color="{{ $loop->first ? 'warning' : 'info' }}" />
+                            description="Unit usaha" color="{{ $loop->first ? 'warning' : 'info' }}" :counter-value="$jenis->umkms_count" />
                     @endforeach
                 </div>
             </div>
