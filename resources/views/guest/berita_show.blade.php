@@ -1,5 +1,5 @@
 <x-guest::layout.app :title="$berita->judul">
-    <section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
         <a href="{{ route('guest.publikasi') }}" class="inline-flex items-center gap-2 text-primary font-semibold hover:underline">
             <x-guest::ui.icon name="arrow_back" size="sm" />
             Kembali ke Publikasi
@@ -15,19 +15,19 @@
             </div>
         </div>
 
-        <div class="mt-10 rounded-[2rem] overflow-hidden bg-slate-100">
-            @if ($berita->gambar)
-                <img src="{{ asset('storage/' . $berita->gambar) }}" alt="{{ $berita->judul }}"
-                    class="w-full max-h-[520px] object-cover">
-            @else
-                <div class="h-[320px] flex items-center justify-center bg-primary/5">
-                    <x-guest::ui.icon name="article" size="2xl" color="text-primary" />
-                </div>
-            @endif
-        </div>
 
         <div class="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <article class="lg:col-span-8">
+            <article class="lg:col-span-8 space-y-14">
+                <div class=" rounded-md overflow-hidden bg-slate-100">
+                    @if ($berita->gambar)
+                        <img src="{{ asset('storage/' . $berita->gambar) }}" alt="{{ $berita->judul }}"
+                            class="w-full max-h-[520px] object-cover">
+                    @else
+                        <div class="h-[320px] flex items-center justify-center bg-primary/5">
+                            <x-guest::ui.icon name="article" size="2xl" color="text-primary" />
+                        </div>
+                    @endif
+                </div>
                 @if ($berita->ringkasan)
                     <div class="text-xl text-slate-600 leading-8 mb-8">
                         {{ $berita->ringkasan }}
@@ -51,7 +51,7 @@
                     <h3 class="text-xl font-bold text-slate-900 mb-4">Berita Terkait</h3>
                     <div class="space-y-4">
                         @forelse ($relatedBerita as $item)
-                            <a href="{{ route('guest.berita.show', $item) }}" class="block rounded-2xl border border-slate-100 p-4 hover:border-primary/30 hover:bg-primary/5 transition-colors">
+                            <a href="{{ route('guest.berita.show', $item) }}" class="block rounded-md border border-slate-100 p-4 hover:border-primary/30 hover:bg-primary/5 transition-colors">
                                 <div class="text-xs text-slate-400 mb-2">{{ $item->published_at?->translatedFormat('d M Y') }}</div>
                                 <div class="font-semibold text-slate-900">{{ $item->judul }}</div>
                             </a>

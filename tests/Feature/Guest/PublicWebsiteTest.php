@@ -132,4 +132,82 @@ class PublicWebsiteTest extends TestCase
             'kategori' => 'kebersihan',
         ]);
     }
+
+    public function test_guest_administrasi_search_results_are_paginated(): void
+    {
+        foreach (range(1, 9) as $number) {
+            LayananSurat::create([
+                'nama' => "Surat Pagination {$number}",
+                'deskripsi' => "Deskripsi layanan {$number}",
+                'is_active' => true,
+            ]);
+        }
+
+        $this->get(route('guest.administrasi', ['q' => 'Surat Pagination']))
+            ->assertOk()
+            ->assertSee('Surat Pagination 1')
+            ->assertDontSee('Surat Pagination 9')
+            ->assertSee('page=2', false);
+
+        $this->get(route('guest.administrasi', ['q' => 'Surat Pagination', 'page' => 2]))
+            ->assertOk()
+            ->assertSee('Surat Pagination 9')
+            ->assertDontSee('Surat Pagination 1');
+    }
+
+    public function test_guest_global_search_results_are_paginated(): void
+    {
+        foreach (range(1, 11) as $number) {
+            $label = str_pad((string) $number, 2, '0', STR_PAD_LEFT);
+
+            LayananSurat::create([
+                'nama' => "Hasil Global {$label}",
+                'deskripsi' => "Pencarian global {$label}",
+                'is_active' => true,
+            ]);
+        }
+
+        $this->get(route('guest.search', ['q' => 'Hasil Global']))
+            ->assertOk()
+            ->assertSee('Hasil Global 01')
+            ->assertDontSee('Hasil Global 11')
+            ->assertSee('page=2', false);
+
+        $this->get(route('guest.search', ['q' => 'Hasil Global', 'page' => 2]))
+            ->assertOk()
+            ->assertSee('Hasil Global 11')
+            ->assertDontSee('Hasil Global 01');
+    }
+
+    public function test_guest_publikasi_document_search_results_show_document_pagination(): void
+    {
+        Storage::fake('public');
+        Storage::disk('public')->put('website/dokumen/file/arsip.pdf', 'isi dokumen');
+
+        foreach (range(1, 9) as $number) {
+            $label = str_pad((string) $number, 2, '0', STR_PAD_LEFT);
+
+            DokumenPublik::create([
+                'judul' => "Dokumen Arsip {$label}",
+                'kategori' => 'transparansi',
+                'deskripsi' => "Deskripsi dokumen {$label}",
+                'file_path' => 'website/dokumen/file/arsip.pdf',
+                'mime_type' => 'application/pdf',
+                'file_size' => 1024,
+                'is_published' => true,
+                'published_at' => now()->subSeconds(20 - $number),
+            ]);
+        }
+
+        $this->get(route('guest.publikasi', ['q' => 'Dokumen Arsip']))
+            ->assertOk()
+            ->assertSee('Dokumen Arsip 09')
+            ->assertDontSee('Dokumen Arsip 01')
+            ->assertSee('dokumen_page=2', false);
+
+        $this->get(route('guest.publikasi', ['q' => 'Dokumen Arsip', 'dokumen_page' => 2]))
+            ->assertOk()
+            ->assertSee('Dokumen Arsip 01')
+            ->assertDontSee('Dokumen Arsip 09');
+    }
 }

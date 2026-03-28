@@ -23,7 +23,7 @@
                 @if ($search !== '')
                     <div class="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm text-slate-600">
                         Menampilkan
-                        <span class="font-semibold text-slate-900">{{ number_format($layananSurat->count()) }}</span>
+                        <span class="font-semibold text-slate-900">{{ number_format($layananSurat->total()) }}</span>
                         hasil untuk pencarian
                         <span class="font-semibold text-primary">"{{ $search }}"</span>.
                     </div>
@@ -35,7 +35,7 @@
                             <div class="flex items-start gap-4">
                                 <div
                                     class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                                    <x-guest::ui.icon :name="$layanan['icon']" size="lg" color="text-primary" />
+                                    <x-guest::ui.icon :name="$layanan->icon ?: 'description'" size="lg" color="text-primary" />
                                 </div>
 
                                 <div class="min-w-0 flex-1">
@@ -53,12 +53,6 @@
                                             Lihat Detail
                                         </x-guest::ui.button>
 
-                                        @if (!empty($layanan->secondary_url) && !empty($layanan->secondary_label))
-                                            <x-guest::ui.button :href="$layanan->secondary_url" variant="ghost" size="sm"
-                                                target="_blank" rel="noreferrer">
-                                                {{ $layanan->secondary_label }}
-                                            </x-guest::ui.button>
-                                        @endif
                                     </div>
                                 </div>
                                 <div class="space-x-1">
@@ -68,9 +62,9 @@
                                             {{ $layanan->biaya }}
                                         </x-guest::ui.badge>
                                     @endif
-                                    @if (!empty($layanan->estimasi_waktu))
+                                    @if (!empty($layanan->estimasi_layanan))
                                         <x-guest::ui.badge variant="info" size="sm">
-                                            Estimasi: {{ $layanan->estimasi_waktu }}
+                                            Estimasi: {{ $layanan->estimasi_layanan }}
                                         </x-guest::ui.badge>
                                     @endif
                                 </div>
@@ -89,6 +83,12 @@
                         </x-guest::ui.card>
                     @endforelse
                 </div>
+
+                @if ($layananSurat->hasPages())
+                    <div class="rounded-2xl border border-slate-100 bg-white p-4">
+                        {{ $layananSurat->links('vendor.pagination.guest-light') }}
+                    </div>
+                @endif
             </div>
 
             <div class="space-y-6">
@@ -109,7 +109,6 @@
                         </div>
                     </div>
                 </x-guest::ui.card>
-
 
                 <x-guest::ui.card padding="lg" class="bg-primary">
                     <h3 class="mb-2 text-xl font-bold">Butuh Bantuan?</h3>

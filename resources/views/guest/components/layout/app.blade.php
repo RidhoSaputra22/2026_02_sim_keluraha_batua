@@ -24,7 +24,7 @@
     </style>
 </head>
 
-<body data-guest-layout="true" class="min-h-screen flex flex-col font-sans text-slate-800 bg-white">
+<body data-guest-layout="true" class="min-h-screen flex flex-col font-sans text-slate-800 bg-white" data-theme="light">
 
     {{-- NAVIGATION --}}
     <x-guest::layout.navbar />

@@ -27,6 +27,8 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -73,20 +75,20 @@ class GuestController extends Controller
         ]);
 
         $search = trim((string) ($validated['q'] ?? ''));
-        $results = collect();
+        $allResults = collect();
 
         if ($search !== '') {
-            $results = collect(array_merge(
+            $allResults = collect(array_merge(
                 $this->searchGuestQuickLinks($search),
-                $this->searchGuestLayananSurat($search, 4),
-                $this->searchGuestBerita($search, 4),
-                $this->searchGuestDokumenPublik($search, 4),
-                $this->searchGuestDestinasiWisata($search, 4),
-                $this->searchGuestUmkm($search, 4),
+                $this->searchGuestLayananSurat($search),
+                $this->searchGuestBerita($search),
+                $this->searchGuestDokumenPublik($search),
+                $this->searchGuestDestinasiWisata($search),
+                $this->searchGuestUmkm($search),
             ));
         }
 
-        $resultGroups = $results->groupBy('category');
+        $resultGroups = $allResults->groupBy('category');
         $summaryCards = $resultGroups->map(function ($items, $category) {
             return [
                 'title' => $category,
@@ -94,6 +96,8 @@ class GuestController extends Controller
                 'icon' => $items->first()['icon'] ?? 'search',
             ];
         })->values();
+
+        $results = $this->paginateGuestCollection($allResults->values(), $request, 10);
 
         return view('guest.search', [
             'search' => $search,
@@ -386,7 +390,7 @@ class GuestController extends Controller
             });
         }
 
-        $layananSurat = $query->get();
+        $layananSurat = $query->paginate(8)->withQueryString();
 
         return view('guest.administrasi', [
             'layananSurat' => $layananSurat,
@@ -693,7 +697,7 @@ class GuestController extends Controller
             ->all();
     }
 
-    private function searchGuestLayananSurat(string $search, int $limit): array
+    private function searchGuestLayananSurat(string $search, ?int $limit = null): array
     {
         $query = LayananSurat::query()
             ->withCount('persyaratans')
@@ -708,7 +712,11 @@ class GuestController extends Controller
             });
         });
 
-        return $query->limit($limit)
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query
             ->get()
             ->map(function (LayananSurat $item) {
                 $subtitle = collect([
@@ -732,12 +740,16 @@ class GuestController extends Controller
             ->toArray();
     }
 
-    private function searchGuestBerita(string $search, int $limit): array
+    private function searchGuestBerita(string $search, ?int $limit = null): array
     {
         $query = Berita::latestPublished();
         $this->applyGuestLike($query, ['judul', 'ringkasan', 'isi', 'kategori'], $search);
 
-        return $query->limit($limit)
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query
             ->get()
             ->map(function (Berita $item) {
                 return [
@@ -756,12 +768,16 @@ class GuestController extends Controller
             ->toArray();
     }
 
-    private function searchGuestDokumenPublik(string $search, int $limit): array
+    private function searchGuestDokumenPublik(string $search, ?int $limit = null): array
     {
         $query = DokumenPublik::latestPublished();
         $this->applyGuestLike($query, ['judul', 'deskripsi', 'kategori'], $search);
 
-        return $query->limit($limit)
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query
             ->get()
             ->map(function (DokumenPublik $item) {
                 return [
@@ -788,12 +804,16 @@ class GuestController extends Controller
             ->toArray();
     }
 
-    private function searchGuestDestinasiWisata(string $search, int $limit): array
+    private function searchGuestDestinasiWisata(string $search, ?int $limit = null): array
     {
         $query = DestinasiWisata::published()->ordered();
         $this->applyGuestLike($query, ['nama', 'ringkasan', 'deskripsi', 'alamat', 'kategori'], $search);
 
-        return $query->limit($limit)
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query
             ->get()
             ->map(function (DestinasiWisata $item) {
                 return [
@@ -817,7 +837,7 @@ class GuestController extends Controller
             ->toArray();
     }
 
-    private function searchGuestUmkm(string $search, int $limit): array
+    private function searchGuestUmkm(string $search, ?int $limit = null): array
     {
         $query = Umkm::query()
             ->with(['jenisUsaha', 'rt.rw'])
@@ -829,7 +849,11 @@ class GuestController extends Controller
             $search
         );
 
-        return $query->limit($limit)
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query
             ->get()
             ->map(function (Umkm $item) {
                 $status = $item->status ? ucfirst(str_replace('_', ' ', $item->status)) : null;
@@ -854,6 +878,29 @@ class GuestController extends Controller
                 ];
             })
             ->toArray();
+    }
+
+    private function paginateGuestCollection(
+        Collection $items,
+        Request $request,
+        int $perPage = 10,
+        string $pageName = 'page'
+    ): LengthAwarePaginator {
+        $page = LengthAwarePaginator::resolveCurrentPage($pageName);
+        $query = $request->query();
+
+        unset($query[$pageName]);
+
+        return (new LengthAwarePaginator(
+            $items->forPage($page, $perPage)->values(),
+            $items->count(),
+            $perPage,
+            $page,
+            [
+                'path' => $request->url(),
+                'pageName' => $pageName,
+            ]
+        ))->appends($query);
     }
 
     private function guestPopularKeywords(): array

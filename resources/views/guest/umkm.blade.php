@@ -132,7 +132,7 @@
                     @endforelse
                 </div>
 
-                <div class="mt-8">{{ $umkmList->links() }}</div>
+                <div class="mt-8">{{ $umkmList->links('vendor.pagination.guest-light') }}</div>
             </div>
         </section>
     </main>

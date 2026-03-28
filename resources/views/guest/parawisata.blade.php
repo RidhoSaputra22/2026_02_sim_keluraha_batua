@@ -108,7 +108,7 @@
                     @endforelse
                 </div>
 
-                <div>{{ $destinasiWisata->links() }}</div>
+                <div>{{ $destinasiWisata->links('vendor.pagination.guest-light') }}</div>
             </div>
 
             <aside class="lg:col-span-4 space-y-6">

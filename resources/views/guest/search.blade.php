@@ -64,7 +64,7 @@
                             </x-guest::ui.card>
                         @endforeach
                     </div>
-                @elseif ($results->isEmpty())
+                @elseif ($results->total() === 0)
                     <x-guest::ui.card variant="bordered" padding="lg" class="text-center">
                         <div
                             class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 text-slate-400">
@@ -77,6 +77,17 @@
                         </p>
                     </x-guest::ui.card>
                 @else
+                    <div class="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm text-slate-600">
+                        Menampilkan
+                        <span class="font-semibold text-slate-900">
+                            {{ number_format($results->firstItem() ?? 0) }}-{{ number_format($results->lastItem() ?? 0) }}
+                        </span>
+                        dari
+                        <span class="font-semibold text-slate-900">{{ number_format($results->total()) }}</span>
+                        hasil untuk
+                        <span class="font-semibold text-primary">"{{ $search }}"</span>.
+                    </div>
+
                     @foreach ($results as $item)
                         <div class="rounded-2xl border border-slate-100 p-5 transition-colors hover:border-primary/20">
                             <div class="flex items-start gap-4">
@@ -115,6 +126,12 @@
                             </div>
                         </div>
                     @endforeach
+
+                    @if ($results->hasPages())
+                        <div class="rounded-2xl border border-slate-100 bg-white p-4">
+                            {{ $results->links('vendor.pagination.guest-light') }}
+                        </div>
+                    @endif
                 @endif
             </div>
 
