@@ -173,7 +173,7 @@
                     </p>
 
                     <x-slot:footer>
-                        <x-guest::ui.button variant="outline" size="sm" class="w-full">
+                        <x-guest::ui.button href="{{ route('guest.administrasi') }}" variant="outline" size="sm" class="w-full">
                             Lihat Detail
                         </x-guest::ui.button>
                     </x-slot:footer>
@@ -188,7 +188,7 @@
                     </p>
 
                     <x-slot:footer>
-                        <x-guest::ui.button variant="outline" size="sm" class="w-full">
+                        <x-guest::ui.button href="{{ route('guest.cek-data') }}" variant="outline" size="sm" class="w-full">
                             Lihat Detail
                         </x-guest::ui.button>
                     </x-slot:footer>
@@ -203,7 +203,7 @@
                     </p>
 
                     <x-slot:footer>
-                        <x-guest::ui.button variant="outline" size="sm" class="w-full">
+                        <x-guest::ui.button href="{{ route('guest.pengaduan') }}" variant="outline" size="sm" class="w-full">
                             Lihat Detail
                         </x-guest::ui.button>
                     </x-slot:footer>

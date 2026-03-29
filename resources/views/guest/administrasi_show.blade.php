@@ -24,7 +24,7 @@
                 </h1>
                 <div class=" mt-5 h-1 w-24 rounded-full bg-primary"></div>
                 <p class="mt-6 text-lg leading-8 text-slate-500">
-                    {{ $layananSurat->deskripsi ?: 'Halaman ini menampilkan persyaratan lengkap, estimasi pelayanan, biaya, dan catatan administrasi untuk layanan yang Anda pilih.' }}
+                    Syarat yang anda harus penuhi :
                 </p>
             </div>
 

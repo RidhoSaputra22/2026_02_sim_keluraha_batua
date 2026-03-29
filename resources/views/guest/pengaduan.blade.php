@@ -1,8 +1,6 @@
 <x-guest::layout.app title="Pengaduan">
     <x-guest::ui.hero size="xl" background="gradient">
-        <x-slot:badge>
-            <x-guest::ui.badge variant="primary">Layanan Aspirasi Masyarakat</x-guest::ui.badge>
-        </x-slot:badge>
+
 
         <x-slot:title>
             Sampaikan Aspirasi & <span class="text-primary">Keluhan Warga</span>

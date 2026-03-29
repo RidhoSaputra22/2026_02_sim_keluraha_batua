@@ -50,7 +50,7 @@
                                     <div class="mt-4 flex flex-wrap gap-3">
                                         <x-guest::ui.button href="{{ route('guest.administrasi.show', $layanan) }}"
                                             variant="outline" size="sm">
-                                            Lihat Detail
+                                            Lihat Persyaratan
                                         </x-guest::ui.button>
 
                                     </div>
