@@ -4,7 +4,7 @@
 @endphp
 
 <x-guest::layout.app title="Publikasi">
-    <x-guest::ui.hero size="lg" background="white">
+    <x-guest::ui.hero size="xl" background="white">
         <x-slot:title>
             Pusat <span class="text-primary">Publikasi & Informasi</span>
         </x-slot:title>

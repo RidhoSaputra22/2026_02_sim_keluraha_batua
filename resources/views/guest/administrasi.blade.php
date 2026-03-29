@@ -1,5 +1,5 @@
 <x-guest::layout.app title="Administrasi Kependudukan">
-    <x-guest::ui.hero size="lg" background="white">
+    <x-guest::ui.hero size="xl" background="white">
         <x-slot:title>
             Layanan <span class="text-primary">Administrasi Kependudukan</span>
         </x-slot:title>

@@ -1,5 +1,5 @@
 <x-guest::layout.app title="UMKM">
-    <x-guest::ui.hero size="lg" background="white">
+    <x-guest::ui.hero size="xl" background="white">
         <x-slot:title>
             Direktori <span class="text-primary">UMKM Kelurahan</span>
         </x-slot:title>

@@ -154,7 +154,7 @@
     <section class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2">
-                <x-guest::ui.section-header title="Rekomendasi Kelurahan"
+                <x-guest::ui.section-header :centered="false" title="Rekomendasi Kelurahan"
                     subtitle="Sorotan cepat untuk destinasi lokal dan dokumen yang sering dibutuhkan warga."
                     size="md" />
 
@@ -196,7 +196,7 @@
             </div>
 
             <div>
-                <x-guest::ui.card variant="bordered" padding="lg" class="h-full" data-aos="fade-left" data-aos-delay="120">
+                <x-guest::ui.card variant="none" padding="none" class="h-full" data-aos="fade-left" data-aos-delay="120">
                     <div class="flex items-center justify-between gap-3 mb-6">
                         <h3 class="text-xl font-bold text-slate-900">Dokumen Terbaru</h3>
                         <a href="{{ route('guest.publikasi') }}"
@@ -205,10 +205,10 @@
 
                     <div class="space-y-4">
                         @forelse ($dokumenPublik as $dokumen)
-                            <div class="rounded-2xl border border-slate-100 p-4">
+                            <div class="rounded-md  p-4 border border-slate-100 hover:border-primary/20 transition-colors">
                                 <div class="flex items-start gap-3">
                                     <div
-                                        class="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                        class="w-12 h-12 rounded-md bg-primary/10 flex items-center justify-center text-primary">
                                         <x-guest::ui.icon name="description" />
                                     </div>
                                     <div class="flex-1 min-w-0">
@@ -220,12 +220,7 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div class="mt-4">
-                                    <x-guest::ui.button href="{{ route('guest.publikasi.download', $dokumen) }}"
-                                        variant="outline" class="w-full">
-                                        Unduh Dokumen
-                                    </x-guest::ui.button>
-                                </div>
+
                             </div>
                         @empty
                             <p class="text-sm text-slate-500">Belum ada dokumen yang dipublikasikan.</p>

@@ -1,5 +1,5 @@
 <x-guest::layout.app :title="$search !== '' ? 'Hasil Pencarian' : 'Global Search'">
-    <x-guest::ui.hero size="lg" background="gradient">
+    <x-guest::ui.hero size="xl" background="gradient">
         <x-slot:title>
             Pencarian <span class="text-primary"> Layanan Publik</span>
         </x-slot:title>

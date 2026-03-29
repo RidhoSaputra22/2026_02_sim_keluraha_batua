@@ -1,5 +1,5 @@
 <x-guest::layout.app title="Kontak">
-    <x-guest::ui.hero size="lg" background="white">
+    <x-guest::ui.hero size="xl" background="white">
         <x-slot:title>
             Hubungi <span class="text-primary">{{ $kelurahan?->nama ?? 'Kelurahan' }}</span>
         </x-slot:title>

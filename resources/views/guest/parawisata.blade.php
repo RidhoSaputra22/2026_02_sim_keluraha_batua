@@ -1,5 +1,5 @@
 <x-guest::layout.app title="Pariwisata">
-    <x-guest::ui.hero size="lg" background="white">
+    <x-guest::ui.hero size="xl" background="white">
         <x-slot:title>
             Jelajahi <span class="text-primary">Pariwisata & Rekomendasi Lokal</span>
         </x-slot:title>
