@@ -164,12 +164,16 @@
                                                 {{ \Illuminate\Support\Str::limit($dokumen->deskripsi, 90) }}
                                             </p>
                                         @endif
-                                         <div class="mt-4">
-                                    <x-guest::ui.button href="{{ route('guest.publikasi.download', $dokumen) }}"
-                                        variant="outline" class="w-full" size="sm">
-                                        Unduh Dokumen
-                                    </x-guest::ui.button>
-                                </div>
+                                        <div class="mt-4 flex flex-wrap gap-3">
+                                            <x-guest::ui.button href="{{ route('guest.dokumen.show', $dokumen) }}"
+                                                variant="outline" size="sm">
+                                                Lihat Dokumen
+                                            </x-guest::ui.button>
+                                            <x-guest::ui.button href="{{ route('guest.publikasi.download', $dokumen) }}"
+                                                variant="ghost" size="sm" target="_blank" rel="noreferrer">
+                                                Unduh
+                                            </x-guest::ui.button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -186,7 +190,6 @@
                     @endif
                 </div>
 
-                <div>{{ $berita->links('vendor.pagination.guest-light') }}</div>
             </div>
 
 

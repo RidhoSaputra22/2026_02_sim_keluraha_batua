@@ -498,20 +498,57 @@ class GuestController extends Controller
         return view('guest.berita_show', compact('berita', 'relatedBerita'));
     }
 
+    public function showDokumenPublik(DokumenPublik $dokumenPublik)
+    {
+        $this->assertDokumenPublikCanBeAccessed($dokumenPublik);
+
+        $previewMode = $this->resolveDokumenPublikPreviewMode($dokumenPublik);
+        $fileExtension = strtoupper(pathinfo((string) $dokumenPublik->file_path, PATHINFO_EXTENSION) ?: 'file');
+        $fileSizeLabel = $this->formatFileSize($dokumenPublik->file_size);
+        $relatedDokumen = DokumenPublik::latestPublished()
+            ->whereKeyNot($dokumenPublik->getKey())
+            ->where('kategori', $dokumenPublik->kategori)
+            ->take(3)
+            ->get();
+
+        if ($relatedDokumen->count() < 3) {
+            $tambahanDokumen = DokumenPublik::latestPublished()
+                ->whereKeyNot($dokumenPublik->getKey())
+                ->whereNotIn('id', $relatedDokumen->pluck('id'))
+                ->take(3 - $relatedDokumen->count())
+                ->get();
+
+            $relatedDokumen = $relatedDokumen->concat($tambahanDokumen)->values();
+        }
+
+        return view('guest.dokumen_show', [
+            'dokumenPublik' => $dokumenPublik,
+            'previewMode' => $previewMode,
+            'fileExtension' => $fileExtension,
+            'fileSizeLabel' => $fileSizeLabel,
+            'relatedDokumen' => $relatedDokumen,
+        ]);
+    }
+
+    public function previewDokumenPublik(DokumenPublik $dokumenPublik)
+    {
+        $absolutePath = $this->dokumenPublikAbsolutePath($dokumenPublik);
+
+        return response()->file($absolutePath, array_filter([
+            'Content-Type' => $dokumenPublik->mime_type,
+        ]));
+    }
+
     public function downloadDokumenPublik(DokumenPublik $dokumenPublik)
     {
-        abort_unless(
-            $dokumenPublik->is_published
-                && $dokumenPublik->published_at !== null
-                && $dokumenPublik->published_at->lte(now()),
-            404
-        );
+        $absolutePath = $this->dokumenPublikAbsolutePath($dokumenPublik);
 
-        abort_unless($dokumenPublik->file_path && Storage::disk('public')->exists($dokumenPublik->file_path), 404);
-
-        return Storage::disk('public')->download(
-            $dokumenPublik->file_path,
-            basename($dokumenPublik->file_path)
+        return response()->download(
+            $absolutePath,
+            basename((string) $dokumenPublik->file_path),
+            array_filter([
+                'Content-Type' => $dokumenPublik->mime_type,
+            ])
         );
     }
 
@@ -802,16 +839,67 @@ class GuestController extends Controller
                         $item->deskripsi ?: 'Dokumen publik ini tersedia untuk dilihat pada halaman publikasi atau diunduh langsung.',
                         140
                     ),
-                    'url' => route('guest.publikasi', [
-                        'q' => $item->judul,
-                        'dokumen_kategori' => $item->kategori,
-                    ]),
-                    'action_label' => 'Buka Publikasi',
+                    'url' => route('guest.dokumen.show', $item),
+                    'action_label' => 'Lihat Dokumen',
                     'secondary_url' => route('guest.publikasi.download', $item),
                     'secondary_label' => 'Unduh',
                 ];
             })
             ->toArray();
+    }
+
+    private function dokumenPublikAbsolutePath(DokumenPublik $dokumenPublik): string
+    {
+        $this->assertDokumenPublikCanBeAccessed($dokumenPublik);
+
+        return Storage::disk('public')->path($dokumenPublik->file_path);
+    }
+
+    private function assertDokumenPublikCanBeAccessed(DokumenPublik $dokumenPublik): void
+    {
+        abort_unless(
+            $dokumenPublik->is_published
+                && $dokumenPublik->published_at !== null
+                && $dokumenPublik->published_at->lte(now()),
+            404
+        );
+
+        abort_unless(
+            filled($dokumenPublik->file_path) && Storage::disk('public')->exists($dokumenPublik->file_path),
+            404
+        );
+    }
+
+    private function resolveDokumenPublikPreviewMode(DokumenPublik $dokumenPublik): string
+    {
+        $mimeType = Str::lower((string) ($dokumenPublik->mime_type ?: Storage::disk('public')->mimeType($dokumenPublik->file_path)));
+        $extension = Str::lower(pathinfo((string) $dokumenPublik->file_path, PATHINFO_EXTENSION));
+
+        if (Str::startsWith($mimeType, 'image/') || in_array($extension, ['jpg', 'jpeg', 'png', 'webp'], true)) {
+            return 'image';
+        }
+
+        if (
+            in_array($mimeType, ['application/pdf', 'text/plain', 'text/csv'], true)
+            || in_array($extension, ['pdf', 'txt', 'csv'], true)
+        ) {
+            return 'iframe';
+        }
+
+        return 'unsupported';
+    }
+
+    private function formatFileSize(?int $bytes): ?string
+    {
+        if (! $bytes || $bytes < 1) {
+            return null;
+        }
+
+        if ($bytes >= 1024 * 1024) {
+            return number_format($bytes / 1024 / 1024, 2) . ' MB';
+        }
+
+        return number_format($bytes / 1024, 1) . ' KB';
     }
 
     private function searchGuestDestinasiWisata(string $search, ?int $limit = null): array

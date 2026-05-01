@@ -212,12 +212,19 @@
                                         <x-guest::ui.icon name="description" />
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="font-semibold text-slate-900">{{ $dokumen->judul }}</p>
+                                        <a href="{{ route('guest.dokumen.show', $dokumen) }}"
+                                            class="font-semibold text-slate-900 transition-colors hover:text-primary">
+                                            {{ $dokumen->judul }}
+                                        </a>
                                         <p class="text-xs text-slate-500 mt-1">
                                             {{ \App\Models\DokumenPublik::kategoriOptions()[$dokumen->kategori] ?? ucfirst($dokumen->kategori) }}
                                             •
                                             {{ $dokumen->published_at?->translatedFormat('d M Y') }}
                                         </p>
+                                        <a href="{{ route('guest.dokumen.show', $dokumen) }}"
+                                            class="mt-3 inline-flex text-sm font-semibold text-primary hover:underline">
+                                            Lihat dokumen
+                                        </a>
                                     </div>
                                 </div>
 

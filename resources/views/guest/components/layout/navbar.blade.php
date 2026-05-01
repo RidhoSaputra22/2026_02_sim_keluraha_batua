@@ -14,7 +14,7 @@ $navItems = [
     ['route' => 'guest.data-kelurahan', 'label' => 'Data Kelurahan', 'patterns' => ['guest.data-kelurahan']],
     ['route' => 'guest.cek-data', 'label' => 'Cek Data', 'patterns' => ['guest.cek-data']],
     ['route' => 'guest.administrasi', 'label' => 'Adm. Kependudukan', 'patterns' => ['guest.administrasi', 'guest.administrasi.show']],
-    ['route' => 'guest.publikasi', 'label' => 'Publikasi', 'patterns' => ['guest.publikasi', 'guest.berita.show']],
+    ['route' => 'guest.publikasi', 'label' => 'Publikasi', 'patterns' => ['guest.publikasi', 'guest.berita.show', 'guest.dokumen.show']],
     ['route' => 'guest.parawisata', 'label' => 'Pariwisata', 'patterns' => ['guest.parawisata']],
     ['route' => 'guest.umkm', 'label' => 'UMKM', 'patterns' => ['guest.umkm']],
     ['route' => 'guest.pengaduan', 'label' => 'Pengaduan', 'patterns' => ['guest.pengaduan']],

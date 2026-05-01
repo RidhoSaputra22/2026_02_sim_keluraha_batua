@@ -14,6 +14,8 @@ Route::post('/cek-data', [GuestController::class, 'cekDataSearch'])->name('guest
 Route::get('/administrasi', [GuestController::class, 'administrasi'])->name('guest.administrasi');
 Route::get('/administrasi/{layananSurat:slug}', [GuestController::class, 'showAdministrasi'])->name('guest.administrasi.show');
 Route::get('/publikasi', [GuestController::class, 'publikasi'])->name('guest.publikasi');
+Route::get('/publikasi/dokumen/{dokumenPublik:slug}', [GuestController::class, 'showDokumenPublik'])->name('guest.dokumen.show');
+Route::get('/publikasi/dokumen/{dokumenPublik:slug}/preview', [GuestController::class, 'previewDokumenPublik'])->name('guest.dokumen.preview');
 Route::get('/publikasi/{berita:slug}', [GuestController::class, 'showBerita'])->name('guest.berita.show');
 Route::get('/dokumen-publik/{dokumenPublik:slug}/unduh', [GuestController::class, 'downloadDokumenPublik'])->name('guest.publikasi.download');
 Route::get('/parawisata', [GuestController::class, 'parawisata'])->name('guest.parawisata');

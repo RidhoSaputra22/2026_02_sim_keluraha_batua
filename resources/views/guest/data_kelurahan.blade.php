@@ -188,9 +188,9 @@
 
                 <div class="flex flex-wrap gap-3">
                     <x-guest::ui.button
-                        href="{{ $laporanPublik ? route('guest.publikasi.download', $laporanPublik) : route('guest.publikasi', ['dokumen_kategori' => 'laporan']) }}"
+                        href="{{ $laporanPublik ? route('guest.dokumen.show', $laporanPublik) : route('guest.publikasi', ['dokumen_kategori' => 'laporan']) }}"
                         variant="outline" size="sm">
-                        Unduh Laporan
+                        {{ $laporanPublik ? 'Lihat Laporan' : 'Cari Laporan' }}
                     </x-guest::ui.button>
                     <x-guest::ui.button href="{{ route('guest.cek-data') }}" size="sm">
                         Lihat Semua Detail
